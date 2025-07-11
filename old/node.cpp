@@ -1,13 +1,10 @@
-#include "Node.h"
-#include "math_funcs.cpp"
+#include "node.h"
 #include <cassert>
 #include <iostream>
 
-// using namespace std;
-
-Node::Node(std::vector<std::complex<double>> &pos,
+Node::Node(std::vector<cmplx> &pos,
 		   std::vector<double> &qs,
-	       std::complex<double> z0,	
+	       cmplx z0,	
 		   const double L,
 		   const int lvl,
 		   const int P)
@@ -15,7 +12,7 @@ Node::Node(std::vector<std::complex<double>> &pos,
       isLeaf(pos.size()<2 || !lvl) // if node has at least two particles and is not lvl 0, then subdivide node
 {
 	if (!isLeaf) {
-		std::vector<std::vector<std::complex<double>>> branchPos(4);
+		std::vector<std::vector<cmplx>> branchPos(4);
 		std::vector<std::vector<double>> branchQs(4);
 		// for (const auto& ele : pos) {
 		for (int n = 0; n < pos.size(); ++n){
@@ -25,7 +22,7 @@ Node::Node(std::vector<std::complex<double>> &pos,
 			branchQs[k].push_back(qs[n]);
 		}
 		for (int k = 0; k < 4; ++k) {
-			std::complex<double> dz0 = (pow(-1,k%2+1), pow(-1,k/2+1)) * L/4;
+			cmplx dz0 = (pow(-1,k%2+1) + iu*pow(-1,k/2+1)) * L/4.0;
 			auto branch = std::make_shared<Node>(branchPos[k], branchQs[k], z0 + dz0, L / 2, lvl - 1, P); //
 			branches.push_back(branch);
 		}
@@ -52,11 +49,6 @@ void Node::buildCoeffs() {
 						- branchCoeffs[0] * pow(branch->z0, k) / static_cast<double>(k);
 		}
 	}
-}
-
-void Node::printPos(std::ofstream& f) {
-	for (const auto& z : pos)
-		f << z.real() << " " << z.imag() << std::endl;
 }
 
 void Node::printNode(std::ofstream& f) {

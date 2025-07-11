@@ -6,5 +6,8 @@ positions = readmatrix(posfile);
 nodes = readmatrix(nodefile);
 
 %%
-scatter(positions(:,1),positions(:,2))
-for node = 1:
+figure();
+scatter(positions(:,1),positions(:,2));
+for node = 1:length(nodes)
+    rectangle('Position',nodes(:,1:2)-)
+end

@@ -1,3 +1,6 @@
+#ifndef MATH_H
+#define MATH_H
+
 #include <cmath>
 #include <complex>
 
@@ -15,3 +18,5 @@ double factorial(int n) {
 double binom(int n, int k) {
 	return factorial(n) / (factorial(k) * factorial(n - k));
 }
+
+#endif
