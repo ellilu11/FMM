@@ -12,13 +12,12 @@ public:
 		cmplx,
 		const double,
 		const int,
-		const int);
+		const int,
+		Node* const);
 
-	void buildCoeffs();
+	void buildCoeffs(const int);
+	void buildLocalCoeffs(const int);
 	void printNode(std::ofstream&);
-
-private:
-	std::vector<std::shared_ptr<Node>> branches;
 
 };
 
