@@ -3,18 +3,18 @@
 
 #include <vector>
 #include <complex>
+#include <optional>
 #include "math.h"
 
 enum class Dir {
-	N,
-	E,
+	SW,
+	SE,
+	NW,
+	NE,
 	S,
 	W,
-	NE,
-	SE,
-	SW,
-	NW,
-	Last
+	E,
+	N
 };
 
 class Node {
@@ -25,8 +25,8 @@ public:
 		const double L,
 		const int lvl,
 		const int branchIdx,
-		Node* const root)
-		: pos(pos), qs(qs), z0(z0), L(L), lvl(lvl), branchIdx(branchIdx), root(root), nborFlag(0)
+		Node* const base)
+		: pos(pos), qs(qs), z0(z0), L(L), lvl(lvl), branchIdx(branchIdx), base(base), nborFlag(0)
 	{
 	};
 
@@ -65,7 +65,7 @@ protected:
 	std::vector<cmplx> coeffs;
 	std::vector<cmplx> localCoeffs;
 
-	Node* const root;
+	Node* const base;
 
 	int nborFlag;
 };

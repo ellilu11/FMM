@@ -51,14 +51,14 @@ int main()
 	uniform_int_distribution<> branchIdx(0, 3);
 	shared_ptr<Node> node = root;
 
-	while (typeid(*node) == typeid(Stem))
-	// while (node->getLvl() > 1)
+	// while (typeid(*node) == typeid(Stem))
+	while (node->getLvl() > 1)
 		node = node->getBranches(branchIdx(gen));
-	node->setNborFlag(1);
+	node->setNborFlag(2);
 
 	auto nbors = node->getNearNeighbors();
 	for (const auto& nbor : nbors)
-		nbor->setNborFlag(2);
+		nbor->setNborFlag(1);
 
 	ofstream posFile, nodeFile;
 	posFile.open("positions.txt");

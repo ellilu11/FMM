@@ -10,8 +10,8 @@ Stem::Stem(std::vector<cmplx>& pos,
 	const double L,
 	const int lvl,
 	const int branchIdx,
-	Node* const root)
-	: Node(pos, qs, z0, L, lvl, branchIdx, root)
+	Node* const base)
+	: Node(pos, qs, z0, L, lvl, branchIdx, base)
 {
 	std::vector<std::vector<cmplx>> branchPos(4);
 	std::vector<std::vector<double>> branchQs(4);
