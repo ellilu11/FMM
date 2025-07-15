@@ -9,7 +9,7 @@ class Stem final : public Node {
 public:
 	Stem(std::vector<cmplx>&,
 		std::vector<double>&,
-		cmplx,
+		const cmplx,
 		const double,
 		const int,
 		const int,

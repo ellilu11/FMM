@@ -3,7 +3,7 @@
 
 Leaf::Leaf(std::vector<cmplx>& pos,
 	std::vector<double>& qs,
-	cmplx z0,
+	const cmplx z0,
 	const double L,
 	const int lvl,
 	const int branchIdx,
@@ -29,5 +29,5 @@ void Leaf::buildLocalCoeffs(const int P) {
 }
 
 void Leaf::printNode(std::ofstream& f) {
-	f << z0.real() << " " << z0.imag() << " " << L << " " << nborFlag << std::endl;
+	f << z0.real() << " " << z0.imag() << " " << L << " " << nodeStat << std::endl;
 }

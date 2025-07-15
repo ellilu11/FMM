@@ -16,7 +16,7 @@ for node = 1:length(nodes)
     if (nodes(node,3) == 0.3125 && ~nborFlag)
         rgb = 'none';
     else
-        rgb = [1 1-nborFlag/2 1];
+        rgb = [1 1-nborFlag/3 1];
     end
     rectangle('Position',nodepos(node,:),...
         'FaceColor',rgb,...

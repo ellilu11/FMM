@@ -7,6 +7,15 @@
 using cmplx = std::complex<double>;
 constexpr cmplx iu(0,1);
 
+std::complex<bool> operator> (cmplx z, cmplx w) {
+	std::complex<bool> out(z.real() > w.real(), z.imag() > w.imag());
+	return out;
+}
+
+size_t cmplx2Idx(std::complex<bool> z) {
+	return z.real() + 2*z.imag();
+}
+
 double factorial(int n) {
 	return n == 0 ? 1 : n * factorial(n-1);
 }
