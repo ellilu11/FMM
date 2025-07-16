@@ -1,15 +1,30 @@
-﻿#include <fstream>
+﻿#define _USE_MATH_DEFINES
+#include <cmath>
+#include <fstream>
 #include <random>
 #include "node.h"
 #include "node.cpp"
 #include "stem.cpp"
 #include "leaf.cpp"
 
+
 using namespace std;
 
 //namespace PARAM {
-//	extern constexpr double L = 10.0;
-//	extern constexpr int Nlvl
+//
+//}
+
+const cmplx evaluateFfieldAnl(const vector<cmplx>& pos, vector<double>& qs, const cmplx z) {
+	assert(pos.size() == qs.size());
+
+	cmplx phi;
+	for (size_t n = 0; n < pos.size(); ++n)
+		phi += qs[n] * std::log(z - pos[n]);
+	return phi;
+}
+
+//void multipoleTest(shared_ptr<Node> root, const int Nobs, const double L, const int P) {
+//
 //}
 
 int main()
@@ -25,6 +40,9 @@ int main()
 	uniform_real_distribution<double> real(-L / 2, L / 2);
 	uniform_real_distribution<double> imag(-L / 2, L / 2);
 
+	//normal_distribution<double> u(0, 0.2 * L);
+	//uniform_real_distribution<double> th(0, 2.0 * M_PI);
+
 	// Populate domain with particles
 	constexpr int N = 1000;
 	constexpr double Q = 1.0;
@@ -35,6 +53,8 @@ int main()
 
 	for (int n = 0; n < N; ++n) {
 		cmplx z(real(gen), imag(gen));
+		//const auto R = std::abs(u(gen));
+		//cmplx z(R * std::cos(th(gen)), R * std::sin(th(gen)));
 		pos.push_back(z);
 		qs.push_back(Q);
 	}
@@ -49,31 +69,31 @@ int main()
 	// Upward pass: Aggregate multipole expansions
 	root->buildCoeffs(P);
 
-	// Near neighbor/interaction list test
-	uniform_int_distribution<> branchIdx(0, 3);
-	shared_ptr<Node> node = root;
+	// Tests (move later into test cpp files)
+	root->iListTest(); // interaction list finding test
 
-	while (node->isNodeType<Stem>())
-	// while (node->getLvl() > 1)
-		node = node->getBranches(branchIdx(gen));
-	node->setNodeStat(3);
+	// Farfield test
+	constexpr int Nobs = 1000;
+	// multipoleTest(root, Nobs, L, P);
 
-	//auto nbors = node->getNearNeighbors();
-	//for (const auto& nbor : nbors)
-	//	nbor->setnodeStat(1);
+	const double c = 10.0;
+	const double R = c * L;
 
-	node->setInteractionList();
-	auto nbors = node->getInteractionList();
-		
-	for (const auto& nbor : nbors)
-		nbor->setNodeStat(2);
+	ofstream obsFile, phiFile;
+	obsFile.open("observers.txt");
+	phiFile.open("farfield.txt");
 
-	ofstream posFile, nodeFile;
-	posFile.open("positions.txt");
-	nodeFile.open("nodes.txt");
+	for (int n = 0; n < Nobs; ++n) {
+		const double th = 2 * M_PI * static_cast<double>(n) / static_cast<double>(Nobs);
+		const double x = R * cos(th);
+		const double y = R * sin(th);
+		const cmplx z(x, y);
 
-	root->printPos(posFile);
-	root->printNode(nodeFile);
+		const auto phi = root->evaluateFfield(z, P);
+		const auto phiAnl = evaluateFfieldAnl(pos, qs, z);
+		obsFile << x << " " << y << std::endl;
+		phiFile << phi.real() << " " << phi.imag() << " " << phiAnl.real() << " " << phiAnl.imag() << std::endl;
+	}
 
 	return 0;
 }

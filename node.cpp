@@ -2,6 +2,7 @@
 #include "leaf.h"
 #include <cassert>
 #include <iostream>
+#include <random>
 
 using enum Dir;
 
@@ -154,8 +155,7 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 	}
 }
 
-std::vector<std::shared_ptr<Node>> const Node::getNearNeighbors() {
-	std::vector<std::shared_ptr<Node>> nbors;
+void Node::setNearNeighbors() {
 	// for (int i = N; i != Last; ++i) {
 	for (int i = 0; i < 8; ++i) {
 		Dir dir = static_cast<Dir>(i);
@@ -164,14 +164,15 @@ std::vector<std::shared_ptr<Node>> const Node::getNearNeighbors() {
 			nbors.push_back(getNeighborGeqSize(dir));
 	}
 	assert(nbors.size() <= 8);
-	return nbors;
 }
 
 void Node::setInteractionList() {
+	setNearNeighbors();
 	auto nbors = getNearNeighbors();
 	for (const auto& nbor : nbors) // flag near neighbors of this node
 		nbor->setNodeStat(1);
 
+	base->setNearNeighbors();
 	auto baseNbors = base->getNearNeighbors();
 
 	for (const auto& nbor : baseNbors)
@@ -181,5 +182,13 @@ void Node::setInteractionList() {
 			for (const auto& branch : nbor->branches) 
 				if (!branch->nodeStat)
 					iList.push_back(branch);
+}
 
+cmplx Node::evaluateFfield(const cmplx z, const int P) {
+	auto phi = coeffs[0] * std::log(z);
+
+	for (size_t k = 1; k < P; ++k)
+		phi += coeffs[k] / std::pow(z, k);
+
+	return phi;
 }

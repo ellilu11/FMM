@@ -17,7 +17,9 @@ public:
 
 	void buildCoeffs(const int);
 	void buildLocalCoeffs(const int);
+	std::vector<cmplx> shiftLocalCoeffs(const std::vector<cmplx>&, const int);
 	void printNode(std::ofstream&);
+	void iListTest();
 };
 
 #endif
