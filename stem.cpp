@@ -7,35 +7,35 @@
 #include "math.h"
 #include "stem.h"
 
-Stem::Stem(std::vector<cmplx>& pos,
+Stem::Stem(cmplxVec& psn,
 	std::vector<double>& qs,
 	const cmplx zk,
 	const double L,
 	const int lvl,
 	const int branchIdx,
-	Node* const base)
-	: Node(pos, qs, zk, L, lvl, branchIdx, base)
+	Stem* const base)
+	: Node(psn, qs, zk, L, lvl, branchIdx, base)
 {
-	std::vector<std::vector<cmplx>> branchPos(4);
+	std::vector<cmplxVec> branchpsn(4);
 	std::vector<std::vector<double>> branchQs(4);
-	// for (auto [ele, elq] : std::views::zip(pos, qs)) {
-	for (size_t n = 0; n < pos.size(); ++n) {
-		size_t k = cmplx2Idx<bool>(pos[n] > zk);
-		assert(k < branchPos.size());
+	// for (auto [ele, elq] : std::views::zip(psn, qs)) {
+	for (size_t n = 0; n < psn.size(); ++n) {
+		size_t k = cmplx2Idx<bool>(psn[n] > zk);
+		assert(k < branchpsn.size());
 
-		branchPos[k].push_back(pos[n]);
+		branchpsn[k].push_back(psn[n]);
 		branchQs[k].push_back(qs[n]);
 	}
-	for (size_t k = 0; k < branchPos.size(); ++k) {
+	for (size_t k = 0; k < branchpsn.size(); ++k) {
 		cmplx dzk( pow(-1,k%2+1), pow(-1,k/2+1) );
 		dzk *= L / 4.0;
 
 		std::shared_ptr<Node> branch;
 		// if branch has at least two particles and is not lvl 0, then further subdivide it
-		if (branchPos[k].size() > 1 && lvl-1)
-			branch = std::make_shared<Stem>(branchPos[k], branchQs[k], zk+dzk, L/2, lvl-1, k, this);
+		if (branchpsn[k].size() > 1 && lvl-1)
+			branch = std::make_shared<Stem>(branchpsn[k], branchQs[k], zk+dzk, L/2, lvl-1, k, this);
 		else
-			branch = std::make_shared<Leaf>(branchPos[k], branchQs[k], zk+dzk, L/2, lvl-1, k, this);
+			branch = std::make_shared<Leaf>(branchpsn[k], branchQs[k], zk+dzk, L/2, lvl-1, k, this);
 
 		branches.push_back(branch);
 	}
@@ -44,8 +44,9 @@ Stem::Stem(std::vector<cmplx>& pos,
 void Stem::buildCoeffs(const int P) {
 	cmplx b_0, b_k;
 
+    // std::vector<cmplxVec> branchCoeffss;
+
 	// recursively combine coeffs from branch nodes
-	// only combine coeffs of nodes on the same lvl!
 	for (const auto& branch : branches) {
 		branch->buildCoeffs(P);
 		auto branchCoeffs = branch->getCoeffs();
@@ -65,67 +66,66 @@ void Stem::buildCoeffs(const int P) {
 	}
 }
 
-std::vector<cmplx> Stem::shiftLocalCoeffs(const std::vector<cmplx>& coeffs, const int P) {
-	return localCoeffs;
-}
-
 void Stem::buildLocalCoeffs(const int P) {
-	localCoeffs = shiftLocalCoeffs( base->getLocalCoeffs(), P ); // add local coeffs to those from base (after shifting to z0)
-	setInteractionList(); // place in constructor instead if possible
-
+	
+	buildInteractionList();
 	cmplx b_0, b_k;
 
 	for (const auto& iNode : iList) {
 		cmplx z0 = iNode->getCenter();
-		b_0 += iNode->getCoeffs()[0] * std::log(-z0);
-		for (size_t l = 1; l < P; ++l)
-			b_0 += iNode->getCoeffs()[l] / pow(-z0, l);
+		b_0 += iNode->getCoeffs()[0] * std::log(-z0-zk);
+		for (size_t k = 1; k < P; ++k)
+			b_0 += iNode->getCoeffs()[k] * pow(-1.0, k) / pow(z0-zk, k);
 	}
 	localCoeffs.push_back(b_0);
 
 	for (size_t k = 1; k < P; ++k) {
 		for (const auto& iNode : iList) {
 			cmplx z0 = iNode->getCenter();
-			b_k -= iNode->getCoeffs()[0] / (static_cast<double>(k) * pow(z0, k));
+			b_k -= iNode->getCoeffs()[0] / (static_cast<double>(k) * pow(z0-zk, k));
 			for (size_t l = 1; l < P; ++l)
-				b_k += iNode->getCoeffs()[l] / pow(-z0, l) / pow (z0, k) * binom(k+l-1,l-1);
+				b_k += iNode->getCoeffs()[l] * pow(-1.0,l) / pow(z0-zk, k+l) * binom(k+l-1,l-1);
 		}
 		localCoeffs.push_back(b_k);
 	}
 
+    localCoeffs += shiftBaseLocalCoeffs(P);
+
 	for (const auto& branch : branches)
 		branch->buildLocalCoeffs(P);
 
+    // nbors.clear();
+    iList.clear();
 }
 
 void Stem::printNode(std::ofstream& f) {
-	f << zk.real() << " " << zk.imag() << " " << L << " " << nodeStat << std::endl;
+	f << zk << " " << L << " " << nodeStat << std::endl;
 	for (const auto& branch : branches)
 		branch->printNode(f);
 }
 
 void Stem::iListTest() {
-	std::random_device rd;
-	std::mt19937 gen(rd());
+    std::random_device rd;
+    std::mt19937 gen(rd());
 
-	std::uniform_int_distribution<> branchIdx(0,3);
-	std::shared_ptr<Node> node = std::make_shared<Stem>(*this);
+    std::uniform_int_distribution<> branchIdx(0,3);
+    std::shared_ptr<Node> node = std::make_shared<Stem>(*this);
 
-	while (node->isNodeType<Stem>())
-	//	// while (node->getLvl() > 3)
-		node = node->getBranches(branchIdx(gen));
-	node->setNodeStat(3);
+    while (node->isNodeType<Stem>())
+    //	// while (node->getLvl() > 3)
+	    node = node->getBranches(branchIdx(gen));
+    node->setNodeStat(3);
 
-	node->setInteractionList();
-	auto nbors = node->getInteractionList();
+    node->buildInteractionList();
+    auto nbors = node->getInteractionList();
 
-	for (const auto& nbor : nbors)
-		nbor->setNodeStat(2);
+    for (const auto& nbor : nbors)
+	    nbor->setNodeStat(2);
 
-	std::ofstream posFile, nodeFile;
-	posFile.open("positions.txt");
-	nodeFile.open("nodes.txt");
+    std::ofstream psnFile, nodeFile;
+    psnFile.open("out/psnitions.txt");
+    nodeFile.open("out/nodes.txt");
 
-	printPos(posFile);
-	printNode(nodeFile);
+    printpsn(psnFile);
+    printNode(nodeFile);
 }

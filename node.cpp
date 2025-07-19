@@ -36,7 +36,7 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 			return nbor->branches[branchIdx-1];
 			break;
 
-		case W:
+		case W :
 			if (branchIdx == 1 || branchIdx == 3 )
 				return base->branches[branchIdx-1];
 			nbor = base->getNeighborGeqSize(dir);
@@ -58,7 +58,7 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 			return nbor->branches[branchIdx+2];
 			break;
 
-		case NE:
+		case NE :
 			if (branchIdx == 0)
 				return base->branches[3];
 			if (branchIdx == 3) {
@@ -81,7 +81,7 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 			}
 			break;
 
-		case NW:
+		case NW :
 			if (branchIdx == 1)
 				return base->branches[2];
 			if (branchIdx == 2) {
@@ -103,7 +103,7 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 			}
 			break;
 
-		case SE:
+		case SE :
 			if (branchIdx == 2)
 				return base->branches[1];
 			if (branchIdx == 1) {
@@ -126,7 +126,7 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 			}
 			break;
 
-		case SW:
+		case SW :
 			if (branchIdx == 3)
 				return base->branches[0];
 			if (branchIdx == 0) {
@@ -149,30 +149,29 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 			}
 			break;
 
-		default:
+		default :
 			std::cout << "Invalid dir" << std::endl;
 			break;
 	}
 }
 
-void Node::setNearNeighbors() {
+void Node::buildNearNeighbors() {
 	// for (int i = N; i != Last; ++i) {
 	for (int i = 0; i < 8; ++i) {
 		Dir dir = static_cast<Dir>(i);
 		auto nbor = getNeighborGeqSize(dir);
 		if (nbor != nullptr)
-			nbors.push_back(getNeighborGeqSize(dir));
+			nbors.push_back(nbor);
 	}
 	assert(nbors.size() <= 8);
 }
 
-void Node::setInteractionList() {
-	setNearNeighbors();
-	auto nbors = getNearNeighbors();
+void Node::buildInteractionList() {
+	buildNearNeighbors();
 	for (const auto& nbor : nbors) // flag near neighbors of this node
 		nbor->setNodeStat(1);
 
-	base->setNearNeighbors();
+	base->buildNearNeighbors(); // uncomment for testing only
 	auto baseNbors = base->getNearNeighbors();
 
 	for (const auto& nbor : baseNbors)
@@ -182,13 +181,60 @@ void Node::setInteractionList() {
 			for (const auto& branch : nbor->branches) 
 				if (!branch->nodeStat)
 					iList.push_back(branch);
+
+    for (const auto& nbor : nbors) // unflag near neighbors (how to do more efficiently?)
+        nbor->setNodeStat(0);
 }
 
-cmplx Node::evaluateFfield(const cmplx z, const int P) {
-	auto phi = coeffs[0] * std::log(z);
+const cmplxVec Node::shiftBaseLocalCoeffs(const int P) {
+    auto shftCoeffs(base->getLocalCoeffs());
+
+    for (size_t j = 0; j < P - 1; ++j)
+        for (size_t k = P - j - 1; k < P - 1; ++k)
+            shftCoeffs[k] -= (zk + base->getCenter()) * shftCoeffs[k + 1];
+
+    return shftCoeffs;
+}
+
+const cmplx Node::evaluateFfield(const cmplx z, const int P) {
+	auto phi(-coeffs[0] * std::log(z));
 
 	for (size_t k = 1; k < P; ++k)
-		phi += coeffs[k] / std::pow(z, k);
+		phi -= coeffs[k] / std::pow(z, k);
 
 	return phi;
 }
+
+const cmplx Node::evaluateFfieldAnl(const cmplx z) {
+    cmplx phi;
+    for (size_t n = 0; n < psn.size(); ++n)
+        phi -= qs[n] * std::log(z - psn[n]);
+    return phi;
+}
+
+void Node::ffieldTest(const int P, const int Nobs){
+    const double R (10.0 * L);
+
+    std::ofstream obsFile, ffFile, ffAnlFile;
+    // obsFile.open("observers.txt");
+    ffFile.open("out/ff.txt"); //, std::ios::app);
+    ffAnlFile.open("out/ffAnl.txt"); // , std::ios::app);
+
+    for (int n = 0; n < Nobs; ++n) {
+        const double th = 2 * M_PI * static_cast<double>(n) / static_cast<double>(Nobs);
+        const cmplx z(R * cos(th), R * sin(th));
+
+        const auto phi = evaluateFfield(z, P);
+
+        const auto phiAnl = evaluateFfieldAnl(z);
+
+        // obsFile << z << std::endl;
+        ffFile << phi.real() << " ";
+        // if (P == 1) 
+            ffAnlFile << phiAnl.real() << " ";
+    }
+    ffFile << std::endl;
+    ffAnlFile << std::endl;
+
+}
+

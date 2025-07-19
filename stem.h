@@ -1,5 +1,4 @@
-#ifndef STEM_H
-#define STEM_H
+#pragma once
 
 #include <vector>
 #include <complex>
@@ -7,20 +6,20 @@
 
 class Stem final : public Node {
 public:
-	Stem(std::vector<cmplx>&,
+	Stem(cmplxVec&,
 		std::vector<double>&,
 		const cmplx,
 		const double,
 		const int,
 		const int,
-		Node* const);
+		Stem* const);
 
 	void buildCoeffs(const int);
 	void buildLocalCoeffs(const int);
-	std::vector<cmplx> shiftLocalCoeffs(const std::vector<cmplx>&, const int);
 	void printNode(std::ofstream&);
 	void iListTest();
 
-};
+//private:
+//    std::vector<std::shared_ptr<Node>> branches;
 
-#endif
+};

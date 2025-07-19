@@ -1,25 +1,29 @@
-#ifndef LEAF_H
-#define LEAF_H
+#pragma once
 
 #include <vector>
 #include <complex>
 #include "node.h"
+#include "stem.h"
 
 class Leaf final : public Node {
 public:
-	Leaf(std::vector<cmplx>&,
+	Leaf(cmplxVec&,
 		 std::vector<double>&,
 		 const cmplx,
 		 const double,
 		 const int,
 		 const int,
-		 Node* const);
+		 Stem* const);
 
 	void buildCoeffs(const int);
 	void buildLocalCoeffs(const int);
-	std::vector<cmplx> shiftLocalCoeffs(const std::vector<cmplx>&, const int);
+    void evaluatePhiLocalExp(const int);
+    void evaluatePhiDirect(const int);
+    void evaluatePhi(const int);
+
 	void printNode(std::ofstream&);
 	void iListTest();
-};
 
-#endif
+private:
+    cmplxVec phis;
+};

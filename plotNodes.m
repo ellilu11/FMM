@@ -1,13 +1,12 @@
-dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
+dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\out\";
 srcfile = strcat(dir,"positions.txt");
 obsfile = strcat(dir,"observers.txt");
 nodefile = strcat(dir,"nodes.txt");
-phifile = strcat(dir,"farfield.txt");
 
 srcs = readmatrix(srcfile);
 obss = readmatrix(obsfile);
 nodes = readmatrix(nodefile);
-phi = readmatrix(phifile);
+
 lengs = nodes(:,3);
 % nodes = sortrows(nodes,3,"descend");
 
@@ -37,8 +36,3 @@ scatter(srcs(:,1),srcs(:,2));
 % scatter(obss(:,1),obss(:,2));
 
 hold off;
-
-%%
-figure(2);
-theta = linspace(0,2*pi,length(phi));
-plot(theta, phi(:,1), theta, phi(:,3));

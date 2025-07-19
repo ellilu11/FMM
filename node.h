@@ -1,5 +1,4 @@
-#ifndef NODE_H
-#define NODE_H
+#pragma once
 
 #include <complex>
 #include <optional>
@@ -19,17 +18,19 @@ enum class Dir {
 
 class Node {
 public:
-	Node(std::vector<cmplx>& pos,
+	Node(cmplxVec& psn,
 		 std::vector<double>& qs,
 		 const cmplx zk,
 		 const double L,
 		 const int lvl,
 		 const int branchIdx,
 		 Node* const base)
-		 : pos(pos), qs(qs), zk(zk), L(L), lvl(lvl), branchIdx(branchIdx), base(base), nodeStat(0)
+		 : psn(psn), qs(qs), zk(zk), L(L), lvl(lvl), branchIdx(branchIdx), base(base), nodeStat(0)
 	{
 	};
 
+    const cmplxVec getPsn() const { return psn;  }
+    const std::vector<double> getQs() const { return qs; }
 	const cmplx getCenter() const { return zk; }
 	const int getLvl() const { return lvl; }
 	const std::shared_ptr<Node> getBranches(const size_t idx) const { return branches[idx]; }
@@ -39,30 +40,35 @@ public:
 
 	void setNodeStat(int flag) { nodeStat = flag; }
 
-	std::vector<cmplx> getCoeffs() const { return coeffs; }
-	std::vector<cmplx> getLocalCoeffs() const { return localCoeffs; }
+	cmplxVec getCoeffs() const { return coeffs; }
+	cmplxVec getLocalCoeffs() const { return localCoeffs; }
 
-	void printPos(std::ofstream& f) {
-		for (const auto& z : pos)
-			f << z.real() << " " << z.imag() << std::endl;
+	void printpsn(std::ofstream& f) {
+		for (const auto& z : psn)
+			f << z << std::endl;
 	}
 
 	std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
 
-	void setNearNeighbors();
+	void buildNearNeighbors();
 	std::vector<std::shared_ptr<Node>> const getNearNeighbors() { return nbors; }
 
-	void setInteractionList();
+	void buildInteractionList();
 	std::vector<std::shared_ptr<Node>> const getInteractionList()  { return iList; }
 
-	cmplx evaluateFfield(const cmplx, const int);
+    const cmplxVec shiftBaseLocalCoeffs(const int);
+
+	const cmplx evaluateFfield(const cmplx, const int);
+
+    const cmplx evaluateFfieldAnl(const cmplx);
 
 	virtual void buildCoeffs(const int) = 0;
 	virtual void buildLocalCoeffs(const int) = 0;
-	virtual std::vector<cmplx> shiftLocalCoeffs(const std::vector<cmplx>&, const int) = 0;
 
 	virtual void printNode(std::ofstream&) = 0;
 	virtual void iListTest() = 0;
+
+    void ffieldTest(const int, const int);
 
 	// virtual void printCoeffs(std::ofstream&) = 0;
 
@@ -74,15 +80,13 @@ protected:
 	const int branchIdx;
 	Node* const base;
 
-	std::vector<std::shared_ptr<Node>> branches;
+    std::vector<std::shared_ptr<Node>> branches;
 	std::vector<std::shared_ptr<Node>> nbors;
 	std::vector<std::shared_ptr<Node>> iList;
 
-	std::vector<cmplx> pos;
-	std::vector<cmplx> coeffs;
-	std::vector<cmplx> localCoeffs;
+	cmplxVec psn;
+	cmplxVec coeffs;
+	cmplxVec localCoeffs;
 
 	int nodeStat;
 };
-
-#endif
