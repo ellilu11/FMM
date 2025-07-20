@@ -41,22 +41,19 @@ Stem::Stem(cmplxVec& psn,
 	}
 }
 
-void Stem::buildCoeffs(const int P) {
+void Stem::buildMpoleCoeffs(const int P) {
 	cmplx b_0, b_k;
 
-    // std::vector<cmplxVec> branchCoeffss;
-
-	// recursively combine coeffs from branch nodes
 	for (const auto& branch : branches) {
-		branch->buildCoeffs(P);
-		auto branchCoeffs = branch->getCoeffs();
+		branch->buildMpoleCoeffs(P);
+		auto branchCoeffs = branch->getMpoleCoeffs();
 		b_0 += branchCoeffs[0];
 	}
 	coeffs.push_back(b_0);
 
 	for (size_t k = 1; k < P; ++k) {
 		for (const auto& branch : branches) {
-			auto branchCoeffs = branch->getCoeffs();
+			auto branchCoeffs = branch->getMpoleCoeffs();
 			auto z0 = branch->getCenter();
 			for (size_t l = 0; l < k; ++l)
 				b_k += branchCoeffs[l] * pow(z0-zk, k - l) * binom(k - 1, l - 1)
@@ -67,41 +64,36 @@ void Stem::buildCoeffs(const int P) {
 }
 
 void Stem::buildLocalCoeffs(const int P) {
-	
-	buildInteractionList();
-	cmplx b_0, b_k;
+    buildNearNeighbors();
 
-	for (const auto& iNode : iList) {
-		cmplx z0 = iNode->getCenter();
-		b_0 += iNode->getCoeffs()[0] * std::log(-z0-zk);
-		for (size_t k = 1; k < P; ++k)
-			b_0 += iNode->getCoeffs()[k] * pow(-1.0, k) / pow(z0-zk, k);
-	}
-	localCoeffs.push_back(b_0);
+    if ( !isRoot() ) {
+        buildInteractionList();
+        cmplx b_0, b_k;
 
-	for (size_t k = 1; k < P; ++k) {
-		for (const auto& iNode : iList) {
-			cmplx z0 = iNode->getCenter();
-			b_k -= iNode->getCoeffs()[0] / (static_cast<double>(k) * pow(z0-zk, k));
-			for (size_t l = 1; l < P; ++l)
-				b_k += iNode->getCoeffs()[l] * pow(-1.0,l) / pow(z0-zk, k+l) * binom(k+l-1,l-1);
-		}
-		localCoeffs.push_back(b_k);
-	}
+        for (const auto& iNode : iList) {
+            cmplx z0 = iNode->getCenter();
+            b_0 += iNode->getMpoleCoeffs()[0] * std::log(-(z0-zk));
+            for (size_t k = 1; k < P; ++k)
+                b_0 += iNode->getMpoleCoeffs()[k] * pow(-1.0, k) / pow(z0-zk, k);
+        }
+        localCoeffs.push_back(b_0);
 
-    localCoeffs += shiftBaseLocalCoeffs(P);
+        for (size_t k = 1; k < P; ++k) {
+            for (const auto& iNode : iList) {
+                cmplx z0 = iNode->getCenter();
+                b_k -= iNode->getMpoleCoeffs()[0] / (static_cast<double>(k) * pow(z0-zk, k));
+                for (size_t l = 1; l < P; ++l)
+                    b_k += iNode->getMpoleCoeffs()[l] * pow(-1.0, l) / pow(z0-zk, k+l) * binom(k+l-1, l-1);
+            }
+            localCoeffs.push_back(b_k);
+        }
+
+        if ( !base->isRoot() ) localCoeffs += shiftBaseLocalCoeffs(P);
+        iList.clear();
+    }
 
 	for (const auto& branch : branches)
 		branch->buildLocalCoeffs(P);
-
-    // nbors.clear();
-    iList.clear();
-}
-
-void Stem::printNode(std::ofstream& f) {
-	f << zk << " " << L << " " << nodeStat << std::endl;
-	for (const auto& branch : branches)
-		branch->printNode(f);
 }
 
 void Stem::iListTest() {
@@ -112,8 +104,8 @@ void Stem::iListTest() {
     std::shared_ptr<Node> node = std::make_shared<Stem>(*this);
 
     while (node->isNodeType<Stem>())
-    //	// while (node->getLvl() > 3)
-	    node = node->getBranches(branchIdx(gen));
+    // while (node->getLvl() > 1)
+	    node = (node->getBranches())[branchIdx(gen)];
     node->setNodeStat(3);
 
     node->buildInteractionList();
@@ -123,7 +115,7 @@ void Stem::iListTest() {
 	    nbor->setNodeStat(2);
 
     std::ofstream psnFile, nodeFile;
-    psnFile.open("out/psnitions.txt");
+    psnFile.open("out/srcs.txt");
     nodeFile.open("out/nodes.txt");
 
     printpsn(psnFile);

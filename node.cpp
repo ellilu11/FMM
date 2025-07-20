@@ -1,3 +1,4 @@
+#include "math.h"
 #include "node.h"
 #include "leaf.h"
 #include <cassert>
@@ -7,9 +8,7 @@
 using enum Dir;
 
 std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
-	// if node is root node, it has no neighbors in any direction
-	if (base == nullptr)
-		return nullptr;
+	if ( isRoot() ) return nullptr;
 
 	std::shared_ptr<Node> nbor;
 
@@ -156,7 +155,6 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 }
 
 void Node::buildNearNeighbors() {
-	// for (int i = N; i != Last; ++i) {
 	for (int i = 0; i < 8; ++i) {
 		Dir dir = static_cast<Dir>(i);
 		auto nbor = getNeighborGeqSize(dir);
@@ -167,27 +165,25 @@ void Node::buildNearNeighbors() {
 }
 
 void Node::buildInteractionList() {
-	buildNearNeighbors();
-	for (const auto& nbor : nbors) // flag near neighbors of this node
-		nbor->setNodeStat(1);
+    assert( !isRoot() );
+	//for (const auto& nbor : nbors) // flag near neighbors of this node
+	//	nbor->setNodeStat(1);
 
-	base->buildNearNeighbors(); // uncomment for testing only
+	// base->buildNearNeighbors(); // uncomment for testing only
 	auto baseNbors = base->getNearNeighbors();
 
-	for (const auto& nbor : baseNbors)
-		if (nbor->branches.empty() && !nbor->nodeStat)
-			iList.push_back(nbor);
+	for (const auto& baseNbor : baseNbors)
+		if (baseNbor->isNodeType<Leaf>() && !vecContains<std::shared_ptr<Node>>(nbors,baseNbor))
+			iList.push_back(baseNbor);
 		else 
-			for (const auto& branch : nbor->branches) 
-				if (!branch->nodeStat)
+			for (const auto& branch : baseNbor->branches) 
+				if (!vecContains<std::shared_ptr<Node>>(nbors, branch))
 					iList.push_back(branch);
-
-    for (const auto& nbor : nbors) // unflag near neighbors (how to do more efficiently?)
-        nbor->setNodeStat(0);
 }
 
 const cmplxVec Node::shiftBaseLocalCoeffs(const int P) {
-    auto shftCoeffs(base->getLocalCoeffs());
+    assert( !isRoot() && !base->isRoot() );
+    auto shftCoeffs( base->getLocalCoeffs() );
 
     for (size_t j = 0; j < P - 1; ++j)
         for (size_t k = P - j - 1; k < P - 1; ++k)
@@ -197,7 +193,7 @@ const cmplxVec Node::shiftBaseLocalCoeffs(const int P) {
 }
 
 const cmplx Node::evaluateFfield(const cmplx z, const int P) {
-	auto phi(-coeffs[0] * std::log(z));
+	auto phi( -coeffs[0] * std::log(z) );
 
 	for (size_t k = 1; k < P; ++k)
 		phi -= coeffs[k] / std::pow(z, k);
@@ -216,7 +212,7 @@ void Node::ffieldTest(const int P, const int Nobs){
     const double R (10.0 * L);
 
     std::ofstream obsFile, ffFile, ffAnlFile;
-    // obsFile.open("observers.txt");
+    // obsFile.open("obss.txt");
     ffFile.open("out/ff.txt"); //, std::ios::app);
     ffAnlFile.open("out/ffAnl.txt"); // , std::ios::app);
 

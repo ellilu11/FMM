@@ -1,4 +1,5 @@
 ﻿#define _USE_MATH_DEFINES
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <random>
@@ -9,28 +10,25 @@
 
 using namespace std;
 
-/* namespace Param {
-
-}*/
-
-int main()
-{
-    // Define computational domain
+namespace Param {
     constexpr double L = 10.0;
     constexpr double EPS = 1.0E-10;
     const int P = ceil(-log(EPS) / log(2)); // # terms in multipole expansion
+}
 
+int main(int argc, char *argv[])
+{
+    // ==================== Populate domain ==================== //
     random_device rd;
     mt19937 gen(rd());
 
-    uniform_real_distribution<double> real(-L / 2, L / 2);
-    uniform_real_distribution<double> imag(-L / 2, L / 2);
+    uniform_real_distribution<double> real(0, Param::L / 2);
+    uniform_real_distribution<double> imag(0, Param::L / 2);
 
     //normal_distribution<double> u(0, 0.2 * L);
     //uniform_real_distribution<double> th(0, 2.0 * M_PI);
 
-    // Populate domain
-    constexpr int N = 1000;
+    constexpr int N = 100;
     constexpr double Q = 1.0;
     const int Nlvl = ceil(log(N) / log(4.0));
 
@@ -45,25 +43,55 @@ int main()
         qs.push_back(Q);
     }
 
-    // Refine domain
+    // ==================== Partition domain ==================== //
+    cout << " Partitioning domain..." << endl;
+    auto start = chrono::high_resolution_clock::now();
+
     shared_ptr<Node> root;
     if (N > 1)
-        root = make_shared<Stem>(psn, qs, 0, L, Nlvl, 0, nullptr);
+        root = make_shared<Stem>(psn, qs, 0, Param::L, Nlvl, 0, nullptr);
     else
-        root = make_shared<Leaf>(psn, qs, 0, L, Nlvl, 0, nullptr);
+        root = make_shared<Leaf>(psn, qs, 0, Param::L, Nlvl, 0, nullptr);
+    
+    auto end = chrono::high_resolution_clock::now();
+    chrono::duration<double, milli> duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    // Tests
-    root->iListTest();
+    root->iListTest(); // Test interaction list finding
 
-    constexpr int NOBS = 1000;
+    // ==================== Upward pass ==================== //
+    cout << " Computing upward pass..." << endl;
+    start = chrono::high_resolution_clock::now();
+
+    root->buildMpoleCoeffs(Param::P);
+
+    end = chrono::high_resolution_clock::now();
+    duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+
+    /*constexpr int NOBS = 1000;
     for (int p = P; p <= P; ++p) {
-        // Upward pass: Aggregate multipole expansions
-        root->buildCoeffs(p);
+        root->buildMpoleCoeffs(p);
         root->ffieldTest(p, NOBS);
-    }
+    }*/
 
-    // Downward pass
-    // root->buildLocalCoeffs(P);
+    // ==================== Downward pass ==================== //
+    cout << " Computing downward pass..." << endl;
+    start = chrono::high_resolution_clock::now();
+
+    root->buildLocalCoeffs(Param::P);
+
+    end = chrono::high_resolution_clock::now();
+    duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+
+    std::ofstream phiFile;
+    phiFile.open("out/nf.txt");
+    root->printPhi(phiFile);
+
+    std::ofstream localCoeffFile;
+    localCoeffFile.open("out/localcoeffs.txt");
+    root->printLocalCoeffs(localCoeffFile);
 
 	return 0;
 }

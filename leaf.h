@@ -15,13 +15,27 @@ public:
 		 const int,
 		 Stem* const);
 
-	void buildCoeffs(const int);
+	void buildMpoleCoeffs(const int);
 	void buildLocalCoeffs(const int);
     void evaluatePhiLocalExp(const int);
     void evaluatePhiDirect(const int);
     void evaluatePhi(const int);
 
-	void printNode(std::ofstream&);
+    void printPhi(std::ofstream& f) {
+        for (size_t n = 0; n < psn.size(); ++n)
+            f << psn[n] << " " << phis[n] << std::endl;
+    }
+
+    void printNode(std::ofstream& f) {
+        f << zk << " " << L << " " << nodeStat << std::endl;
+    }
+
+    void printLocalCoeffs(std::ofstream& f) {
+        for (const auto& coeff : localCoeffs)
+            f << coeff << " ";
+        f << "\n";
+    }
+
 	void iListTest();
 
 private:

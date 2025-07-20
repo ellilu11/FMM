@@ -33,14 +33,15 @@ public:
     const std::vector<double> getQs() const { return qs; }
 	const cmplx getCenter() const { return zk; }
 	const int getLvl() const { return lvl; }
-	const std::shared_ptr<Node> getBranches(const size_t idx) const { return branches[idx]; }
+	const std::vector<std::shared_ptr<Node>> getBranches() const { return branches; }
+    const bool isRoot() const { return base == nullptr; }
 
 	template <typename T>
 	bool isNodeType() const { return typeid(*this) == typeid(T); }
 
 	void setNodeStat(int flag) { nodeStat = flag; }
 
-	cmplxVec getCoeffs() const { return coeffs; }
+	cmplxVec getMpoleCoeffs() const { return coeffs; }
 	cmplxVec getLocalCoeffs() const { return localCoeffs; }
 
 	void printpsn(std::ofstream& f) {
@@ -62,15 +63,18 @@ public:
 
     const cmplx evaluateFfieldAnl(const cmplx);
 
-	virtual void buildCoeffs(const int) = 0;
+	virtual void buildMpoleCoeffs(const int) = 0;
 	virtual void buildLocalCoeffs(const int) = 0;
 
-	virtual void printNode(std::ofstream&) = 0;
+    virtual void printPhi(std::ofstream&) = 0;
+    virtual void printNode(std::ofstream&) = 0;
+    virtual void printLocalCoeffs(std::ofstream&) = 0;
+
 	virtual void iListTest() = 0;
 
     void ffieldTest(const int, const int);
 
-	// virtual void printCoeffs(std::ofstream&) = 0;
+
 
 protected:
 	const std::vector<double> qs;

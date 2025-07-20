@@ -10,10 +10,10 @@ Leaf::Leaf(cmplxVec& psn,
 	Stem* const base)
 	: Node(psn, qs, zk, L, lvl, branchIdx, base)
 {
-    phis.reserve(psn.size());
+    phis.resize(psn.size());
 }
 
-void Leaf::buildCoeffs(const int P) {
+void Leaf::buildMpoleCoeffs(const int P) {
 	//auto sumOverpsn =
 	//	[this](const double q, const cmplx psn, const int idx) {
 	//		return q *
@@ -29,29 +29,34 @@ void Leaf::buildCoeffs(const int P) {
 }
 
 void Leaf::buildLocalCoeffs(const int P) {
-    buildInteractionList();
-    cmplx b_0, b_k;
 
-    for (const auto& iNode : iList) {
-        cmplx z0 = iNode->getCenter();
-        b_0 += iNode->getCoeffs()[0] * std::log(-z0 - zk);
-        for (size_t k = 1; k < P; ++k)
-            b_0 += iNode->getCoeffs()[k] * pow(-1.0, k) / pow(z0 - zk, k);
-    }
-    localCoeffs.push_back(b_0);
+    buildNearNeighbors();
 
-    for (size_t k = 1; k < P; ++k) {
+    if (!isRoot()) {
+        buildInteractionList();
+        cmplx b_0, b_k;
+
         for (const auto& iNode : iList) {
             cmplx z0 = iNode->getCenter();
-            b_k -= iNode->getCoeffs()[0] / (static_cast<double>(k) * pow(z0 - zk, k));
-            for (size_t l = 1; l < P; ++l)
-                b_k += iNode->getCoeffs()[l] * pow(-1.0, l) / pow(z0 - zk, k + l) * binom(k + l - 1, l - 1);
+            b_0 += iNode->getMpoleCoeffs()[0] * std::log(-(z0-zk));
+            for (size_t k = 1; k < P; ++k)
+                b_0 += iNode->getMpoleCoeffs()[k] * pow(-1.0, k) / pow(z0 - zk, k);
         }
-        localCoeffs.push_back(b_k);
-    }
+        localCoeffs.push_back(b_0);
 
-    localCoeffs += shiftBaseLocalCoeffs(P);
-    iList.clear();
+        for (size_t k = 1; k < P; ++k) {
+            for (const auto& iNode : iList) {
+                cmplx z0 = iNode->getCenter();
+                b_k -= iNode->getMpoleCoeffs()[0] / (static_cast<double>(k) * pow(z0 - zk, k));
+                for (size_t l = 1; l < P; ++l)
+                    b_k += iNode->getMpoleCoeffs()[l] * pow(-1.0, l) / pow(z0 - zk, k + l) * binom(k + l - 1, l - 1);
+            }
+            localCoeffs.push_back(b_k);
+        }
+
+        if (!base->isRoot()) localCoeffs += shiftBaseLocalCoeffs(P);
+        iList.clear();
+    }
 
     evaluatePhi(P);
     // evaluateFld(P);
@@ -73,10 +78,12 @@ void Leaf::evaluatePhiDirect(const int P) {
     cmplxVec phisDirect;
     // cmplxVec 
 
-    for (const auto& nbor : nbors) {
+    // phi due to other particles in this box (reciprocate later)
+    for (size_t m = 0; m < psn.size(); ++m)
+        for (size_t n = 0; n < psn.size(), n != m; ++n)
+            phi -= qs[n] * std::log(psn[m] - psn[n]);
 
-    }
-
+    // phi due to particles in neighboring boxes
     for (const auto& obs : psn) {
         for (const auto& nbor : nbors) {
             cmplxVec srcs = nbor->getPsn();
@@ -91,10 +98,6 @@ void Leaf::evaluatePhiDirect(const int P) {
 void Leaf::evaluatePhi(const int P) {
     evaluatePhiLocalExp(P);
     evaluatePhiDirect(P);
-}
-
-void Leaf::printNode(std::ofstream& f) {
-	f << zk << " " << L << " " << nodeStat << std::endl;
 }
 
 void Leaf::iListTest() {

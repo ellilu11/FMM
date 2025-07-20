@@ -1,10 +1,10 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\out\";
-srcfile = strcat(dir,"positions.txt");
-obsfile = strcat(dir,"observers.txt");
+srcfile = strcat(dir,"srcs.txt");
+% obsfile = strcat(dir,"obss.txt");
 nodefile = strcat(dir,"nodes.txt");
 
 srcs = readmatrix(srcfile);
-obss = readmatrix(obsfile);
+% obss = readmatrix(obsfile);
 nodes = readmatrix(nodefile);
 
 lengs = nodes(:,3);

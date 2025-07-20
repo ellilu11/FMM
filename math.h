@@ -45,6 +45,11 @@ const double binom(int n, int k) {
     return fallingFactorial(n, k) / fallingFactorial(n - k, 0);
 }
 
+template <typename T>
+bool vecContains(std::vector<T>& vec, T val) {
+    return std::find(vec.begin(), vec.end(), val) != vec.end();
+}
+
 //template <typename T>
 //bool ptrContains(std::vector<std::shared_ptr<T>>& vec, std::shared_ptr<T>& ele) {
 //    auto it = std::find_if(vec.begin(), vec.end(),
