@@ -85,7 +85,7 @@ void Stem::buildLocalCoeffs(const int P) {
                 auto mpoleCoeffs = iNode->getMpoleCoeffs();
                 b_k -= mpoleCoeffs[0] / (static_cast<double>(k) * pow(z0 - zk, k));
                 for (size_t l = 1; l < P; ++l)
-                    b_k += mpoleCoeffs[l] * pow(-1.0, l) / pow(z0 - zk, k + l) * binom(k + l - 1, l - 1);
+                    b_k += mpoleCoeffs[l] * pow(-1.0, l) / pow(z0 - zk, k + l); // *binom(k + l - 1, l - 1);
             }
             localCoeffs.push_back(b_k);
         }

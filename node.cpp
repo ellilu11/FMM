@@ -86,7 +86,7 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 		    if (branchIdx == 2) {
 			    nbor = base->getNeighborGeqSize(dir);
 			    if (nbor == nullptr)
-				    return nbor;
+			        return nbor;
 			    if (nbor->isNodeType<Leaf>())
 				    return nbor;
 			    return nbor->branches[1];
@@ -95,7 +95,7 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 				    base->getNeighborGeqSize(N):
 				    base->getNeighborGeqSize(W);
 			    if (nbor == nullptr)
-				    return nbor;
+			        return nbor;
 			    if (nbor->isNodeType<Leaf>())
 				    return nullptr;
 			    return nbor->branches[3-branchIdx];
@@ -161,7 +161,7 @@ void Node::buildNearNeighbors() {
 	    if (nbor != nullptr)
 		    nbors.push_back(nbor);
     }
-    assert(nbors.size() <= 8);
+    assert(nbors.size() <= pow(3,Param::DIM)-1);
 }
 
 void Node::buildInteractionList() {
@@ -180,7 +180,7 @@ void Node::buildInteractionList() {
 			    if (!vecContains<std::shared_ptr<Node>>(nbors, branch))
 				    iList.push_back(branch);
 
-    assert(iList.size() <= 27);
+    assert(iList.size() <= pow(6,Param::DIM) - pow(3,Param::DIM));
 }
 
 const cmplxVec Node::shiftBaseLocalCoeffs(const int P) {
@@ -234,5 +234,9 @@ void Node::ffieldTest(const int P, const int Nobs){
     ffFile << std::endl;
     ffAnlFile << std::endl;
 
+}
+
+const cmplxVec Node::evaluateNfieldAnl() {
+    // 
 }
 

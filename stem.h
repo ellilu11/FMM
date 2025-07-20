@@ -6,16 +6,16 @@
 
 class Stem final : public Node {
 public:
-	Stem(cmplxVec&,
-		std::vector<double>&,
-		const cmplx,
-		const double,
-		const int,
-		const int,
-		Stem* const);
+    Stem(cmplxVec&,
+	    std::vector<double>&,
+	    const cmplx,
+	    const double,
+	    const int,
+	    const int,
+	    Stem* const);
 
-	void buildMpoleCoeffs(const int);
-	void buildLocalCoeffs(const int);
+    void buildMpoleCoeffs(const int);
+    void buildLocalCoeffs(const int);
 
     void printPhi(std::ofstream& f) {
         for (const auto& branch : branches) 
@@ -26,6 +26,14 @@ public:
         f << zk << " " << L << " " << nodeStat << std::endl;
         for (const auto& branch : branches)
             branch->printNode(f);
+    }
+
+    void printMpoleCoeffs(std::ofstream& f) {
+        for (const auto& coeff : coeffs)
+            f << coeff << " ";
+        f << "\n";
+        for (const auto& branch : branches)
+            branch->printMpoleCoeffs(f);
     }
 
     void printLocalCoeffs(std::ofstream& f) {

@@ -15,8 +15,8 @@ public:
 		 const int,
 		 Stem* const);
 
-	void buildMpoleCoeffs(const int);
-	void buildLocalCoeffs(const int);
+    void buildMpoleCoeffs(const int);
+    void buildLocalCoeffs(const int);
     void evaluatePhiLocalExp(const int);
     void evaluatePhiDirect(const int);
     void evaluatePhi(const int);
@@ -30,13 +30,19 @@ public:
         f << zk << " " << L << " " << nodeStat << std::endl;
     }
 
+    void printMpoleCoeffs(std::ofstream& f) {
+        for (const auto& coeff : coeffs)
+            f << coeff << " ";
+        f << "\n";
+    }
+
     void printLocalCoeffs(std::ofstream& f) {
         for (const auto& coeff : localCoeffs)
             f << coeff << " ";
         f << "\n";
     }
 
-	void iListTest();
+    void iListTest();
 
 private:
     cmplxVec phis;

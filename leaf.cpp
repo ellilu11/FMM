@@ -80,12 +80,12 @@ void Leaf::evaluatePhiDirect(const int P) {
     cmplxVec phisDirect;
     // cmplxVec 
 
-    // phi due to other particles in this box (reciprocate later)
+    // phi due to other particles in this node (apply reciprocity later)
     for (size_t m = 0; m < psn.size(); ++m)
         for (size_t n = 0; n < psn.size(), n != m; ++n)
             phi -= qs[n] * std::log(psn[m] - psn[n]);
 
-    // phi due to particles in neighboring boxes
+    // phi due to particles in neighboring nodes
     for (const auto& obs : psn) {
         for (const auto& nbor : nbors) {
             cmplxVec srcs = nbor->getPsn();

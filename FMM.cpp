@@ -11,6 +11,7 @@
 using namespace std;
 
 namespace Param {
+    extern const int DIM = 2;
     constexpr double L = 10.0;
     constexpr double EPS = 1.0E-10;
     const int P = ceil(-log(EPS) / log(2)); // # terms in multipole expansion
@@ -69,6 +70,10 @@ int main(int argc, char *argv[])
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
+    std::ofstream mpoleCoeffFile;
+    mpoleCoeffFile.open("out/mpolecoeffs.txt");
+    root->printMpoleCoeffs(mpoleCoeffFile);
+
     /*constexpr int NOBS = 1000;
     for (int p = P; p <= P; ++p) {
         root->buildMpoleCoeffs(p);
@@ -93,5 +98,5 @@ int main(int argc, char *argv[])
     localCoeffFile.open("out/localcoeffs.txt");
     root->printLocalCoeffs(localCoeffFile);
 
-	return 0;
+    return 0;
 }
