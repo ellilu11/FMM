@@ -19,13 +19,13 @@ enum class Dir {
 class Node {
 public:
 	Node(cmplxVec& psn,
-		 std::vector<double>& qs,
-		 const cmplx zk,
-		 const double L,
-		 const int lvl,
-		 const int branchIdx,
-		 Node* const base)
-		 : psn(psn), qs(qs), zk(zk), L(L), lvl(lvl), branchIdx(branchIdx), base(base), nodeStat(0)
+	    std::vector<double>& qs,
+	    const cmplx zk,
+	    const double L,
+	    const int lvl,
+	    const int branchIdx,
+	    Node* const base)
+	    : psn(psn), qs(qs), zk(zk), L(L), lvl(lvl), branchIdx(branchIdx), base(base), nodeStat(0)
 	{
 	};
 

@@ -40,4 +40,5 @@ public:
 
 private:
     cmplxVec phis;
+    cmplxVec flds;
 };

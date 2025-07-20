@@ -2,30 +2,30 @@
 #include <iostream>
 
 Leaf::Leaf(cmplxVec& psn,
-	std::vector<double>& qs,
-	const cmplx zk,
-	const double L,
-	const int lvl,
-	const int branchIdx,
-	Stem* const base)
-	: Node(psn, qs, zk, L, lvl, branchIdx, base)
-{
+    std::vector<double>& qs,
+    const cmplx zk,
+    const double L,
+    const int lvl,
+    const int branchIdx,
+    Stem* const base)
+    : Node(psn, qs, zk, L, lvl, branchIdx, base)
+    {
     phis.resize(psn.size());
 }
 
 void Leaf::buildMpoleCoeffs(const int P) {
-	//auto sumOverpsn =
-	//	[this](const double q, const cmplx psn, const int idx) {
-	//		return q *
-	//			idx == 0 ? 1 : -pow(psn-z0, idx) / static_cast<double>(idx); 
-	//	};
-	cmplx a_k;
-	for (int k = 0; k < P; ++k) {
-		for (size_t i = 0; i < psn.size(); ++i)
-			a_k += qs[i] * 
-				k == 0 ? 1 : -pow(psn[i]-zk, k) / static_cast<double>(k);
-		coeffs.push_back(a_k);
-	}
+    //auto sumOverpsn =
+    //	[this](const double q, const cmplx psn, const int idx) {
+    //		return q *
+    //			idx == 0 ? 1 : -pow(psn-z0, idx) / static_cast<double>(idx); 
+    //	};
+    cmplx a_k;
+    for (int k = 0; k < P; ++k) {
+	    for (size_t i = 0; i < psn.size(); ++i)
+		    a_k += qs[i] * 
+			    k == 0 ? 1 : -pow(psn[i]-zk, k) / static_cast<double>(k);
+	    coeffs.push_back(a_k);
+    }
 }
 
 void Leaf::buildLocalCoeffs(const int P) {
@@ -37,19 +37,21 @@ void Leaf::buildLocalCoeffs(const int P) {
         cmplx b_0, b_k;
 
         for (const auto& iNode : iList) {
-            cmplx z0 = iNode->getCenter();
-            b_0 += iNode->getMpoleCoeffs()[0] * std::log(-(z0-zk));
+            auto z0 = iNode->getCenter();
+            auto mpoleCoeffs = iNode->getMpoleCoeffs();
+            b_0 += mpoleCoeffs[0] * std::log(-(z0-zk));
             for (size_t k = 1; k < P; ++k)
-                b_0 += iNode->getMpoleCoeffs()[k] * pow(-1.0, k) / pow(z0 - zk, k);
+                b_0 += mpoleCoeffs[k] * pow(-1.0, k) / pow(z0 - zk, k);
         }
         localCoeffs.push_back(b_0);
 
         for (size_t k = 1; k < P; ++k) {
             for (const auto& iNode : iList) {
-                cmplx z0 = iNode->getCenter();
-                b_k -= iNode->getMpoleCoeffs()[0] / (static_cast<double>(k) * pow(z0 - zk, k));
+                auto z0 = iNode->getCenter();
+                auto mpoleCoeffs = iNode->getMpoleCoeffs();
+                b_k -= mpoleCoeffs[0] / (static_cast<double>(k) * pow(z0 - zk, k));
                 for (size_t l = 1; l < P; ++l)
-                    b_k += iNode->getMpoleCoeffs()[l] * pow(-1.0, l) / pow(z0 - zk, k + l) * binom(k + l - 1, l - 1);
+                    b_k += mpoleCoeffs[l] * pow(-1.0, l) / pow(z0 - zk, k + l) * binom(k + l - 1, l - 1);
             }
             localCoeffs.push_back(b_k);
         }
@@ -101,17 +103,17 @@ void Leaf::evaluatePhi(const int P) {
 }
 
 void Leaf::iListTest() {
-	setNodeStat(3);
-	buildInteractionList();
-	auto nbors = getInteractionList();
+    setNodeStat(3);
+    buildInteractionList();
+    auto nbors = getInteractionList();
 
-	for (const auto& nbor : nbors)
-		nbor->setNodeStat(2);
+    for (const auto& nbor : nbors)
+	    nbor->setNodeStat(2);
 
-	std::ofstream psnFile, nodeFile;
-	psnFile.open("out/psnitions.txt");
-	nodeFile.open("out/nodes.txt");
+    std::ofstream psnFile, nodeFile;
+    psnFile.open("out/psnitions.txt");
+    nodeFile.open("out/nodes.txt");
 
-	printpsn(psnFile);
-	printNode(nodeFile);
+    printpsn(psnFile);
+    printNode(nodeFile);
 }

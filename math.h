@@ -8,13 +8,13 @@ using cmplxVec = std::vector<cmplx>;
 constexpr cmplx iu(0,1);
 
 std::complex<bool> operator> (cmplx z, cmplx w) {
-	std::complex<bool> bools(z.real() > w.real(), z.imag() > w.imag());
-	return bools;
+    std::complex<bool> bools(z.real() > w.real(), z.imag() > w.imag());
+    return bools;
 }
 
 template <typename T>
 size_t cmplx2Idx(std::complex<T> z) {
-	return z.real() + 2*z.imag();
+    return z.real() + 2*z.imag();
 }
 
 std::ostream& operator<< (std::ostream& out, const cmplx z) {
