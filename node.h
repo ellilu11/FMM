@@ -55,7 +55,7 @@ public:
 
     void printPsn(std::ofstream& f) {
         for (const auto& z : psn)
-	        f << z << std::endl;
+            f << z << std::endl;
     }
 
     void buildBinomTable();

@@ -31,9 +31,9 @@ Stem::Stem(cmplxVec& psn,
         std::shared_ptr<Node> branch;
         // if branch has at least two particles and is not lvl 0, then further subdivide it
         if (branchpsn[k].size() > 1 && lvl-1)
-	        branch = std::make_shared<Stem>(branchpsn[k], branchQs[k], zk+dzk, L_/2, lvl-1, k, this);
+            branch = std::make_shared<Stem>(branchpsn[k], branchQs[k], zk+dzk, L_/2, lvl-1, k, this);
         else
-	        branch = std::make_shared<Leaf>(branchpsn[k], branchQs[k], zk+dzk, L_/2, lvl-1, k, this);
+            branch = std::make_shared<Leaf>(branchpsn[k], branchQs[k], zk+dzk, L_/2, lvl-1, k, this);
 
         branches.push_back(branch);
     }
@@ -94,8 +94,8 @@ void Stem::buildLocalCoeffs() {
         iList.clear();
     }
 
-	for (const auto& branch : branches)
-		branch->buildLocalCoeffs();
+    for (const auto& branch : branches)
+        branch->buildLocalCoeffs();
 }
 
 void Stem::iListTest() {
