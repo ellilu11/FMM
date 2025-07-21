@@ -2,10 +2,22 @@
 #include "node.h"
 #include "leaf.h"
 #include <cassert>
+#include <chrono>
 #include <iostream>
 #include <random>
 
 using enum Dir;
+
+int Node::P_ = ceil(-log(Param::EPS) / log(2)); // # terms in multipole expansion
+
+void Node::buildBinomTable() {
+    for (int n = 0; n <= 2 * P_ - 1; ++n) {
+        std::vector<uint64_t> binomN;
+        for (int k = 0; k <= std::min(n,P_-1); ++k)
+            binomN.emplace_back(binom(n, k));
+        binomTable.push_back( binomN );
+    }
+}
 
 std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
     if ( isRoot() ) return nullptr;
@@ -149,56 +161,55 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 		    break;
 
 	    default :
-		    std::cout << "Invalid dir" << std::endl;
+		    // throw exception
 		    break;
     }
 }
 
 void Node::buildNearNeighbors() {
-    for (int i = 0; i < 8; ++i) {
-	    Dir dir = static_cast<Dir>(i);
-	    auto nbor = getNeighborGeqSize(dir);
-	    if (nbor != nullptr)
-		    nbors.push_back(nbor);
+    const int nDir = std::pow(3, Param::DIM) - 1;
+    for (int i = 0; i < nDir; ++i) {
+        Dir dir = static_cast<Dir>(i);
+        auto nbor = getNeighborGeqSize(dir);
+        if (nbor != nullptr)
+            nbors.push_back(nbor);
     }
-    assert(nbors.size() <= pow(3,Param::DIM)-1);
+    assert(nbors.size() <= nDir);
 }
 
 void Node::buildInteractionList() {
     assert( !isRoot() );
-    //for (const auto& nbor : nbors) // flag near neighbors of this node
-    //	nbor->setNodeStat(1);
 
-    // base->buildNearNeighbors(); // uncomment for testing only
+    base->buildNearNeighbors(); // uncomment for iListTest() only
     auto baseNbors = base->getNearNeighbors();
 
     for (const auto& baseNbor : baseNbors)
-	    if (baseNbor->isNodeType<Leaf>() && !vecContains<std::shared_ptr<Node>>(nbors,baseNbor))
-		    iList.push_back(baseNbor);
-	    else 
-		    for (const auto& branch : baseNbor->branches) 
-			    if (!vecContains<std::shared_ptr<Node>>(nbors, branch))
-				    iList.push_back(branch);
+        if (baseNbor->isNodeType<Leaf>() && !vecContains<std::shared_ptr<Node>>(nbors,baseNbor))
+	        iList.push_back(baseNbor);
+        else 
+	        for (const auto& branch : baseNbor->branches) 
+                if (!vecContains<std::shared_ptr<Node>>(nbors, branch))
+	                iList.push_back(branch);
 
     assert(iList.size() <= pow(6,Param::DIM) - pow(3,Param::DIM));
 }
 
-const cmplxVec Node::shiftBaseLocalCoeffs(const int P) {
+const cmplxVec Node::shiftBaseLocalCoeffs() {
     assert( !isRoot() && !base->isRoot() );
-    auto shftCoeffs( base->getLocalCoeffs() );
+    auto shiftedCoeffs( base->getLocalCoeffs() );
 
-    for (size_t j = 0; j < P - 1; ++j)
-        for (size_t k = P - j - 1; k < P - 1; ++k)
-            shftCoeffs[k] -= (zk + base->getCenter()) * shftCoeffs[k + 1];
+    for (size_t j = 0; j < P_ - 1; ++j)
+        for (size_t k = P_ - j - 1; k < P_ - 1; ++k)
+            shiftedCoeffs[k] -= (zk + base->getCenter()) * shiftedCoeffs[k + 1];
 
-    return shftCoeffs;
+    return shiftedCoeffs;
 }
 
-const cmplx Node::evaluateFfield(const cmplx z, const int P) {
-    auto phi( -coeffs[0] * std::log(z) );
+const cmplx Node::evaluateFfield(const cmplx z) {
+    cmplx phi = -coeffs[0] * std::log(z-zk);
 
-    for (size_t k = 1; k < P; ++k)
-	    phi -= coeffs[k] / std::pow(z, k);
+    for (size_t k = 1; k < P_; ++k)
+        phi -= coeffs[k] / std::pow(z-zk, k);
 
     return phi;
 }
@@ -210,33 +221,76 @@ const cmplx Node::evaluateFfieldAnl(const cmplx z) {
     return phi;
 }
 
-void Node::ffieldTest(const int P, const int Nobs){
-    const double R (10.0 * L);
+void Node::ffieldTest(const int Nobs){
+    const double R (20.0 * L_);
 
-    std::ofstream obsFile, ffFile, ffAnlFile;
-    // obsFile.open("obss.txt");
-    ffFile.open("out/ff.txt"); //, std::ios::app);
-    ffAnlFile.open("out/ffAnl.txt"); // , std::ios::app);
+    std::ofstream obsFile, outFile, outAnlFile;
+    obsFile.open("out/obss.txt");
+    outFile.open("out/ff.txt");
+    outAnlFile.open("out/ffAnl.txt");
 
+    cmplxVec obss;
     for (int n = 0; n < Nobs; ++n) {
         const double th = 2 * M_PI * static_cast<double>(n) / static_cast<double>(Nobs);
-        const cmplx z(R * cos(th), R * sin(th));
-
-        const auto phi = evaluateFfield(z, P);
-
-        const auto phiAnl = evaluateFfieldAnl(z);
-
-        // obsFile << z << std::endl;
-        ffFile << phi.real() << " ";
-        // if (P == 1) 
-            ffAnlFile << phiAnl.real() << " ";
+        obss.emplace_back(cmplx(R * cos(th), R * sin(th)));
+        obsFile << obss[n] << std::endl;
     }
-    ffFile << std::endl;
-    ffAnlFile << std::endl;
 
+    const int P = Node::getP();
+    for (int p = 1; p <= P; ++p) {
+        Node::setP(p);
+        buildMpoleCoeffs();
+
+        for (const auto& obs : obss) {
+            auto phi = evaluateFfield(obs);
+            // auto phi = evaluateFfieldFromLeaf(obs);
+            outFile << phi.real() << " ";
+        }
+        outFile << '\n';
+        if (p < P) clearMpoleCoeffs();
+    }
+
+    for (const auto& obs : obss) {
+        auto phiAnl = evaluateFfieldAnl(obs);
+        outAnlFile << phiAnl.real() << " ";
+    }
+    outAnlFile << '\n';
 }
 
-const cmplxVec Node::evaluateNfieldAnl() {
-    // 
+void Node::evalAndPrintNfieldAnl(std::ofstream& f) {
+    for (size_t obs = 0; obs < psn.size(); ++obs) {
+        cmplx phi;
+        for (size_t src = 0; src < psn.size(); ++src)
+            if (src != obs) phi -= qs[src] * std::log(psn[obs] - psn[src]);
+        f << psn[obs] << " " << phi << std::endl;
+    }
+}
+
+void Node::nfieldTest() {
+    using namespace std;
+
+    cout << " Computing downward pass..." << endl;
+    auto start = chrono::high_resolution_clock::now();
+
+    buildLocalCoeffs();
+
+    auto end = chrono::high_resolution_clock::now();
+    chrono::duration<double, milli> duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+
+    std::ofstream outFile, outAnlFile;
+    outFile.open("out/nf.txt");
+    outAnlFile.open("out/nfAnl.txt");
+
+    printPhi(outFile);
+
+    cout << " Computing pairwise..." << endl;
+    start = chrono::high_resolution_clock::now();
+
+    evalAndPrintNfieldAnl(outAnlFile);
+
+    end = chrono::high_resolution_clock::now();
+    duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 }
 

@@ -11,10 +11,9 @@
 using namespace std;
 
 namespace Param {
-    extern const int DIM = 2;
-    constexpr double L = 10.0;
-    constexpr double EPS = 1.0E-10;
-    const int P = ceil(-log(EPS) / log(2)); // # terms in multipole expansion
+    extern constexpr int    DIM     = 2;
+    extern constexpr double L       = 10.0;
+    extern constexpr double EPS     = 1.0E-3;
 }
 
 int main(int argc, char *argv[])
@@ -23,13 +22,16 @@ int main(int argc, char *argv[])
     random_device rd;
     mt19937 gen(rd());
 
-    uniform_real_distribution<double> real(0, Param::L / 2);
-    uniform_real_distribution<double> imag(0, Param::L / 2);
+    uniform_real_distribution<double> real(-Param::L / 2, Param::L / 2);
+    uniform_real_distribution<double> imag(-Param::L / 2, Param::L / 2);
 
-    //normal_distribution<double> u(0, 0.2 * L);
-    //uniform_real_distribution<double> th(0, 2.0 * M_PI);
+    // uniform_real_distribution<double> real(0, Param::L / 2);
+    // uniform_real_distribution<double> imag(0, Param::L / 2);
 
-    constexpr int N = 100;
+    normal_distribution<double> u(0, 0.2 * Param::L);
+    uniform_real_distribution<double> th(0, 2.0 * M_PI);
+
+    constexpr int N = 1000;
     constexpr double Q = 1.0;
     const int Nlvl = ceil(log(N) / log(4.0));
 
@@ -38,8 +40,8 @@ int main(int argc, char *argv[])
 
     for (int n = 0; n < N; ++n) {
         cmplx z(real(gen), imag(gen));
-        //const auto R = std::abs(u(gen));
-        //cmplx z(R * std::cos(th(gen)), R * std::sin(th(gen)));
+        // const auto R = std::abs(u(gen));
+        // cmplx z(R * std::cos(th(gen)), R * std::sin(th(gen)));
         psn.push_back(z);
         qs.push_back(Q);
     }
@@ -64,7 +66,10 @@ int main(int argc, char *argv[])
     cout << " Computing upward pass..." << endl;
     start = chrono::high_resolution_clock::now();
 
-    root->buildMpoleCoeffs(Param::P);
+    root->buildMpoleCoeffs();
+
+    //constexpr int NOBS = 1000;
+    //root->ffieldTest(NOBS);
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
@@ -74,25 +79,17 @@ int main(int argc, char *argv[])
     mpoleCoeffFile.open("out/mpolecoeffs.txt");
     root->printMpoleCoeffs(mpoleCoeffFile);
 
-    /*constexpr int NOBS = 1000;
-    for (int p = P; p <= P; ++p) {
-        root->buildMpoleCoeffs(p);
-        root->ffieldTest(p, NOBS);
-    }*/
-
     // ==================== Downward pass ==================== //
-    cout << " Computing downward pass..." << endl;
+    /* cout << " Computing downward pass..." << endl;
     start = chrono::high_resolution_clock::now();
 
-    root->buildLocalCoeffs(Param::P);
+    root->buildLocalCoeffs();
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-
-    std::ofstream phiFile;
-    phiFile.open("out/nf.txt");
-    root->printPhi(phiFile);
+    */
+    // root->nfieldTest();
 
     std::ofstream localCoeffFile;
     localCoeffFile.open("out/localcoeffs.txt");

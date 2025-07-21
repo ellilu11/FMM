@@ -7,19 +7,26 @@
 
 class Leaf final : public Node {
 public:
-	Leaf(cmplxVec&,
-		 std::vector<double>&,
-		 const cmplx,
-		 const double,
-		 const int,
-		 const int,
-		 Stem* const);
+    Leaf(cmplxVec&,
+        std::vector<double>&,
+        const cmplx,
+        const double,
+        const int,
+        const int,
+        Stem* const);
 
-    void buildMpoleCoeffs(const int);
-    void buildLocalCoeffs(const int);
-    void evaluatePhiLocalExp(const int);
-    void evaluatePhiDirect(const int);
-    void evaluatePhi(const int);
+    void buildMpoleCoeffs();
+
+    void clearMpoleCoeffs() { coeffs.clear(); }
+
+    const cmplx evaluateFfieldFromLeaf(const cmplx z) {
+        return evaluateFfield(z);
+    }
+
+    void buildLocalCoeffs();
+    void evaluatePhiLocalExp();
+    void evaluatePhiDirect();
+    void evaluatePhi();
 
     void printPhi(std::ofstream& f) {
         for (size_t n = 0; n < psn.size(); ++n)
@@ -27,7 +34,7 @@ public:
     }
 
     void printNode(std::ofstream& f) {
-        f << zk << " " << L << " " << nodeStat << std::endl;
+        f << zk << " " << L_ << " " << nodeStat << std::endl;
     }
 
     void printMpoleCoeffs(std::ofstream& f) {

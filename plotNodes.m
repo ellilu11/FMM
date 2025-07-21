@@ -17,7 +17,7 @@ isNode = nodes(:,4) == 3;
 assert( nnz(isNode) == 1 );
 nodeLeng = lengs(isNode);
 
-figure(1);
+figure();
 hold on;
 
 for node = 1:length(nodes)

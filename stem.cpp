@@ -1,7 +1,5 @@
-#include <bitset>
 #include <cassert>
 #include <iostream>
-#include <memory>
 #include <ranges>
 #include "leaf.h"
 #include "math.h"
@@ -20,82 +18,84 @@ Stem::Stem(cmplxVec& psn,
     std::vector<std::vector<double>> branchQs(4);
     // for (auto [ele, elq] : std::views::zip(psn, qs)) {
     for (size_t n = 0; n < psn.size(); ++n) {
-	    size_t k = cmplx2Idx<bool>(psn[n] > zk);
-	    assert(k < branchpsn.size());
+        size_t k = cmplx2Idx<bool>(psn[n] > zk);
+        assert(k < branchpsn.size());
 
-	    branchpsn[k].push_back(psn[n]);
-	    branchQs[k].push_back(qs[n]);
+        branchpsn[k].push_back(psn[n]);
+        branchQs[k].push_back(qs[n]);
     }
     for (size_t k = 0; k < branchpsn.size(); ++k) {
-	    cmplx dzk( pow(-1,k%2+1), pow(-1,k/2+1) );
-	    dzk *= L / 4.0;
+        cmplx dzk( pow(-1,k%2+1), pow(-1,k/2+1) );
+        dzk *= L_ / 4.0;
 
-	    std::shared_ptr<Node> branch;
-	    // if branch has at least two particles and is not lvl 0, then further subdivide it
-	    if (branchpsn[k].size() > 1 && lvl-1)
-		    branch = std::make_shared<Stem>(branchpsn[k], branchQs[k], zk+dzk, L/2, lvl-1, k, this);
-	    else
-		    branch = std::make_shared<Leaf>(branchpsn[k], branchQs[k], zk+dzk, L/2, lvl-1, k, this);
+        std::shared_ptr<Node> branch;
+        // if branch has at least two particles and is not lvl 0, then further subdivide it
+        if (branchpsn[k].size() > 1 && lvl-1)
+	        branch = std::make_shared<Stem>(branchpsn[k], branchQs[k], zk+dzk, L_/2, lvl-1, k, this);
+        else
+	        branch = std::make_shared<Leaf>(branchpsn[k], branchQs[k], zk+dzk, L_/2, lvl-1, k, this);
 
-	    branches.push_back(branch);
+        branches.push_back(branch);
     }
 }
 
-void Stem::buildMpoleCoeffs(const int P) {
-    cmplx b_0, b_k;
-
+void Stem::buildMpoleCoeffs() {
+    cmplx b_0;
     for (const auto& branch : branches) {
-	    branch->buildMpoleCoeffs(P);
-	    auto branchCoeffs = branch->getMpoleCoeffs();
-	    b_0 += branchCoeffs[0];
+        branch->buildMpoleCoeffs();
+        auto branchCoeffs = branch->getMpoleCoeffs();
+        b_0 += branchCoeffs[0];
     }
     coeffs.push_back(b_0);
 
-    for (size_t k = 1; k < P; ++k) {
-	    for (const auto& branch : branches) {
-		    auto branchCoeffs = branch->getMpoleCoeffs();
-		    auto z0 = branch->getCenter();
-		    for (size_t l = 0; l < k; ++l)
-			    b_k += branchCoeffs[l] * pow(z0-zk, k - l) * binom(k - 1, l - 1)
-			    - branchCoeffs[0] * pow(z0-zk, k) / static_cast<double>(k);
-	    }
-	    coeffs.push_back(b_k);
+    for (size_t k = 1; k <= P_; ++k) {
+        cmplx b_k;
+        for (const auto& branch : branches) {
+            auto branchCoeffs = branch->getMpoleCoeffs();
+            auto z0 = branch->getCenter();
+            b_k -= branchCoeffs[0] * pow(z0-zk, k) / static_cast<double>(k);
+            for (size_t l = 1; l <= k; ++l)
+                b_k += branchCoeffs[l] * pow(z0-zk, k - l) * static_cast<double>(binomTable[k-1][l-1]);
+        }
+        coeffs.push_back(b_k);
     }
 }
 
-void Stem::buildLocalCoeffs(const int P) {
+void Stem::buildLocalCoeffs() {
     buildNearNeighbors();
 
     if (!isRoot()) {
         buildInteractionList();
-        cmplx b_0, b_k;
+        cmplx b_0;
 
         for (const auto& iNode : iList) {
             auto z0 = iNode->getCenter();
             auto mpoleCoeffs = iNode->getMpoleCoeffs();
             b_0 += mpoleCoeffs[0] * std::log(-(z0-zk));
-            for (size_t k = 1; k < P; ++k)
-                b_0 += mpoleCoeffs[k] * pow(-1.0, k) / pow(z0 - zk, k);
+            for (size_t k = 1; k <= P_; ++k)
+                b_0 += mpoleCoeffs[k] * pow(-1.0, k) / pow(z0-zk, k);
         }
         localCoeffs.push_back(b_0);
 
-        for (size_t k = 1; k < P; ++k) {
+        for (size_t k = 1; k <= P_; ++k) {
+            cmplx b_k;
             for (const auto& iNode : iList) {
                 auto z0 = iNode->getCenter();
                 auto mpoleCoeffs = iNode->getMpoleCoeffs();
-                b_k -= mpoleCoeffs[0] / (static_cast<double>(k) * pow(z0 - zk, k));
-                for (size_t l = 1; l < P; ++l)
-                    b_k += mpoleCoeffs[l] * pow(-1.0, l) / pow(z0 - zk, k + l); // *binom(k + l - 1, l - 1);
+                b_k -= mpoleCoeffs[0] / (static_cast<double>(k) * pow(z0-zk, k));
+                for (size_t l = 1; l <= P_; ++l)
+                    b_k += mpoleCoeffs[l] * pow(-1.0, l) / pow(z0-zk, k + l) * 
+                        static_cast<double>(binomTable[k+l-1][l-1]);
             }
             localCoeffs.push_back(b_k);
         }
 
-        if (!base->isRoot()) localCoeffs += shiftBaseLocalCoeffs(P);
+        if (!base->isRoot()) localCoeffs += shiftBaseLocalCoeffs();
         iList.clear();
     }
 
 	for (const auto& branch : branches)
-		branch->buildLocalCoeffs(P);
+		branch->buildLocalCoeffs();
 }
 
 void Stem::iListTest() {
@@ -107,19 +107,20 @@ void Stem::iListTest() {
 
     while (node->isNodeType<Stem>())
     // while (node->getLvl() > 1)
-	    node = (node->getBranches())[branchIdx(gen)];
+        node = (node->getBranches())[branchIdx(gen)];
     node->setNodeStat(3);
 
+    node->buildNearNeighbors();
     node->buildInteractionList();
-    auto nbors = node->getInteractionList();
+    auto iList = node->getInteractionList();
 
-    for (const auto& nbor : nbors)
-	    nbor->setNodeStat(2);
+    for (const auto& iNode : iList)
+        iNode->setNodeStat(2);
 
     std::ofstream psnFile, nodeFile;
     psnFile.open("out/srcs.txt");
     nodeFile.open("out/nodes.txt");
 
-    printpsn(psnFile);
+    printPsn(psnFile);
     printNode(nodeFile);
 }

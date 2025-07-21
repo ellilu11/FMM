@@ -32,32 +32,17 @@ cmplxVec operator+ (cmplxVec& zs, cmplxVec& ws) {
     return zs += ws;
 }
 
-//const double factorial(int n) {
-//	return n == 0 ? 1 : n * factorial(n-1);
-//}
-
-const double fallingFactorial(int n, int k) {
+const uint64_t fallingFactorial(int n, int k) {
     return n == k ? 1 : n * fallingFactorial(n - 1, k);
 }
 
-const double binom(int n, int k) {
+const uint64_t binom(int n, int k) {
     // return fallingFactorial(n,k) / factorial(n - k);
-    return fallingFactorial(n, k) / fallingFactorial(n - k, 0);
+    return fallingFactorial(n, k) / fallingFactorial(n - k, 0); 
 }
 
 template <typename T>
 bool vecContains(std::vector<T>& vec, T val) {
     return std::find(vec.begin(), vec.end(), val) != vec.end();
 }
-
-//template <typename T>
-//bool ptrContains(std::vector<std::shared_ptr<T>>& vec, std::shared_ptr<T>& ele) {
-//    auto it = std::find_if(vec.begin(), vec.end(),
-//        [&val_to_find](ele) {
-//            return ele && *ele == val_to_find;
-//        });
-//    return it != vec.end();
-//}
-
-
 
