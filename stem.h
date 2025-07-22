@@ -22,10 +22,13 @@ public:
         return phi;
     };
 
-    void clearMpoleCoeffs() { 
-        coeffs.clear(); 
+    void resetNode() { 
+        coeffs.clear();
+        localCoeffs.clear();
+        nbors.clear();
+        iList.clear();
         for (const auto& branch : branches)
-            branch->clearMpoleCoeffs();
+            branch->resetNode();
     }
 
     void buildLocalCoeffs();
@@ -42,7 +45,6 @@ public:
     }
 
     void printMpoleCoeffs(std::ofstream& f) {
-
         for (const auto& coeff : coeffs)
             f << coeff << " ";
         f << "\n";
@@ -58,7 +60,8 @@ public:
             branch->printLocalCoeffs(f);
     }
 
-    void iListTest();
+    void mpoleToLocalTest();
+    // void iListTest();
 
 //private:
 //    std::vector<std::shared_ptr<Node>> branches;

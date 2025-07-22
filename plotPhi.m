@@ -1,42 +1,35 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\out\";
 %%
-ffFile = strcat(dir,"ff.txt");
-ffAnlFile = strcat(dir,"ffAnl.txt");
+% phiFile = strcat(dir,"ff.txt");
+% phiAnlFile = strcat(dir,"ffAnl.txt");
+phiFile = strcat(dir,"local.txt");
+phiAnlFile = strcat(dir,"localAnl.txt");
 
-ff = readmatrix(ffFile).';
-ffAnl = readmatrix(ffAnlFile).';
-pmax = size(ff,2);
+phi = readmatrix(phiFile).';
+phiAnl = readmatrix(phiAnlFile).';
+pmax = size(phi,2);
 
 % Nobs = 1000;
-% ff = reshape(phi,Nobs,[],2);
+% phi = reshape(phi,Nobs,[],2);
 
 %%
 theta = linspace(0,2*pi,length(phi));
+pmin = 1;
+pvec = pmin:pmax;
 
 figure(1);
-pmin = 1;
-plot(theta, ffAnl, theta, ff(:,pmin:pmax) );
+plot(theta, phiAnl, theta, phi(:,pvec), '-o');
+        % 'LineWidth',[2,ones(1,pmax-pmin+1)]
 % ylim([-4620,-4600])
-legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pmin:pmax,...
+legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
      'UniformOutput',false))] );
 
 figure(2);
-semilogy(theta, abs(ff-ffAnl)./abs(ffAnl));
+relErr = abs(phi-phiAnl)./abs(phiAnl);
+semilogy(theta, relErr, '-o');
 
-legend(strcat(" p = ", arrayfun(@num2str,pmin:pmax,...
+legend(strcat(" p = ", arrayfun(@num2str,pvec,...
     'UniformOutput',false)) );
 
-%%
-nfFile = strcat(dir,"nf.txt");
-nfAnlFile = strcat(dir,"nfAnl.txt");
-
-nf = readmatrix(nfFile);
-nfAnl = readmatrix(nfAnlFile);
-% nfJoin = join(nfAnl,nf,'Keys',[])
-pmax = size(nf,2);
-
-figure(1);
-plot(nf(:,3));
-
-figure(2);
-scatter(nfAnl(:,1),nfAnl(:,2));
+figure(3);
+semilogy(pvec,mean(relErr,1), '-o');

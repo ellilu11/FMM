@@ -4,9 +4,13 @@
 #include <fstream>
 #include <random>
 #include "node.h"
+
+#include "leaf.cpp"
 #include "node.cpp"
 #include "stem.cpp"
-#include "leaf.cpp"
+#include "test/leaftest.cpp"
+#include "test/nodetest.cpp"
+#include "test/stemtest.cpp"
 
 using namespace std;
 
@@ -18,6 +22,8 @@ namespace Param {
 
 int main(int argc, char *argv[])
 {
+    cout << setprecision(18) << scientific;
+
     // ==================== Populate domain ==================== //
     random_device rd;
     mt19937 gen(rd());
@@ -28,8 +34,8 @@ int main(int argc, char *argv[])
     // uniform_real_distribution<double> real(0, Param::L / 2);
     // uniform_real_distribution<double> imag(0, Param::L / 2);
 
-    normal_distribution<double> u(0, 0.2 * Param::L);
-    uniform_real_distribution<double> th(0, 2.0 * M_PI);
+    // normal_distribution<double> u(0, 0.2 * Param::L);
+    // uniform_real_distribution<double> th(0, 2.0 * M_PI);
 
     constexpr int N = 1000;
     constexpr double Q = 1.0;
@@ -60,16 +66,15 @@ int main(int argc, char *argv[])
     chrono::duration<double, milli> duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    root->iListTest(); // Test interaction list finding
-
     // ==================== Upward pass ==================== //
     cout << " Computing upward pass..." << endl;
     start = chrono::high_resolution_clock::now();
 
+    Node::buildBinomTable();
     root->buildMpoleCoeffs();
 
-    //constexpr int NOBS = 1000;
-    //root->ffieldTest(NOBS);
+    // constexpr int NOBS = 1000;
+    // root->ffieldTest(NOBS);
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
@@ -80,17 +85,18 @@ int main(int argc, char *argv[])
     root->printMpoleCoeffs(mpoleCoeffFile);
 
     // ==================== Downward pass ==================== //
-    /* cout << " Computing downward pass..." << endl;
+    cout << " Computing downward pass..." << endl;
     start = chrono::high_resolution_clock::now();
 
-    root->buildLocalCoeffs();
+    // root->buildLocalCoeffs();
+
+    // root->mpoleToLocalTest();
+    root->nfieldTest();
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-    */
-    // root->nfieldTest();
-
+    
     std::ofstream localCoeffFile;
     localCoeffFile.open("out/localcoeffs.txt");
     root->printLocalCoeffs(localCoeffFile);

@@ -10,7 +10,7 @@ Leaf::Leaf(cmplxVec& psn,
     const int branchIdx,
     Stem* const base)
     : Node(psn, qs, zk, L, lvl, branchIdx, base)
-    {
+{
     phis.resize(psn.size());
 }
 
@@ -34,7 +34,7 @@ void Leaf::buildLocalCoeffs() {
         for (const auto& iNode : iList) {
             auto z0 = iNode->getCenter();
             auto mpoleCoeffs = iNode->getMpoleCoeffs();
-            b_0 += mpoleCoeffs[0] * std::log(-(z0-zk));
+            b_0 += mpoleCoeffs[0] * std::log(zk-z0);
             for (size_t k = 1; k <= P_; ++k)
                 b_0 += mpoleCoeffs[k] * pow(-1.0, k) / pow(z0 - zk, k);
         }
@@ -53,8 +53,9 @@ void Leaf::buildLocalCoeffs() {
             localCoeffs.push_back(b_k);
         }
 
-        if (!base->isRoot()) localCoeffs += shiftBaseLocalCoeffs();
-        iList.clear();
+        // comment out for mpoleToLocalTest()
+        // if (!base->isRoot()) localCoeffs += shiftBaseLocalCoeffs(); 
+        // iList.clear();
     }
 
     evaluatePhi();
@@ -99,18 +100,3 @@ void Leaf::evaluatePhi() {
     evaluatePhiDirect();
 }
 
-void Leaf::iListTest() {
-    setNodeStat(3);
-    buildInteractionList();
-    auto nbors = getInteractionList();
-
-    for (const auto& nbor : nbors)
-        nbor->setNodeStat(2);
-
-    std::ofstream psnFile, nodeFile;
-    psnFile.open("out/srcs.txt");
-    nodeFile.open("out/nodes.txt");
-
-    printPsn(psnFile);
-    printNode(nodeFile);
-}

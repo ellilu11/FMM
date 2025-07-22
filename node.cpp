@@ -9,6 +9,7 @@
 using enum Dir;
 
 int Node::P_ = ceil(-log(Param::EPS) / log(2)); // # terms in multipole expansion
+std::vector<std::vector<uint64_t>> Node::binomTable;
 
 void Node::buildBinomTable() {
     for (int n = 0; n <= 2 * P_ - 1; ++n) {
@@ -194,101 +195,24 @@ void Node::buildInteractionList() {
 
 const cmplxVec Node::shiftBaseLocalCoeffs() {
     assert( !isRoot() && !base->isRoot() );
+    
+    // Horner scheme
     auto shiftedCoeffs( base->getLocalCoeffs() );
+    for (size_t j = 0; j <= P_ - 1; ++j)
+        for (size_t k = P_ - j - 1; k <= P_ - 1; ++k)
+            shiftedCoeffs[k] += (zk - base->getCenter()) * shiftedCoeffs[k+1];
 
-    for (size_t j = 0; j < P_ - 1; ++j)
-        for (size_t k = P_ - j - 1; k < P_ - 1; ++k)
-            shiftedCoeffs[k] -= (zk + base->getCenter()) * shiftedCoeffs[k + 1];
+    //auto localCoeffs = base->getLocalCoeffs();
+    //cmplxVec shiftedCoeffs;
+    //for (size_t l = 0; l <= P_; ++l) {
+    //    cmplx shiftedCoeff;
+    //    for (size_t k = l; k <= P_; ++k)
+    //        shiftedCoeff += localCoeffs[k] * std::pow(zk - base->getCenter(), k-l)
+    //            * static_cast<double>(binomTable[k][l]);
+    //    shiftedCoeffs.push_back(shiftedCoeff);
+    //}
 
     return shiftedCoeffs;
 }
 
-const cmplx Node::evaluateFfield(const cmplx z) {
-    cmplx phi = -coeffs[0] * std::log(z-zk);
-
-    for (size_t k = 1; k < P_; ++k)
-        phi -= coeffs[k] / std::pow(z-zk, k);
-
-    return phi;
-}
-
-const cmplx Node::evaluateFfieldAnl(const cmplx z) {
-    cmplx phi;
-    for (size_t n = 0; n < psn.size(); ++n)
-        phi -= qs[n] * std::log(z - psn[n]);
-    return phi;
-}
-
-void Node::ffieldTest(const int Nobs){
-    const double R (20.0 * L_);
-
-    std::ofstream obsFile, outFile, outAnlFile;
-    obsFile.open("out/obss.txt");
-    outFile.open("out/ff.txt");
-    outAnlFile.open("out/ffAnl.txt");
-
-    cmplxVec obss;
-    for (int n = 0; n < Nobs; ++n) {
-        const double th = 2 * M_PI * static_cast<double>(n) / static_cast<double>(Nobs);
-        obss.emplace_back(cmplx(R * cos(th), R * sin(th)));
-        obsFile << obss[n] << std::endl;
-    }
-
-    const int P = Node::getP();
-    for (int p = 1; p <= P; ++p) {
-        Node::setP(p);
-        buildMpoleCoeffs();
-
-        for (const auto& obs : obss) {
-            auto phi = evaluateFfield(obs);
-            // auto phi = evaluateFfieldFromLeaf(obs);
-            outFile << phi.real() << " ";
-        }
-        outFile << '\n';
-        if (p < P) clearMpoleCoeffs();
-    }
-
-    for (const auto& obs : obss) {
-        auto phiAnl = evaluateFfieldAnl(obs);
-        outAnlFile << phiAnl.real() << " ";
-    }
-    outAnlFile << '\n';
-}
-
-void Node::evalAndPrintNfieldAnl(std::ofstream& f) {
-    for (size_t obs = 0; obs < psn.size(); ++obs) {
-        cmplx phi;
-        for (size_t src = 0; src < psn.size(); ++src)
-            if (src != obs) phi -= qs[src] * std::log(psn[obs] - psn[src]);
-        f << psn[obs] << " " << phi << std::endl;
-    }
-}
-
-void Node::nfieldTest() {
-    using namespace std;
-
-    cout << " Computing downward pass..." << endl;
-    auto start = chrono::high_resolution_clock::now();
-
-    buildLocalCoeffs();
-
-    auto end = chrono::high_resolution_clock::now();
-    chrono::duration<double, milli> duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-
-    std::ofstream outFile, outAnlFile;
-    outFile.open("out/nf.txt");
-    outAnlFile.open("out/nfAnl.txt");
-
-    printPhi(outFile);
-
-    cout << " Computing pairwise..." << endl;
-    start = chrono::high_resolution_clock::now();
-
-    evalAndPrintNfieldAnl(outAnlFile);
-
-    end = chrono::high_resolution_clock::now();
-    duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-}
 

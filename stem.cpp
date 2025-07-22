@@ -1,6 +1,5 @@
 #include <cassert>
 #include <iostream>
-#include <ranges>
 #include "leaf.h"
 #include "math.h"
 #include "stem.h"
@@ -71,7 +70,7 @@ void Stem::buildLocalCoeffs() {
         for (const auto& iNode : iList) {
             auto z0 = iNode->getCenter();
             auto mpoleCoeffs = iNode->getMpoleCoeffs();
-            b_0 += mpoleCoeffs[0] * std::log(-(z0-zk));
+            b_0 += mpoleCoeffs[0] * std::log(zk-z0);
             for (size_t k = 1; k <= P_; ++k)
                 b_0 += mpoleCoeffs[k] * pow(-1.0, k) / pow(z0-zk, k);
         }
@@ -89,38 +88,12 @@ void Stem::buildLocalCoeffs() {
             }
             localCoeffs.push_back(b_k);
         }
-
-        if (!base->isRoot()) localCoeffs += shiftBaseLocalCoeffs();
-        iList.clear();
+        // comment out for mpoleToLocalTest()
+        // if (!base->isRoot()) localCoeffs += shiftBaseLocalCoeffs(); 
+        // iList.clear();
     }
 
     for (const auto& branch : branches)
         branch->buildLocalCoeffs();
 }
 
-void Stem::iListTest() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
-    std::uniform_int_distribution<> branchIdx(0,3);
-    std::shared_ptr<Node> node = std::make_shared<Stem>(*this);
-
-    while (node->isNodeType<Stem>())
-    // while (node->getLvl() > 1)
-        node = (node->getBranches())[branchIdx(gen)];
-    node->setNodeStat(3);
-
-    node->buildNearNeighbors();
-    node->buildInteractionList();
-    auto iList = node->getInteractionList();
-
-    for (const auto& iNode : iList)
-        iNode->setNodeStat(2);
-
-    std::ofstream psnFile, nodeFile;
-    psnFile.open("out/srcs.txt");
-    nodeFile.open("out/nodes.txt");
-
-    printPsn(psnFile);
-    printNode(nodeFile);
-}

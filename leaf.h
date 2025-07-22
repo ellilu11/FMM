@@ -17,7 +17,12 @@ public:
 
     void buildMpoleCoeffs();
 
-    void clearMpoleCoeffs() { coeffs.clear(); }
+    void resetNode() { 
+        coeffs.clear();
+        localCoeffs.clear();
+        nbors.clear();
+        iList.clear();
+    }
 
     const cmplx evaluateFfieldFromLeaf(const cmplx z) {
         return evaluateFfield(z);
@@ -29,8 +34,8 @@ public:
     void evaluatePhi();
 
     void printPhi(std::ofstream& f) {
-        for (size_t n = 0; n < psn.size(); ++n)
-            f << psn[n] << " " << phis[n] << std::endl;
+        for (const auto& phi : phis)
+            f << phi << std::endl;
     }
 
     void printNode(std::ofstream& f) {
@@ -49,7 +54,8 @@ public:
         f << "\n";
     }
 
-    void iListTest();
+    void mpoleToLocalTest();
+    //void iListTest();
 
 private:
     cmplxVec phis;

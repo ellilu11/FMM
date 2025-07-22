@@ -32,25 +32,24 @@ public:
         Node* const base)
         : psn(psn), qs(qs), zk(zk), L_(L), lvl(lvl), branchIdx(branchIdx), base(base), nodeStat(0)
     {
-        buildBinomTable();
     };
 
+    static void buildBinomTable();
     static const int getP() { return P_; }
-    static const void setP(const int P) { P_ = P; }
-    const cmplxVec getPsn() const { return psn;  }
+    static void setP(const int p) { P_ = p; }
+
+    const cmplxVec getPsn() const { return psn; }
     const std::vector<double> getQs() const { return qs; }
     const cmplx getCenter() const { return zk; }
     const int getLvl() const { return lvl; }
     const std::vector<std::shared_ptr<Node>> getBranches() const { return branches; }
+    Node* getBase() const { return base; }
     const bool isRoot() const { return base == nullptr; }
 
     template <typename T>
     bool isNodeType() const { return typeid(*this) == typeid(T); }
 
-    void setNodeStat(int flag) { nodeStat = flag; }
-
     cmplxVec getMpoleCoeffs() const { return coeffs; }
-
     cmplxVec getLocalCoeffs() const { return localCoeffs; }
 
     void printPsn(std::ofstream& f) {
@@ -58,7 +57,7 @@ public:
             f << z << std::endl;
     }
 
-    void buildBinomTable();
+    void setNodeStat(int flag) { nodeStat = flag; }
 
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
 
@@ -71,13 +70,11 @@ public:
     const cmplxVec shiftBaseLocalCoeffs();
     const cmplx evaluateFfield(const cmplx);
     virtual const cmplx evaluateFfieldFromLeaf(const cmplx) = 0;
-    const cmplx evaluateFfieldAnl(const cmplx);
-    void evalAndPrintNfieldAnl(std::ofstream&);
-
-    void ffieldTest(const int);
+    const cmplx evalAnalyticFfield(const cmplx);
+    void evalAnalyticNfield(std::ofstream&);
 
     virtual void buildMpoleCoeffs() = 0;
-    virtual void clearMpoleCoeffs() = 0;
+    virtual void resetNode() = 0;
 
     virtual void buildLocalCoeffs() = 0;
     virtual void printPhi(std::ofstream&) = 0;
@@ -85,12 +82,15 @@ public:
     virtual void printMpoleCoeffs(std::ofstream&) = 0;
     virtual void printLocalCoeffs(std::ofstream&) = 0;
 
+    // tests (move later)
+    void ffieldTest(const int);
+    virtual void mpoleToLocalTest() = 0;
     void nfieldTest();
-
-    virtual void iListTest() = 0;
+    // virtual void iListTest() = 0;
 
 protected:
     static int P_;
+    static std::vector<std::vector<uint64_t>> binomTable;
 
     const std::vector<double> qs;
     const cmplx zk;
@@ -102,7 +102,6 @@ protected:
     std::vector<std::shared_ptr<Node>> branches;
     std::vector<std::shared_ptr<Node>> nbors;
     std::vector<std::shared_ptr<Node>> iList;
-    std::vector<std::vector<uint64_t>> binomTable;
 
     cmplxVec psn;
     cmplxVec coeffs;
