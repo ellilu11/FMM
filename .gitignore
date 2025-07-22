@@ -361,3 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/TestMultipole/farfield.cpp
+/TestMultipole/pch.cpp
+/TestMultipole/pch.h
+/TestMultipole/TestMultipole.cpp
+/TestMultipole/TestMultipole.vcxproj
+/TestMultipole/TestMultipole.vcxproj.filters
+/plotNodes.asv
+/plotPhi.asv
