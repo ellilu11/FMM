@@ -24,7 +24,7 @@ enum class Dir {
 class Node {
 public:
     Node(cmplxVec& psn,
-        std::vector<double>& qs,
+        realVec& qs,
         const cmplx zk,
         const double L,
         const int lvl,
@@ -39,7 +39,7 @@ public:
     static void setP(const int p) { P_ = p; }
 
     const cmplxVec getPsn() const { return psn; }
-    const std::vector<double> getQs() const { return qs; }
+    const realVec getQs() const { return qs; }
     const cmplx getCenter() const { return zk; }
     const int getLvl() const { return lvl; }
     const std::vector<std::shared_ptr<Node>> getBranches() const { return branches; }
@@ -68,10 +68,10 @@ public:
     std::vector<std::shared_ptr<Node>> const getInteractionList()  { return iList; }
 
     const cmplxVec getShiftedLocalCoeffs(const cmplx);
-    const cmplx evaluateFfield(const cmplx);
-    virtual const cmplx evaluateFfieldFromLeaf(const cmplx) = 0;
-    const cmplx evalAnalyticField(const cmplx);
-    const cmplxVec evalAnalyticNfields();
+    const cmplx getFfield(const cmplx);
+    virtual const cmplx getFfieldFromLeaf(const cmplx) = 0;
+    const cmplx getAnalyticField(const cmplx);
+    const cmplxVec getAnalyticNfields();
 
     virtual void buildMpoleCoeffs() = 0;
     virtual void resetNode() = 0;
@@ -83,7 +83,7 @@ public:
     virtual void printLocalCoeffs(std::ofstream&) = 0;
 
     // tests (move later)
-    void ffieldTest(const int);
+    // void ffieldTest(const int);
     virtual void mpoleToLocalTest() = 0;
     void nfieldTest();
     // virtual void iListTest() = 0;
@@ -92,7 +92,7 @@ protected:
     static int P_;
     static std::vector<std::vector<uint64_t>> binomTable;
 
-    const std::vector<double> qs;
+    const realVec qs;
     const cmplx zk;
     const double L_;
     const int lvl;

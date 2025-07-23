@@ -7,7 +7,7 @@
 class Stem final : public Node {
 public:
     Stem(cmplxVec&,
-        std::vector<double>&,
+        realVec&,
         const cmplx,
         const double,
         const int,
@@ -15,10 +15,10 @@ public:
         Stem* const);
 
     void buildMpoleCoeffs();
-    const cmplx evaluateFfieldFromLeaf(const cmplx z) {
+    const cmplx getFfieldFromLeaf(const cmplx z) {
         cmplx phi;
         for (const auto& branch : branches)
-            phi += branch->evaluateFfieldFromLeaf(z);
+            phi += branch->getFfieldFromLeaf(z);
         return phi;
     };
 

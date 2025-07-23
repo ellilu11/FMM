@@ -5,7 +5,7 @@
 #include "stem.h"
 
 Stem::Stem(cmplxVec& psn,
-    std::vector<double>& qs,
+    realVec& qs,
     const cmplx zk,
     const double L,
     const int lvl,
@@ -14,7 +14,7 @@ Stem::Stem(cmplxVec& psn,
     : Node(psn, qs, zk, L, lvl, branchIdx, base)
 {
     std::vector<cmplxVec> branchpsn(4);
-    std::vector<std::vector<double>> branchQs(4);
+    std::vector<realVec> branchQs(4);
     // for (auto [ele, elq] : std::views::zip(psn, qs)) {
     for (size_t n = 0; n < psn.size(); ++n) {
         size_t k = cmplx2Idx<bool>(psn[n] > zk);

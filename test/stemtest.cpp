@@ -39,9 +39,7 @@ void Stem::mpoleToLocalTest() {
         buildLocalCoeffs();
 
         leafNode->evaluatePhi();
-
-        for (const auto& phi : leafNode->getPhi())
-            outFile << phi.real() << " ";
+        leafNode->printPhi(outFile);
         outFile << '\n';
 
         if (p < P) {
@@ -50,20 +48,12 @@ void Stem::mpoleToLocalTest() {
         }
     }
 
-    auto iList = node->getInteractionList();
+    //auto iList = node->getInteractionList();
     //cout << iList.size() << '\n';
     //
     //auto iListBase = node->getBase()->getInteractionList();
     //cout << iListBase.size() << '\n';
     //iList.insert(iList.end(), iListBase.begin(), iListBase.end());
-
-    //auto iListBase2 = node->getBase()->getBase()->getInteractionList();
-    //cout << iListBase2.size() << '\n';
-    //iList.insert(iList.end(), iListBase2.begin(), iListBase2.end());
-
-    //auto iListBase3 = node->getBase()->getBase()->getBase()->getInteractionList();
-    //cout << iListBase3.size() << '\n';
-    //iList.insert(iList.end(), iListBase3.begin(), iListBase3.end());
 
     for (const auto& obs : node->getPsn()) {
         cmplx phi;
@@ -71,7 +61,7 @@ void Stem::mpoleToLocalTest() {
         for (size_t src = 0; src < psn.size(); ++src) {
             auto dist = obs - psn[src];
             if (abs(dist) > 1.0E-9)
-                phi -= qs[src] * std::log(dist);
+                phi -= qs[src] * log(dist);
         }
         outAnlFile << phi.real() << " ";
     }

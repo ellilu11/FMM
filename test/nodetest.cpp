@@ -6,7 +6,7 @@
 #include "../node.h"
 #include "../leaf.h"
 
-const cmplx Node::evaluateFfield(const cmplx z) {
+const cmplx Node::getFfield(const cmplx z) {
     cmplx phi = -coeffs[0] * std::log(z-zk);
 
     for (size_t k = 1; k < P_; ++k)
@@ -15,14 +15,14 @@ const cmplx Node::evaluateFfield(const cmplx z) {
     return phi;
 }
 
-const cmplx Node::evalAnalyticField(const cmplx z) {
+const cmplx Node::getAnalyticField(const cmplx z) {
     cmplx phi;
     for (size_t n = 0; n < psn.size(); ++n)
         phi -= qs[n] * std::log(z - psn[n]);
     return phi;
 }
 
-const cmplxVec Node::evalAnalyticNfields() {
+const cmplxVec Node::getAnalyticNfields() {
     cmplxVec phis;
 
     for (size_t obs = 0; obs < psn.size(); ++obs) {
@@ -74,30 +74,54 @@ void Node::ffieldTest(const int Nobs) {
 void Node::nfieldTest() {
     using namespace std;
 
-    cout << " Computing downward pass..." << endl;
-    auto start = chrono::high_resolution_clock::now();
-
-    buildLocalCoeffs();
-
-    auto end = chrono::high_resolution_clock::now();
-    chrono::duration<double, milli> duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-
-    std::ofstream outFile, outAnlFile;
+    ofstream outFile, outAnlFile;
     outFile.open("out/nf.txt");
     outAnlFile.open("out/nfAnl.txt");
 
-    printPhi(outFile);
+    outFile << setprecision(15) << scientific;
+    outAnlFile << setprecision(15) << scientific;
+
+    const int P = Node::getP();
+    for (int p = 1; p <= P; ++p) {
+        Node::setP(p);
+        Node::buildBinomTable();
+
+        cout << " Computing upward pass...   (" << " P = " << p << " )\n";
+        auto start = chrono::high_resolution_clock::now();
+
+        buildMpoleCoeffs();
+
+        auto end = chrono::high_resolution_clock::now();
+        chrono::duration<double, milli> duration_ms = end - start;
+        cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+
+        cout << " Computing downward pass... (" << " P = " << P_ << " )\n";
+        start = chrono::high_resolution_clock::now();
+
+        buildLocalCoeffs();
+
+        end = chrono::high_resolution_clock::now();
+        duration_ms = end - start;
+        cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+
+        printPhi(outFile);
+        outFile << '\n';
+
+        if (p < P) {
+            resetNode();
+            binomTable.clear();
+        }
+    }
 
     cout << " Computing pairwise..." << endl;
-    start = chrono::high_resolution_clock::now();
+    auto start = chrono::high_resolution_clock::now();
 
-    auto phis = evalAnalyticNfields();
+    auto phis = getAnalyticNfields();
     for (const auto& phi : phis)
-        outAnlFile << phi << '\n';
+        outAnlFile << phi.real() << '\n';
 
-    end = chrono::high_resolution_clock::now();
-    duration_ms = end - start;
+    auto end = chrono::high_resolution_clock::now();
+    chrono::duration<double, milli> duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 }
 

@@ -2,31 +2,34 @@
 phiFile = strcat(dir,"nf.txt");
 phiAnlFile = strcat(dir,"nfAnl.txt");
 
-phi = readmatrix(phiFile);
+phi = readmatrix(phiFile)';
 phiAnl = readmatrix(phiAnlFile);
 
 phi = sortrows(phi,1);
 phiAnl = sortrows(phiAnl,1);
-nvec = 1:length(phi);
+nvec = 1:size(phi,1);
+pmax = size(phi,2);
 
 %%
-pvec = [10];
+pmin = 2;
+pvec = 1:5; % pmin:pmax;
 
 figure(1);
 [phi(:,1), phiAnl(:,1)]
-plot(nvec, phiAnl(:,1), nvec, phi(:,1));
+plot(nvec, phiAnl, nvec, phi(:,pvec));
+% plot(nvec, phiAnl(:,2), nvec, phi(:,2));
 legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
      'UniformOutput',false))],...
      'Location','southeast');
 
 figure(2);
 relErr = abs(phi-phiAnl)./abs(phiAnl);
-semilogy(nvec, relErr, '-o');
+semilogy(nvec, relErr(:,pvec), '-o');
 
 legend(strcat(" p = ", arrayfun(@num2str,pvec,...
     'UniformOutput',false)) );
-%%
-% [phiAnl(:,1), phi(:,3)]
-% plot(nvec, phiAnl(:,1), nvec, phi(:,3))
-% legend(' Analytic ', ' FMM (far) + Direct (near) ', ...
-%        'Location','southeast');
+
+figure(3);
+meanRelErr = mean(relErr,1);
+semilogy(pvec,meanRelErr(pvec), '-o');
+

@@ -183,11 +183,11 @@ void Node::buildInteractionList() {
     auto baseNbors = base->getNearNeighbors();
 
     for (const auto& baseNbor : baseNbors)
-        if (baseNbor->isNodeType<Leaf>() && !vecContains<std::shared_ptr<Node>>(nbors,baseNbor))
+        if (baseNbor->isNodeType<Leaf>() && !contains<std::shared_ptr<Node>>(nbors,baseNbor))
             iList.push_back(baseNbor);
         else 
             for (const auto& branch : baseNbor->branches) 
-                if (!vecContains<std::shared_ptr<Node>>(nbors, branch))
+                if (!contains<std::shared_ptr<Node>>(nbors, branch))
                     iList.push_back(branch);
 
     assert(iList.size() <= pow(6,Param::DIM) - pow(3,Param::DIM));
@@ -200,16 +200,6 @@ const cmplxVec Node::getShiftedLocalCoeffs(const cmplx z0) {
     for (size_t j = 0; j <= P_ - 1; ++j)
         for (size_t k = P_ - j - 1; k <= P_ - 1; ++k)
             shiftedCoeffs[k] += (z0 - zk) * shiftedCoeffs[k+1];
-
-    //auto localCoeffs = base->getLocalCoeffs();
-    //cmplxVec shiftedCoeffs;
-    //for (size_t l = 0; l <= P_; ++l) {
-    //    cmplx shiftedCoeff;
-    //    for (size_t k = l; k <= P_; ++k)
-    //        shiftedCoeff += localCoeffs[k] * std::pow(zk - base->getCenter(), k-l)
-    //            * static_cast<double>(binomTable[k][l]);
-    //    shiftedCoeffs.push_back(shiftedCoeff);
-    //}
 
     return shiftedCoeffs;
 }

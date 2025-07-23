@@ -4,6 +4,7 @@
 #include <complex>
 
 using cmplx = std::complex<double>;
+using realVec = std::vector<double>;
 using cmplxVec = std::vector<cmplx>;
 constexpr cmplx iu(0,1);
 
@@ -49,9 +50,11 @@ std::ostream& operator<<(std::ostream& out, const cmplxVec& vec) {
 }
 
 template <typename T>
-bool vecContains(std::vector<T>& vec, T val) {
+bool contains(std::vector<T>& vec, T val) {
     return std::find(vec.begin(), vec.end(), val) != vec.end();
 }
+
+
 
 
 

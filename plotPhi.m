@@ -26,10 +26,10 @@ legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
 
 figure(2);
 relErr = abs(phi-phiAnl)./abs(phiAnl);
-semilogy(theta, relErr, '-o');
+semilogy(theta, relErr(:,pvec), '-o');
 
 legend(strcat(" p = ", arrayfun(@num2str,pvec,...
     'UniformOutput',false)) );
 
-figure(3);
-semilogy(pvec,mean(relErr,1), '-o');
+meanRelErr = mean(relErr,1);
+semilogy(pvec,meanRelErr(pvec), '-o');

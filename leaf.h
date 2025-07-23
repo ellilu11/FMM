@@ -8,7 +8,7 @@
 class Leaf final : public Node {
 public:
     Leaf(cmplxVec&,
-        std::vector<double>&,
+        realVec&,
         const cmplx,
         const double,
         const int,
@@ -25,20 +25,20 @@ public:
         phis.clear();
     }
 
-    const cmplx evaluateFfieldFromLeaf(const cmplx z) {
-        return evaluateFfield(z);
+    const cmplx getFfieldFromLeaf(const cmplx z) {
+        return getFfield(z);
     }
 
     void buildLocalCoeffs();
-    cmplxVec getPhiFar();
-    cmplxVec getPhiNear();
+    cmplxVec getPhiFarSrc();
+    cmplxVec getPhiNearSrc();
     void evaluatePhi();
 
     cmplxVec getPhi() { return phis; }
 
     void printPhi(std::ofstream& f) {
         for (const auto& phi : phis)
-            f << phi << '\n';
+            f << phi.real() << ' ';
     }
 
     void printNode(std::ofstream& f) {

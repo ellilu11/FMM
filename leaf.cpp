@@ -4,7 +4,7 @@
 #include <iostream>
 
 Leaf::Leaf(cmplxVec& psn,
-    std::vector<double>& qs,
+    realVec& qs,
     const cmplx zk,
     const double L,
     const int lvl,
@@ -12,7 +12,6 @@ Leaf::Leaf(cmplxVec& psn,
     Stem* const base)
     : Node(psn, qs, zk, L, lvl, branchIdx, base)
 {
-    
 }
 
 void Leaf::buildMpoleCoeffs() {
@@ -63,19 +62,19 @@ void Leaf::buildLocalCoeffs() {
     // evaluateFld();
 }
 
-cmplxVec Leaf::getPhiFar() {
-    cmplxVec phisFar;
+cmplxVec Leaf::getPhiFarSrc() {
+    cmplxVec phis;
     for (const auto& obs : psn) {
         cmplx phi;
         for (size_t k = 0; k <= P_; ++k)
             phi -= localCoeffs[k] * pow(obs-zk, k);
-        phisFar.push_back(phi);
+        phis.push_back(phi);
     }
-    return phisFar;
+    return phis;
 }
 
-cmplxVec Leaf::getPhiNear() {
-    cmplxVec phisNear;
+cmplxVec Leaf::getPhiNearSrc() {
+    cmplxVec phis;
 
     for (size_t obs = 0; obs < psn.size(); ++obs) {
         cmplx phi;
@@ -90,15 +89,15 @@ cmplxVec Leaf::getPhiNear() {
             for (size_t src = 0; src < psnNbor.size(); ++src)
                 phi -= (nbor->getQs())[src] * std::log(psn[obs] - psnNbor[src]);
         }
-        phisNear.push_back(phi);
+        phis.push_back(phi);
     }
-    return phisNear;
+    return phis;
 }
 
 void Leaf::evaluatePhi() {
     phis.resize(psn.size());
     for (size_t n = 0; n < psn.size(); ++n)
-        phis[n] = getPhiFar()[n] + getPhiNear()[n];
-    // phis = getPhiFar() + getPhiNear(); // why is override not working?
+        phis[n] = getPhiFarSrc()[n] + getPhiNearSrc()[n];
+    // phis = getPhiFarSrc() + getPhiNearSrc();
 }
 

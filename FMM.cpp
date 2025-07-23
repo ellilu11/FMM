@@ -5,18 +5,17 @@ using namespace std;
 namespace Param {
     extern constexpr int    DIM     = 2;
     extern constexpr double L       = 10.0;
-    extern constexpr double EPS     = 1.0E-3;
+    extern constexpr double EPS     = 1.0E-6;
 }
 
 int main(int argc, char *argv[])
 {
-
     // ==================== Populate domain ==================== //
     random_device rd;
     mt19937 gen(rd());
 
-    uniform_real_distribution<double> real(-Param::L / 2, Param::L / 2);
-    uniform_real_distribution<double> imag(-Param::L / 2, Param::L / 2);
+    uniform_real_distribution<double> real(0, Param::L / 2);
+    uniform_real_distribution<double> imag(0, Param::L / 2);
 
     // uniform_real_distribution<double> real(0, Param::L / 2);
     // uniform_real_distribution<double> imag(0, Param::L / 2);
@@ -26,7 +25,7 @@ int main(int argc, char *argv[])
 
     constexpr int N = 1000;
     constexpr double Q = 1.0;
-    const int Nlvl = ceil(log(N) / log(4.0)) - 1;
+    const int Nlvl = ceil(log(N) / log(4.0));
 
     vector<cmplx> psn;
     vector<double> qs;
@@ -54,7 +53,7 @@ int main(int argc, char *argv[])
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     // ==================== Upward pass ==================== //
-    cout << " Computing upward pass..." << endl;
+    cout << " Computing upward pass... \n";
     start = chrono::high_resolution_clock::now();
 
     Node::buildBinomTable();
@@ -72,7 +71,7 @@ int main(int argc, char *argv[])
     root->printMpoleCoeffs(mpoleCoeffFile);
 
     // ==================== Downward pass ==================== //
-    //cout << " Computing downward pass..." << endl;
+    // cout << " Computing downward pass... \n";
     //start = chrono::high_resolution_clock::now();
 
     // root->buildLocalCoeffs();
