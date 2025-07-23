@@ -89,11 +89,10 @@ void Stem::buildLocalCoeffs() {
             localCoeffs.push_back(b_k);
         }
         // comment out for mpoleToLocalTest()
-        // if (!base->isRoot()) localCoeffs += shiftBaseLocalCoeffs(); 
+        if (!base->isRoot()) localCoeffs += base->getShiftedLocalCoeffs(zk); 
         // iList.clear();
     }
 
     for (const auto& branch : branches)
         branch->buildLocalCoeffs();
 }
-

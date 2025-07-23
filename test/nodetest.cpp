@@ -1,10 +1,10 @@
-#include "math.h"
-#include "node.h"
-#include "leaf.h"
 #include <cassert>
 #include <chrono>
 #include <iostream>
 #include <random>
+#include "../math.h"
+#include "../node.h"
+#include "../leaf.h"
 
 const cmplx Node::evaluateFfield(const cmplx z) {
     cmplx phi = -coeffs[0] * std::log(z-zk);
@@ -15,22 +15,26 @@ const cmplx Node::evaluateFfield(const cmplx z) {
     return phi;
 }
 
-const cmplx Node::evalAnalyticFfield(const cmplx z) {
+const cmplx Node::evalAnalyticField(const cmplx z) {
     cmplx phi;
     for (size_t n = 0; n < psn.size(); ++n)
         phi -= qs[n] * std::log(z - psn[n]);
     return phi;
 }
 
-void Node::evalAnalyticNfield(std::ofstream& f) {
+const cmplxVec Node::evalAnalyticNfields() {
+    cmplxVec phis;
+
     for (size_t obs = 0; obs < psn.size(); ++obs) {
         cmplx phi;
         for (size_t src = 0; src < psn.size(); ++src)
             if (src != obs) phi -= qs[src] * std::log(psn[obs] - psn[src]);
-        f << phi << std::endl;
+        phis.push_back(phi);
     }
+    return phis;
 }
 
+/*
 void Node::ffieldTest(const int Nobs) {
     const double R(2.0*L_);
 
@@ -41,9 +45,9 @@ void Node::ffieldTest(const int Nobs) {
 
     cmplxVec obss;
     for (int n = 0; n < Nobs; ++n) {
-        const double th = 2 * M_PI * static_cast<double>(n) / static_cast<double>(Nobs);
+        const double th = 2 * 3.1415927 * static_cast<double>(n) / static_cast<double>(Nobs);
         obss.emplace_back(cmplx(R * cos(th), R * sin(th)));
-        obsFile << obss[n] << std::endl;
+        obsFile << obss[n] << '\n';
     }
 
     const int P = Node::getP();
@@ -61,11 +65,11 @@ void Node::ffieldTest(const int Nobs) {
     }
 
     for (const auto& obs : obss) {
-        auto phi = evalAnalyticFfield(obs);
+        auto phi = evalAnalyticField(obs);
         outAnlFile << phi.real() << " ";
     }
     outAnlFile << '\n';
-}
+}*/
 
 void Node::nfieldTest() {
     using namespace std;
@@ -88,7 +92,9 @@ void Node::nfieldTest() {
     cout << " Computing pairwise..." << endl;
     start = chrono::high_resolution_clock::now();
 
-    evalAnalyticNfield(outAnlFile);
+    auto phis = evalAnalyticNfields();
+    for (const auto& phi : phis)
+        outAnlFile << phi << '\n';
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;

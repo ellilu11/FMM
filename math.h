@@ -41,9 +41,18 @@ const uint64_t binom(int n, int k) {
     return fallingFactorial(n, k) / fallingFactorial(n - k, 0); 
 }
 
+std::ostream& operator<<(std::ostream& out, const cmplxVec& vec) {
+    for (const auto& ele : vec)
+        out << ele << ' ';
+    out << '\n';
+    return out;
+}
+
 template <typename T>
 bool vecContains(std::vector<T>& vec, T val) {
     return std::find(vec.begin(), vec.end(), val) != vec.end();
 }
+
+
 
 

@@ -22,6 +22,7 @@ public:
         localCoeffs.clear();
         nbors.clear();
         iList.clear();
+        phis.clear();
     }
 
     const cmplx evaluateFfieldFromLeaf(const cmplx z) {
@@ -29,17 +30,19 @@ public:
     }
 
     void buildLocalCoeffs();
-    void evaluatePhiLocalExp();
-    void evaluatePhiDirect();
+    cmplxVec getPhiFar();
+    cmplxVec getPhiNear();
     void evaluatePhi();
+
+    cmplxVec getPhi() { return phis; }
 
     void printPhi(std::ofstream& f) {
         for (const auto& phi : phis)
-            f << phi << std::endl;
+            f << phi << '\n';
     }
 
     void printNode(std::ofstream& f) {
-        f << zk << " " << L_ << " " << nodeStat << std::endl;
+        f << zk << " " << L_ << " " << nodeStat << '\n';
     }
 
     void printMpoleCoeffs(std::ofstream& f) {
@@ -59,5 +62,4 @@ public:
 
 private:
     cmplxVec phis;
-    cmplxVec flds;
 };

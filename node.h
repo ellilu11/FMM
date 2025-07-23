@@ -54,7 +54,7 @@ public:
 
     void printPsn(std::ofstream& f) {
         for (const auto& z : psn)
-            f << z << std::endl;
+            f << z << '\n';
     }
 
     void setNodeStat(int flag) { nodeStat = flag; }
@@ -67,11 +67,11 @@ public:
     void buildInteractionList();
     std::vector<std::shared_ptr<Node>> const getInteractionList()  { return iList; }
 
-    const cmplxVec shiftBaseLocalCoeffs();
+    const cmplxVec getShiftedLocalCoeffs(const cmplx);
     const cmplx evaluateFfield(const cmplx);
     virtual const cmplx evaluateFfieldFromLeaf(const cmplx) = 0;
-    const cmplx evalAnalyticFfield(const cmplx);
-    void evalAnalyticNfield(std::ofstream&);
+    const cmplx evalAnalyticField(const cmplx);
+    const cmplxVec evalAnalyticNfields();
 
     virtual void buildMpoleCoeffs() = 0;
     virtual void resetNode() = 0;

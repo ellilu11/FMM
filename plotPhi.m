@@ -13,7 +13,7 @@ pmax = size(phi,2);
 % phi = reshape(phi,Nobs,[],2);
 
 %%
-theta = linspace(0,2*pi,length(phi));
+theta = linspace(0,2*pi,size(phi,1));
 pmin = 1;
 pvec = pmin:pmax;
 

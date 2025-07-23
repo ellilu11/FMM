@@ -1,4 +1,5 @@
 #include "leaf.h"
+#include "math.h"
 #include "node.h"
 #include <iostream>
 
@@ -11,7 +12,7 @@ Leaf::Leaf(cmplxVec& psn,
     Stem* const base)
     : Node(psn, qs, zk, L, lvl, branchIdx, base)
 {
-    phis.resize(psn.size());
+    
 }
 
 void Leaf::buildMpoleCoeffs() {
@@ -54,7 +55,7 @@ void Leaf::buildLocalCoeffs() {
         }
 
         // comment out for mpoleToLocalTest()
-        // if (!base->isRoot()) localCoeffs += shiftBaseLocalCoeffs(); 
+        if (!base->isRoot()) localCoeffs += base->getShiftedLocalCoeffs(zk); 
         // iList.clear();
     }
 
@@ -62,41 +63,42 @@ void Leaf::buildLocalCoeffs() {
     // evaluateFld();
 }
 
-void Leaf::evaluatePhiLocalExp() {
-    cmplx phi;
-    cmplxVec phisLocalExp;
-    for (const auto& ele : psn) {
-        for (size_t k = 0; k < P_; ++k)
-            phi += localCoeffs[k] * pow(ele, k);
-        phisLocalExp.push_back(phi);
+cmplxVec Leaf::getPhiFar() {
+    cmplxVec phisFar;
+    for (const auto& obs : psn) {
+        cmplx phi;
+        for (size_t k = 0; k <= P_; ++k)
+            phi -= localCoeffs[k] * pow(obs-zk, k);
+        phisFar.push_back(phi);
     }
-    phis += phisLocalExp;
+    return phisFar;
 }
 
-void Leaf::evaluatePhiDirect() {
-    cmplx phi;
-    cmplxVec phisDirect;
-    // cmplxVec 
+cmplxVec Leaf::getPhiNear() {
+    cmplxVec phisNear;
 
-    // phi due to other particles in this node (apply reciprocity later)
-    for (size_t m = 0; m < psn.size(); ++m)
-        for (size_t n = 0; n < psn.size(); ++n)
-            if (n != m) phi -= qs[n] * std::log(psn[m] - psn[n]);
+    for (size_t obs = 0; obs < psn.size(); ++obs) {
+        cmplx phi;
 
-    // phi due to particles in neighboring nodes
-    for (const auto& obs : psn) {
+        // phi due to other particles in this node (apply reciprocity later)
+        for (size_t src = 0; src < psn.size(); ++src)
+            if (src != obs) phi -= qs[src] * std::log(psn[obs] - psn[src]);
+
+        // phi due to particles in neighboring nodes
         for (const auto& nbor : nbors) {
-            cmplxVec srcs = nbor->getPsn();
-            for (size_t n = 0; n < srcs.size(); ++n)
-                phi -= (nbor->getQs())[n] * std::log(obs - srcs[n]);
+            cmplxVec psnNbor = nbor->getPsn();
+            for (size_t src = 0; src < psnNbor.size(); ++src)
+                phi -= (nbor->getQs())[src] * std::log(psn[obs] - psnNbor[src]);
         }
-        phisDirect.push_back(phi);
+        phisNear.push_back(phi);
     }
-    phis += phisDirect;
+    return phisNear;
 }
 
 void Leaf::evaluatePhi() {
-    evaluatePhiLocalExp();
-    evaluatePhiDirect();
+    phis.resize(psn.size());
+    for (size_t n = 0; n < psn.size(); ++n)
+        phis[n] = getPhiFar()[n] + getPhiNear()[n];
+    // phis = getPhiFar() + getPhiNear(); // why is override not working?
 }
 

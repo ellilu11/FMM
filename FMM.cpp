@@ -1,16 +1,4 @@
-﻿#define _USE_MATH_DEFINES
-#include <chrono>
-#include <cmath>
-#include <fstream>
-#include <random>
-#include "node.h"
-
-#include "leaf.cpp"
-#include "node.cpp"
-#include "stem.cpp"
-#include "test/leaftest.cpp"
-#include "test/nodetest.cpp"
-#include "test/stemtest.cpp"
+﻿#include "FMM.h"
 
 using namespace std;
 
@@ -22,7 +10,6 @@ namespace Param {
 
 int main(int argc, char *argv[])
 {
-    cout << setprecision(18) << scientific;
 
     // ==================== Populate domain ==================== //
     random_device rd;
@@ -39,7 +26,7 @@ int main(int argc, char *argv[])
 
     constexpr int N = 1000;
     constexpr double Q = 1.0;
-    const int Nlvl = ceil(log(N) / log(4.0));
+    const int Nlvl = ceil(log(N) / log(4.0)) - 1;
 
     vector<cmplx> psn;
     vector<double> qs;
@@ -85,17 +72,17 @@ int main(int argc, char *argv[])
     root->printMpoleCoeffs(mpoleCoeffFile);
 
     // ==================== Downward pass ==================== //
-    cout << " Computing downward pass..." << endl;
-    start = chrono::high_resolution_clock::now();
+    //cout << " Computing downward pass..." << endl;
+    //start = chrono::high_resolution_clock::now();
 
     // root->buildLocalCoeffs();
 
     // root->mpoleToLocalTest();
     root->nfieldTest();
 
-    end = chrono::high_resolution_clock::now();
-    duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+    //end = chrono::high_resolution_clock::now();
+    //duration_ms = end - start;
+    //cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
     
     std::ofstream localCoeffFile;
     localCoeffFile.open("out/localcoeffs.txt");

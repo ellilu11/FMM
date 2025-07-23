@@ -39,7 +39,7 @@ public:
     }
 
     void printNode(std::ofstream& f) {
-        f << zk << " " << L_ << " " << nodeStat << std::endl;
+        f << zk << " " << L_ << " " << nodeStat << '\n';
         for (const auto& branch : branches)
             branch->printNode(f);
     }
