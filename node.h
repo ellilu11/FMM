@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include "math.h"
+#include "particle.h"
 
 namespace Param {
     extern const int DIM;
@@ -23,14 +24,14 @@ enum class Dir {
 
 class Node {
 public:
-    Node(cmplxVec& psn,
-        realVec& qs,
+    Node(
+        ParticleVec& particles,
         const cmplx zk,
         const double L,
         const int lvl,
         const int branchIdx,
         Node* const base)
-        : psn(psn), qs(qs), zk(zk), L_(L), lvl(lvl), branchIdx(branchIdx), base(base), nodeStat(0)
+        : particles(particles), zk(zk), L_(L), lvl(lvl), branchIdx(branchIdx), base(base), nodeStat(0)
     {
     };
 
@@ -38,8 +39,7 @@ public:
     static const int getP() { return P_; }
     static void setP(const int p) { P_ = p; }
 
-    const cmplxVec getPsn() const { return psn; }
-    const realVec getQs() const { return qs; }
+    ParticleVec getParticles() const { return particles; }
     const cmplx getCenter() const { return zk; }
     const int getLvl() const { return lvl; }
     const std::vector<std::shared_ptr<Node>> getBranches() const { return branches; }
@@ -51,11 +51,6 @@ public:
 
     cmplxVec getMpoleCoeffs() const { return coeffs; }
     cmplxVec getLocalCoeffs() const { return localCoeffs; }
-
-    void printPsn(std::ofstream& f) {
-        for (const auto& z : psn)
-            f << z << '\n';
-    }
 
     void setNodeStat(int flag) { nodeStat = flag; }
 
@@ -92,7 +87,7 @@ protected:
     static int P_;
     static std::vector<std::vector<uint64_t>> binomTable;
 
-    const realVec qs;
+    ParticleVec particles;
     const cmplx zk;
     const double L_;
     const int lvl;
@@ -103,7 +98,6 @@ protected:
     std::vector<std::shared_ptr<Node>> nbors;
     std::vector<std::shared_ptr<Node>> iList;
 
-    cmplxVec psn;
     cmplxVec coeffs;
     cmplxVec localCoeffs;
 

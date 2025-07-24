@@ -10,7 +10,9 @@
 #include <fstream>
 #include <random>
 
+#include "math.h"
 #include "node.h"
+#include "particle.h"
 #include "leaf.cpp"
 #include "node.cpp"
 #include "stem.cpp"

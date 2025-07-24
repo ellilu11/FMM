@@ -1,5 +1,6 @@
 %%
 phiFile = strcat(dir,"nf.txt");
+
 phiAnlFile = strcat(dir,"nfAnl.txt");
 
 phi = readmatrix(phiFile)';

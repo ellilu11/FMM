@@ -17,18 +17,18 @@ const cmplx Node::getFfield(const cmplx z) {
 
 const cmplx Node::getAnalyticField(const cmplx z) {
     cmplx phi;
-    for (size_t n = 0; n < psn.size(); ++n)
-        phi -= qs[n] * std::log(z - psn[n]);
+    for (const auto& particle : particles)
+        phi -= particle->getCharge() * std::log(z - particle->getPos());
     return phi;
 }
 
 const cmplxVec Node::getAnalyticNfields() {
     cmplxVec phis;
 
-    for (size_t obs = 0; obs < psn.size(); ++obs) {
+    for (const auto& obs : particles) {
         cmplx phi;
-        for (size_t src = 0; src < psn.size(); ++src)
-            if (src != obs) phi -= qs[src] * std::log(psn[obs] - psn[src]);
+        for (const auto& src : particles)
+            if (src != obs) phi -= src->getCharge() * std::log(obs->getPos() - src->getPos());
         phis.push_back(phi);
     }
     return phis;

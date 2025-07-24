@@ -10,20 +10,21 @@ void Leaf::mpoleToLocalTest() {
     outFile.open("out/local.txt");
     outAnlFile.open("out/localAnl.txt");
 
-    for (const auto& obs : getPsn()) {
+    for (const auto& obs : particles) {
         cmplx phi;
         for (size_t k = 0; k < P_; ++k)
-            phi -= localCoeffs[k] * pow(obs-zk, k);
+            phi -= localCoeffs[k] * pow(obs->getPos()-zk, k);
         outFile << phi << " ";
     }
     outFile << "\n";
 
-    for (const auto& obs : getPsn()) {
+    for (const auto& obs : particles) {
         cmplx phi;
         for (const auto& iNode : iList) {
-            cmplxVec srcs = iNode->getPsn();
-            for (size_t src = 0; src < srcs.size(); ++src)
-                phi -= (iNode->getQs())[src] * std::log(obs - srcs[src]);
+            auto srcs = iNode->getParticles();
+            // for (size_t src = 0; src < srcs.size(); ++src)
+            for (const auto& src : srcs)
+                phi -= src->getCharge() * std::log( obs->getPos() - src->getPos() );
         }
         outAnlFile << phi << " ";
     }
@@ -34,11 +35,9 @@ void Leaf::mpoleToLocalTest() {
     for (const auto& iNode : iList)
         iNode->setNodeStat(2);
 
-    std::ofstream psnFile, nodeFile;
-    psnFile.open("out/srcs.txt");
+    std::ofstream nodeFile;
     nodeFile.open("out/nodes.txt");
 
-    printPsn(psnFile);
     printNode(nodeFile);
 }
 
@@ -51,10 +50,10 @@ void Leaf::iListTest() {
     for (const auto& nbor : nbors)
         nbor->setNodeStat(2);
 
-    std::ofstream psnFile, nodeFile;
-    psnFile.open("out/srcs.txt");
+    std::ofstream posFile, nodeFile;
+    posFile.open("out/srcs.txt");
     nodeFile.open("out/nodes.txt");
 
-    printPsn(psnFile);
+    printPos(posFile);
     printNode(nodeFile);
 }*/

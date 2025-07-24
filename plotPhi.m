@@ -1,35 +1,37 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\out\";
-%%
-% phiFile = strcat(dir,"ff.txt");
-% phiAnlFile = strcat(dir,"ffAnl.txt");
-phiFile = strcat(dir,"local.txt");
-phiAnlFile = strcat(dir,"localAnl.txt");
+phiFile = strcat(dir,"phi.txt");
+phiAnlFile = strcat(dir,"phiAnl.txt");
 
 phi = readmatrix(phiFile).';
 phiAnl = readmatrix(phiAnlFile).';
-pmax = size(phi,2);
+numP = size(phi,2);
+
+phi = sortrows(phi);
+phiAnl = sortrows(phiAnl);
 
 % Nobs = 1000;
 % phi = reshape(phi,Nobs,[],2);
 
 %%
-theta = linspace(0,2*pi,size(phi,1));
-pmin = 1;
-pvec = pmin:pmax;
+nvec = 1:size(phi,1);
+% nvec = linspace(0,2*pi,size(phi,1));
+pmax = 4;
+pvec = pmax-numP+1:pmax;
 
 figure(1);
-plot(theta, phiAnl, theta, phi(:,pvec), '-o');
-        % 'LineWidth',[2,ones(1,pmax-pmin+1)]
-% ylim([-4620,-4600])
+% [phi, phiAnl]
+plot(nvec, phiAnl, nvec, phi);
 legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
-     'UniformOutput',false))] );
+     'UniformOutput',false))],...
+     'Location','southeast');
 
 figure(2);
 relErr = abs(phi-phiAnl)./abs(phiAnl);
-semilogy(theta, relErr(:,pvec), '-o');
+semilogy(nvec, relErr, '-o');
 
 legend(strcat(" p = ", arrayfun(@num2str,pvec,...
     'UniformOutput',false)) );
 
-meanRelErr = mean(relErr,1);
-semilogy(pvec,meanRelErr(pvec), '-o');
+% figure(3);
+% meanRelErr = mean(relErr,1);
+% semilogy(pvec,meanRelErr, '-o');

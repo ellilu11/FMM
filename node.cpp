@@ -160,7 +160,7 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
             break;
 
         default :
-            // throw exception
+            throw std::runtime_error("Invalid direction");
         break;
     }
 }

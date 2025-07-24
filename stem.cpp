@@ -4,35 +4,35 @@
 #include "math.h"
 #include "stem.h"
 
-Stem::Stem(cmplxVec& psn,
-    realVec& qs,
+Stem::Stem(
+    ParticleVec& particles,
     const cmplx zk,
     const double L,
     const int lvl,
     const int branchIdx,
     Stem* const base)
-    : Node(psn, qs, zk, L, lvl, branchIdx, base)
+    : Node(particles, zk, L, lvl, branchIdx, base)
 {
-    std::vector<cmplxVec> branchpsn(4);
-    std::vector<realVec> branchQs(4);
-    // for (auto [ele, elq] : std::views::zip(psn, qs)) {
-    for (size_t n = 0; n < psn.size(); ++n) {
-        size_t k = cmplx2Idx<bool>(psn[n] > zk);
-        assert(k < branchpsn.size());
-
-        branchpsn[k].push_back(psn[n]);
-        branchQs[k].push_back(qs[n]);
+    std::vector<ParticleVec> branchParts(4);
+    
+    // Assign every particle in node to a branch node
+    for (const auto& particle : particles) {
+        size_t k = cmplx2Idx<bool>(particle->getPos() > zk);
+        assert(k < branchParts.size());
+        branchParts[k].push_back(particle);
     }
-    for (size_t k = 0; k < branchpsn.size(); ++k) {
+
+    // Construct branch nodes
+    for (size_t k = 0; k < branchParts.size(); ++k) {
         cmplx dzk( pow(-1,k%2+1), pow(-1,k/2+1) );
         dzk *= L_ / 4.0;
 
         std::shared_ptr<Node> branch;
         // if branch has at least two particles and is not lvl 0, then further subdivide it
-        if (branchpsn[k].size() > 1 && lvl-1)
-            branch = std::make_shared<Stem>(branchpsn[k], branchQs[k], zk+dzk, L_/2, lvl-1, k, this);
+        if (branchParts[k].size() > 1 && lvl-1)
+            branch = std::make_shared<Stem>(branchParts[k], zk+dzk, L_/2, lvl-1, k, this);
         else
-            branch = std::make_shared<Leaf>(branchpsn[k], branchQs[k], zk+dzk, L_/2, lvl-1, k, this);
+            branch = std::make_shared<Leaf>(branchParts[k], zk+dzk, L_/2, lvl-1, k, this);
 
         branches.push_back(branch);
     }
@@ -88,9 +88,9 @@ void Stem::buildLocalCoeffs() {
             }
             localCoeffs.push_back(b_k);
         }
-        // comment out for mpoleToLocalTest()
+
         if (!base->isRoot()) localCoeffs += base->getShiftedLocalCoeffs(zk); 
-        // iList.clear();
+        iList.clear();
     }
 
     for (const auto& branch : branches)

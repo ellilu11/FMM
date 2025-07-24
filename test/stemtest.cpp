@@ -55,13 +55,15 @@ void Stem::mpoleToLocalTest() {
     //cout << iListBase.size() << '\n';
     //iList.insert(iList.end(), iListBase.begin(), iListBase.end());
 
-    for (const auto& obs : node->getPsn()) {
+    for (const auto& obs : node->getParticles()) {
         cmplx phi;
 
-        for (size_t src = 0; src < psn.size(); ++src) {
-            auto dist = obs - psn[src];
-            if (abs(dist) > 1.0E-9)
-                phi -= qs[src] * log(dist);
+        // for (size_t src = 0; src < pos.size(); ++src) {
+        for (const auto& src : particles) {
+            // auto dist = obs - pos[src];
+            // if (abs(dist) > 1.0E-9)
+            if (src != obs)
+                phi -= src->getCharge() * log(obs->getPos() - src->getPos());
         }
         outAnlFile << phi.real() << " ";
     }
@@ -73,11 +75,9 @@ void Stem::mpoleToLocalTest() {
     for (const auto& iNode : iList)
         iNode->setNodeStat(2);
 
-    std::ofstream psnFile, nodeFile;
-    psnFile.open("out/srcs.txt");
+    std::ofstream nodeFile;
     nodeFile.open("out/nodes.txt");
 
-    printPsn(psnFile);
     printNode(nodeFile);
 }
 
@@ -100,10 +100,10 @@ void Stem::mpoleToLocalTest() {
 //    for (const auto& iNode : iList)
 //        iNode->setNodeStat(2);
 //
-//    std::ofstream psnFile, nodeFile;
-//    psnFile.open("out/srcs.txt");
+//    std::ofstream posFile, nodeFile;
+//    posFile.open("out/srcs.txt");
 //    nodeFile.open("out/nodes.txt");
 //
-//    printPsn(psnFile);
+//    printPos(posFile);
 //    printNode(nodeFile);
 //}

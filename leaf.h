@@ -7,8 +7,8 @@
 
 class Leaf final : public Node {
 public:
-    Leaf(cmplxVec&,
-        realVec&,
+    Leaf(
+        ParticleVec&,
         const cmplx,
         const double,
         const int,

@@ -3,10 +3,12 @@
 #include <cmath>
 #include <complex>
 
+using namespace std;
+
 using cmplx = std::complex<double>;
 using realVec = std::vector<double>;
 using cmplxVec = std::vector<cmplx>;
-constexpr cmplx iu(0,1);
+constexpr cmplx iu(0, 1);
 
 std::complex<bool> operator> (cmplx z, cmplx w) {
     std::complex<bool> bools(z.real() > w.real(), z.imag() > w.imag());
@@ -21,6 +23,13 @@ size_t cmplx2Idx(std::complex<T> z) {
 std::ostream& operator<< (std::ostream& out, const cmplx z) {
     out << z.real() << " " << z.imag();
     return out;
+}
+
+std::istream& operator>>(std::istream& in, cmplx& z) {
+    double real, imag;
+    if (in >> real >> imag)
+        z = cmplx(real, imag);
+    return in;
 }
 
 cmplxVec operator+= (cmplxVec& zs, const cmplxVec& ws) {
@@ -53,7 +62,6 @@ template <typename T>
 bool contains(std::vector<T>& vec, T val) {
     return std::find(vec.begin(), vec.end(), val) != vec.end();
 }
-
 
 
 

@@ -3,23 +3,23 @@
 #include "node.h"
 #include <iostream>
 
-Leaf::Leaf(cmplxVec& psn,
-    realVec& qs,
+Leaf::Leaf(
+    ParticleVec& particles,
     const cmplx zk,
     const double L,
     const int lvl,
     const int branchIdx,
     Stem* const base)
-    : Node(psn, qs, zk, L, lvl, branchIdx, base)
+    : Node(particles, zk, L, lvl, branchIdx, base)
 {
 }
 
 void Leaf::buildMpoleCoeffs() {
     for (int k = 0; k <= P_; ++k) {
         cmplx a_k;
-        for (size_t n = 0; n < psn.size(); ++n)
-            a_k += qs[n] *
-                k == 0 ? 1 : -pow(psn[n]-zk, k) / static_cast<double>(k);
+        for (const auto& src : particles)
+            a_k += src->getCharge() *
+                k == 0 ? 1 : -pow(src->getPos()-zk, k) / static_cast<double>(k);
         coeffs.push_back(a_k);
     }
 }
@@ -53,9 +53,8 @@ void Leaf::buildLocalCoeffs() {
             localCoeffs.push_back(b_k);
         }
 
-        // comment out for mpoleToLocalTest()
         if (!base->isRoot()) localCoeffs += base->getShiftedLocalCoeffs(zk); 
-        // iList.clear();
+        iList.clear();
     }
 
     evaluatePhi();
@@ -64,10 +63,10 @@ void Leaf::buildLocalCoeffs() {
 
 cmplxVec Leaf::getPhiFarSrc() {
     cmplxVec phis;
-    for (const auto& obs : psn) {
+    for (const auto& obs : particles) {
         cmplx phi;
         for (size_t k = 0; k <= P_; ++k)
-            phi -= localCoeffs[k] * pow(obs-zk, k);
+            phi -= localCoeffs[k] * pow(obs->getPos()-zk, k);
         phis.push_back(phi);
     }
     return phis;
@@ -76,18 +75,19 @@ cmplxVec Leaf::getPhiFarSrc() {
 cmplxVec Leaf::getPhiNearSrc() {
     cmplxVec phis;
 
-    for (size_t obs = 0; obs < psn.size(); ++obs) {
+    for (const auto& obs : particles) {
         cmplx phi;
+        auto obsPos = obs->getPos();
 
         // phi due to other particles in this node (apply reciprocity later)
-        for (size_t src = 0; src < psn.size(); ++src)
-            if (src != obs) phi -= qs[src] * std::log(psn[obs] - psn[src]);
+        for (const auto& src : particles)
+            if (src != obs) phi -= src->getCharge() * std::log(obsPos - src->getPos());
 
         // phi due to particles in neighboring nodes
         for (const auto& nbor : nbors) {
-            cmplxVec psnNbor = nbor->getPsn();
-            for (size_t src = 0; src < psnNbor.size(); ++src)
-                phi -= (nbor->getQs())[src] * std::log(psn[obs] - psnNbor[src]);
+            auto srcsNbor = nbor->getParticles();
+            for (const auto& src : srcsNbor)
+                phi -= src->getCharge() * std::log(obsPos - src->getPos());
         }
         phis.push_back(phi);
     }
@@ -95,8 +95,8 @@ cmplxVec Leaf::getPhiNearSrc() {
 }
 
 void Leaf::evaluatePhi() {
-    phis.resize(psn.size());
-    for (size_t n = 0; n < psn.size(); ++n)
+    phis.resize(particles.size());
+    for (size_t n = 0; n < particles.size(); ++n)
         phis[n] = getPhiFarSrc()[n] + getPhiNearSrc()[n];
     // phis = getPhiFarSrc() + getPhiNearSrc();
 }

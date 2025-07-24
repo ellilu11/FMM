@@ -6,8 +6,8 @@
 
 class Stem final : public Node {
 public:
-    Stem(cmplxVec&,
-        realVec&,
+    Stem(
+        ParticleVec&,
         const cmplx,
         const double,
         const int,
