@@ -13,9 +13,8 @@ Stem::Stem(
     Stem* const base)
     : Node(particles, zk, L, lvl, branchIdx, base)
 {
-    std::vector<ParticleVec> branchParts(4);
-    
     // Assign every particle in node to a branch node
+    std::vector<ParticleVec> branchParts(4);
     for (const auto& particle : particles) {
         size_t k = cmplx2Idx<bool>(particle->getPos() > zk);
         assert(k < branchParts.size());

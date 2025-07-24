@@ -24,10 +24,10 @@ ParticleVec makeRNGParticles(const int N, const double param0, const double para
     random_device rd;
     mt19937 gen(rd());
 
-    //T rand0(param0, param1);
-    //U rand1(param0, param1);
     T rand0(param0, param1);
-    U rand1(0, 2.0 * 3.1415927);
+    U rand1(param0, param1);
+    // T rand0(param0, param1);
+    // U rand1(0, 2.0 * 3.1415927);
 
     for (int n = 0; n < N; ++n) {
         //if constexpr (is_integral<T>::uniform_real_distribution<double>)
@@ -39,10 +39,10 @@ ParticleVec makeRNGParticles(const int N, const double param0, const double para
         //else
         //    throw std::runtime_error("Invalid probability distribution");
 
-        // cmplx z(rand0(gen), rand1(gen));
-        const auto R = abs(rand0(gen));
-        cmplx z(R * cos(rand1(gen)), R * sin(rand1(gen)));
-        particles.emplace_back(make_shared<Particle>(z, Q, M));
+        cmplx z(rand0(gen), rand1(gen));
+        // const auto R = abs(rand0(gen));
+        // cmplx z(R * cos(rand1(gen)), R * sin(rand1(gen)));
+        particles.emplace_back( make_shared<Particle>(z, Q, M) );
     }
     return particles;
 }
@@ -50,17 +50,14 @@ ParticleVec makeRNGParticles(const int N, const double param0, const double para
 int main(int argc, char *argv[])
 {
     // ==================== Make particles ==================== //
-    int Nsrcs = 1000;
-    Mode mode = Mode::GEN_GAUSSIAN;
+    int Nsrcs = 10000;
+    Mode mode = Mode::GEN_UNIFORM;
     ParticleVec srcs;
-    /*ifstream inFile;
-    istream_iterator<Particle> in_iter(inFile), eof;*/
 
     switch (mode) {
-        case Mode::READ_FROM_FILE :
-            /*inFile.open("out/srcs.txt");
-            srcs = ParticleVec(in_iter, eof);*/
-            break;
+        // case Mode::READ_FROM_FILE :
+            // srcs = import_particles("out/srcs.txt");
+            // break;
 
         case Mode::GEN_UNIFORM : 
             srcs = makeRNGParticles<uniform_real_distribution<double>>

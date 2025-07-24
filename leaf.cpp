@@ -96,8 +96,6 @@ cmplxVec Leaf::getPhiNearSrc() {
 
 void Leaf::evaluatePhi() {
     phis.resize(particles.size());
-    for (size_t n = 0; n < particles.size(); ++n)
-        phis[n] = getPhiFarSrc()[n] + getPhiNearSrc()[n];
-    // phis = getPhiFarSrc() + getPhiNearSrc();
+    phis = getPhiFarSrc() + getPhiNearSrc();
 }
 

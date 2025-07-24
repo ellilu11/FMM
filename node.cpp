@@ -179,7 +179,6 @@ void Node::buildNearNeighbors() {
 void Node::buildInteractionList() {
     assert( !isRoot() );
 
-    // base->buildNearNeighbors(); // uncomment for iListTest() only
     auto baseNbors = base->getNearNeighbors();
 
     for (const auto& baseNbor : baseNbors)

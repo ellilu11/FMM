@@ -10,6 +10,7 @@ using ParticleVec = std::vector<std::shared_ptr<Particle>>;
 
 class Particle {
 public :
+    Particle() = default;
     Particle(const cmplx z, const double q, const double m)
         : pos(z), charge(q), mass(m)
     {
@@ -35,3 +36,9 @@ private :
     double mass;
     // cmplx vel;
 };
+
+//ParticleVec import_particles(const std::string& fname) {
+//    std::ifstream inFile(fname);
+//    std::istream_iterator<Particle> in_iter(inFile), eof;
+//    return ParticleVec(in_iter, eof);
+//}

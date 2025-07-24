@@ -38,8 +38,15 @@ cmplxVec operator+= (cmplxVec& zs, const cmplxVec& ws) {
     return zs;
 }
 
-cmplxVec operator+ (cmplxVec& zs, cmplxVec& ws) {
-    return zs += ws;
+//cmplxVec operator+ (cmplxVec& zs, cmplxVec& ws) {
+//    return zs += ws;
+//}
+
+cmplxVec operator+ (const cmplxVec& zs, const cmplxVec& ws) {
+    cmplxVec sum;
+    for (size_t i = 0; i < zs.size(); ++i)
+        sum.emplace_back( zs[i] + ws[i] );
+    return sum;
 }
 
 const uint64_t fallingFactorial(int n, int k) {
