@@ -369,3 +369,6 @@ FodyWeavers.xsd
 /TestMultipole/TestMultipole.vcxproj.filters
 /plotNodes.asv
 /plotPhi.asv
+/test/leaftest.cpp
+/test/nodetest.cpp
+/test/stemtest.cpp
