@@ -18,6 +18,7 @@ nvec = 1:size(phi,1);
 pmax = 4;
 pvec = pmax-numP+1:pmax;
 
+close all;
 figure(1);
 % [phi, phiAnl]
 plot(nvec, phiAnl, nvec, phi);

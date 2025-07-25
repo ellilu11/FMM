@@ -12,7 +12,7 @@ Leaf::Leaf(
 }
 
 void Leaf::buildMpoleCoeffs() {
-    for (int k = 0; k <= P_; ++k) {
+    for (int k = 0; k <= order; ++k) {
         cmplx a_k;
         for (const auto& src : particles)
             a_k += src->getCharge() *
@@ -22,15 +22,22 @@ void Leaf::buildMpoleCoeffs() {
 }
 
 void Leaf::buildLocalCoeffs() {
-    buildLocalCoeffsFromIList();
+    buildMpoleToLocalCoeffs();
     evaluatePhi();
     // evaluateFld();
 }
 
 cmplxVec Leaf::getPhiFarSrc() {
+    //cmplxVec phis(particles.size());
+    //auto evaluateLocalExp = [this](std::shared_ptr<Particle> p) {
+    //    return -evaluatePoly<cmplx>(localCoeffs, p->getPos()-center);
+    //    };
+    //std::transform(particles.begin(), particles.end(), phis.begin(), evaluateLocalExp);
+
     cmplxVec phis;
     for (const auto& obs : particles)
         phis.push_back( -evaluatePoly<cmplx>(localCoeffs, obs->getPos()-center) );
+
     return phis;
 }
 

@@ -9,13 +9,10 @@ Stem::Stem(
     Stem* const base)
     : Node(particles, center, L, lvl, branchIdx, base)
 {
-    // Assign every particle in node to a branch node
+    // Assign every particle in node to a branch based on its position relative to center
     std::vector<ParticleVec> branchParts(4);
-    for (const auto& particle : particles) {
-        size_t k = cmplx2Idx<bool>(particle->getPos() > center);
-        assert(k < branchParts.size());
-        branchParts[k].push_back(particle);
-    }
+    for (const auto& p : particles)
+        branchParts[bools2Idx(p->getPos() > center)].push_back(p);
 
     // Construct branch nodes
     for (size_t k = 0; k < branchParts.size(); ++k) {
@@ -34,14 +31,14 @@ Stem::Stem(
 }
 
 void Stem::buildMpoleCoeffs() {
-    coeffs.resize(P_+1);
+    coeffs.resize(order+1);
 
     for (const auto& branch : branches) {
         branch->buildMpoleCoeffs();
         auto branchCoeffs = branch->getMpoleCoeffs();
         coeffs[0] += branchCoeffs[0];
 
-        for (size_t l = 1; l <= P_; ++l) {
+        for (size_t l = 1; l <= order; ++l) {
             auto branchCoeffs = branch->getMpoleCoeffs();
             auto dz = branch->getCenter() - center;
 
@@ -59,7 +56,7 @@ void Stem::buildMpoleCoeffs() {
 }
 
 void Stem::buildLocalCoeffs() {
-    buildLocalCoeffsFromIList();
+    buildMpoleToLocalCoeffs();
 
     for (const auto& branch : branches)
         branch->buildLocalCoeffs();

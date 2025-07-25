@@ -3,7 +3,7 @@
 const cmplx Node::getFfield(const cmplx z) {
     cmplx phi = -coeffs[0] * std::log(z-center);
 
-    for (size_t k = 1; k < P_; ++k)
+    for (size_t k = 1; k < order; ++k)
         phi -= coeffs[k] / std::pow(z-center, k);
 
     return phi;
@@ -75,9 +75,9 @@ void Node::nfieldTest() {
     outFile << setprecision(15) << scientific;
     outAnlFile << setprecision(15) << scientific;
 
-    const int P = Node::getP();
+    const int P = Node::getExpansionOrder();
     for (int p = 1; p <= P; ++p) {
-        Node::setP(p);
+        Node::setExpansionOrder(p);
         Node::buildBinomTable();
 
         cout << " Computing upward pass...   (" << " P = " << p << " )\n";
@@ -89,7 +89,7 @@ void Node::nfieldTest() {
         chrono::duration<double, milli> duration_ms = end - start;
         cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-        cout << " Computing downward pass... (" << " P = " << P_ << " )\n";
+        cout << " Computing downward pass... (" << " P = " << order << " )\n";
         start = chrono::high_resolution_clock::now();
 
         buildLocalCoeffs();

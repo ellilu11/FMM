@@ -15,8 +15,7 @@ std::complex<bool> operator> (cmplx z, cmplx w) {
     return bools;
 }
 
-template <typename T>
-size_t cmplx2Idx(std::complex<T> z) {
+size_t bools2Idx(std::complex<bool> z) {
     return z.real() + 2*z.imag();
 }
 
@@ -41,7 +40,7 @@ cmplxVec operator+= (cmplxVec& zs, const cmplxVec& ws) {
 cmplxVec operator+ (const cmplxVec& zs, const cmplxVec& ws) {
     cmplxVec sum;
     for (size_t i = 0; i < zs.size(); ++i)
-        sum.emplace_back( zs[i] + ws[i] );
+        sum.push_back( zs[i] + ws[i] );
     return sum;
 }
 
@@ -66,7 +65,8 @@ bool contains(std::vector<T>& vec, T val) {
     return std::find(vec.begin(), vec.end(), val) != vec.end();
 }
 
-// returns \sum_i coeffs[i] * z^i
+// return \sum_i (coeffs[i] * z^i)
+// understand why passing coeffs by ref yields larger error
 template <typename T>
 const T evaluatePoly(std::vector<T> coeffs, const T z) {
     for (ptrdiff_t i = coeffs.size()-2; i >= 0; --i) 

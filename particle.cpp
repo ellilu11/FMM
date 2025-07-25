@@ -2,7 +2,7 @@
 
 using namespace std;
 
-ParticleVec import_particles(const std::string& fname) {
+ParticleVec importParticles(const std::string& fname) {
     ifstream inFile(fname);
     string line;
     ParticleVec particles;
@@ -12,7 +12,7 @@ ParticleVec import_particles(const std::string& fname) {
         
         Particle p;
         if (iss >> p) 
-            particles.push_back(make_shared<Particle>(p));
+            particles.emplace_back(make_shared<Particle>(p));
         else
             throw std::runtime_error("Unable to parse line");
     }

@@ -23,9 +23,9 @@ void Stem::mpoleToLocalTest() {
     outFile << setprecision(15) << scientific;
     outAnlFile << setprecision(15) << scientific;
 
-    const int P = Node::getP();
+    const int P = Node::getExpansionOrder();
     for (int p = 1; p <= P; ++p) {
-        Node::setP(p);
+        Node::setExpansionOrder(p);
         Node::buildBinomTable();
 
         cout << " Computing upward pass...   (" << " P = " << p << " )\n";

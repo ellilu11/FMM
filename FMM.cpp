@@ -13,43 +13,43 @@ namespace Param {
     extern constexpr double EPS     = 1.0E-1;
 }
 
-enum class Mode {
-    READ_FROM_FILE,
-    GEN_RNG
-};
-
 int main(int argc, char *argv[])
 {
     // ==================== Make particles ==================== //
-    int Nsrcs;
-    Mode mode = Mode::READ_FROM_FILE;
+    enum class Mode {
+        READ,
+        RNG,
+        REGULAR
+    };
+
+    constexpr Mode mode = Mode::READ;
     ParticleVec srcs;
+    int Nsrcs;
     ofstream srcFile;
 
     switch (mode) {
-        case Mode::READ_FROM_FILE :
-             srcs = import_particles("config/srcs.txt");
+        case Mode::READ :
+             srcs = importParticles("config/srcs.txt");
              Nsrcs = srcs.size();
              break;
 
-        case Mode::GEN_RNG : 
-            Nsrcs = 5000;
+        case Mode::RNG : 
+            Nsrcs = 10000;
             srcs = makeRNGParticles<uniform_real_distribution<double>>
                     (Nsrcs, -Param::L/2, Param::L/2);
+            // src = makeRNGParticles<normal_distribution<double>, uniform_real_distribution<double>>
+            // (Nsrcs, 0.0, 0.1*Param::L);
+
             srcFile.open("config/srcs.txt");
             for (const auto& src : srcs) srcFile << *src;
             break;
-        //case Mode::GEN_GAUSSIAN :
-        //    srcs =
-        //        makeRNGParticles<normal_distribution<double>, uniform_real_distribution<double>>
-        //            (Nsrcs, 0.0, 0.1*Param::L);
-        //    break;
+
         default : 
             throw std::runtime_error("Invalid mode");
     }
 
     // ==================== Partition domain ==================== //
-    cout << " Partitioning domain...    (" << " N = " << Nsrcs << " )\n";
+    cout << " Partitioning domain...     (" << " N = " << Nsrcs << " )\n";
     auto start = chrono::high_resolution_clock::now();
 
     const int Nlvl = ceil(log(Nsrcs) / log(4.0));
@@ -68,8 +68,8 @@ int main(int argc, char *argv[])
     root->printNode(nodeFile);
 
     // ==================== Upward pass ==================== //
-    const int P = Node::getP();
-    cout << " Computing upward pass...   (" << " Order = " << P << " )\n";
+    const int order = Node::getExpansionOrder();
+    cout << " Computing upward pass...   (" << " Order = " << order << " )\n";
     start = chrono::high_resolution_clock::now();
 
     Node::buildBinomTable();
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
     // root->printMpoleCoeffs(mpoleCoeffFile);
 
     // ==================== Downward pass ==================== //
-    cout << " Computing downward pass... (" << " Order = " << P << " )\n";
+    cout << " Computing downward pass... (" << " Order = " << order << " )\n";
     start = chrono::high_resolution_clock::now();
 
     root->buildLocalCoeffs();

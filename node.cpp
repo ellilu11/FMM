@@ -2,13 +2,13 @@
 
 using enum Dir;
 
-int Node::P_ = ceil(-log(Param::EPS) / log(2)); // # terms in multipole expansion
+int Node::order = ceil(-log(Param::EPS) / log(2)); // # terms in multipole expansion
 std::vector<std::vector<uint64_t>> Node::binomTable;
 
 void Node::buildBinomTable() {
-    for (int n = 0; n <= 2 * P_ - 1; ++n) {
+    for (int n = 0; n <= 2 * order - 1; ++n) {
         std::vector<uint64_t> binomN;
-        for (int k = 0; k <= std::min(n,P_-1); ++k)
+        for (int k = 0; k <= std::min(n,order-1); ++k)
             binomN.emplace_back(binom(n, k));
         binomTable.push_back( binomN );
     }
@@ -186,12 +186,12 @@ void Node::buildInteractionList() {
     assert(iList.size() <= pow(6,Param::DIM) - pow(3,Param::DIM));
 }
 
-void Node::buildLocalCoeffsFromIList() {
+void Node::buildMpoleToLocalCoeffs() {
     buildNearNeighbors();
 
     if (!isRoot()) {
         buildInteractionList();
-        localCoeffs.resize(P_+1);
+        localCoeffs.resize(order+1);
 
         for (const auto& iNode : iList) {
             auto mpoleCoeffs( iNode->getMpoleCoeffs() );
@@ -199,19 +199,19 @@ void Node::buildLocalCoeffsFromIList() {
             auto mdz2k( cmplx(1,0) );
 
             cmplxVec innerCoeffs; // innerCoeffs[k] = mpoleCoeffs[k] / (-dz)^k
-            for (size_t k = 0; k <= P_; ++k) {
+            for (size_t k = 0; k <= order; ++k) {
                 innerCoeffs.push_back(mpoleCoeffs[k] / mdz2k);
                 mdz2k *= -dz;
             }
 
             localCoeffs[0] += innerCoeffs[0] * std::log(-dz);
-            for (size_t k = 1; k <= P_; ++k)
+            for (size_t k = 1; k <= order; ++k)
                 localCoeffs[0] += innerCoeffs[k];
 
-            for (size_t l = 1; l <= P_; ++l) {
+            for (size_t l = 1; l <= order; ++l) {
                 cmplx dz2l = std::pow(dz, l);
                 localCoeffs[l] -= innerCoeffs[0] / (static_cast<double>(l) * dz2l);
-                for (size_t k = 1; k <= P_; ++k)
+                for (size_t k = 1; k <= order; ++k)
                     localCoeffs[l] += innerCoeffs[k] / dz2l
                                         * static_cast<double>(binomTable[k+l-1][k-1]);
             }
@@ -226,8 +226,8 @@ const cmplxVec Node::getShiftedLocalCoeffs(const cmplx z0) {
     assert( !isRoot() );
     
     auto shiftedCoeffs( localCoeffs );
-    for (size_t j = 0; j <= P_ - 1; ++j)
-        for (size_t k = P_ - j - 1; k <= P_ - 1; ++k)
+    for (size_t j = 0; j <= order - 1; ++j)
+        for (size_t k = order - j - 1; k <= order - 1; ++k)
             shiftedCoeffs[k] += shiftedCoeffs[k+1] * (z0 - center);
 
     return shiftedCoeffs;

@@ -36,8 +36,8 @@ public:
     };
 
     static void buildBinomTable();
-    static const int getP() { return P_; }
-    static void setP(const int p) { P_ = p; }
+    static const int getExpansionOrder() { return order; }
+    static void setExpansionOrder(const int p) { order = p; }
 
     ParticleVec getParticles() const { return particles; }
     const cmplx getCenter() const { return center; }
@@ -62,7 +62,7 @@ public:
     void buildInteractionList();
     std::vector<std::shared_ptr<Node>> const getInteractionList()  { return iList; }
 
-    void buildLocalCoeffsFromIList();
+    void buildMpoleToLocalCoeffs();
 
     const cmplxVec getShiftedLocalCoeffs(const cmplx);
     const cmplx getFfield(const cmplx);
@@ -86,7 +86,7 @@ public:
     // virtual void iListTest() = 0;
 
 protected:
-    static int P_;
+    static int order;
     static std::vector<std::vector<uint64_t>> binomTable;
 
     ParticleVec particles;

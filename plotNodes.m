@@ -14,7 +14,8 @@ lengs = nodes(:,3);
 nodeVec = [nodes(:,1:3),lengs];
 nodeVec(:,1:2) = nodeVec(:,1:2) - nodeVec(:,3:4)/2;
 
-figure();
+close all;
+figure(1);
 hold on;
 
 for node = 1:length(nodes)

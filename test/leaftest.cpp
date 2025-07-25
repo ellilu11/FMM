@@ -10,7 +10,7 @@ void Leaf::mpoleToLocalTest() {
 
     for (const auto& obs : particles) {
         cmplx phi;
-        for (size_t k = 0; k < P_; ++k)
+        for (size_t k = 0; k < order; ++k)
             phi -= localCoeffs[k] * pow(obs->getPos()-center, k);
         outFile << phi << " ";
     }
