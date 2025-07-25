@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
         REGULAR
     };
 
-    constexpr Mode mode = Mode::READ;
+    constexpr Mode mode = Mode::RNG;
     ParticleVec srcs;
     int Nsrcs;
     ofstream srcFile;
@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
              break;
 
         case Mode::RNG : 
-            Nsrcs = 10000;
+            Nsrcs = 1000;
             srcs = makeRNGParticles<uniform_real_distribution<double>>
                     (Nsrcs, -Param::L/2, Param::L/2);
             // src = makeRNGParticles<normal_distribution<double>, uniform_real_distribution<double>>
@@ -49,15 +49,16 @@ int main(int argc, char *argv[])
     }
 
     // ==================== Partition domain ==================== //
-    cout << " Partitioning domain...     (" << " N = " << Nsrcs << " )\n";
+    const int Nlvl = ceil(log(Nsrcs) / log(4.0));
+    Node::setMaxLvl(Nlvl);
+    cout << " Partitioning domain...     (" << " Nsrcs = " << Nsrcs << ", Nlvl = " << Nlvl << " )\n";
     auto start = chrono::high_resolution_clock::now();
 
-    const int Nlvl = ceil(log(Nsrcs) / log(4.0));
     shared_ptr<Node> root;
     if (Nsrcs > 1)
-        root = make_shared<Stem>(srcs, 0, Param::L, Nlvl, 0, nullptr);
+        root = make_shared<Stem>(srcs, 0.0, 0, 0, nullptr);
     else
-        root = make_shared<Leaf>(srcs, 0, Param::L, Nlvl, 0, nullptr);
+        root = make_shared<Leaf>(srcs, 0.0, 0, 0, nullptr);
     
     auto end = chrono::high_resolution_clock::now();
     chrono::duration<double, milli> duration_ms = end - start;
@@ -97,7 +98,8 @@ int main(int argc, char *argv[])
     
     ofstream outFile;
     outFile.open("out/phi.txt");
-    root->printPhi(outFile);
+    for (const auto& src : srcs)
+        src->printPhi(outFile);
 
     // root->mpoleToLocalTest();
     // root->nfieldTest();
@@ -109,7 +111,7 @@ int main(int argc, char *argv[])
     cout << " Computing pairwise..." << endl;
     start = chrono::high_resolution_clock::now();
 
-    auto phisAnl = root->getAnalyticNfields();
+    auto phisAnl = root->getDirectPhis();
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;

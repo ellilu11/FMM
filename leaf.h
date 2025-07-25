@@ -9,39 +9,36 @@ public:
     Leaf(
         ParticleVec&,
         const cmplx,
-        const double,
         const int,
         const int,
         Stem* const);
 
     void buildMpoleCoeffs();
+    void buildLocalCoeffs();
+    cmplxVec getPhisFar();
+    cmplxVec getPhisNear();
+    cmplxVec getFldsFar();
+    cmplxVec getFldsNear();
+    void evaluateSolAtParticles();
 
-    void resetNode() { 
+    const cmplx getFfieldFromLeaf(const cmplx z) {
+        return getDirectPhiFar(z);
+    }
+
+    void resetNode() {
         coeffs.clear();
         localCoeffs.clear();
         nbors.clear();
         iList.clear();
-        phis.clear();
     }
 
-    const cmplx getFfieldFromLeaf(const cmplx z) {
-        return getFfield(z);
-    }
-
-    void buildLocalCoeffs();
-    cmplxVec getPhiFarSrc();
-    cmplxVec getPhiNearSrc();
-    void evaluatePhi();
-
-    cmplxVec getPhi() { return phis; }
-
-    void printPhi(std::ofstream& f) {
-        for (const auto& phi : phis)
-            f << phi.real() << ' ';
-    }
+    //void printPhi(std::ofstream& f) {
+    //    for (const auto& phi : phis)
+    //        f << phi.real() << ' ';
+    //}
 
     void printNode(std::ofstream& f) {
-        f << center << " " << L_ << " " << nodeStat << '\n';
+        f << center << " " << nodeLeng << " " << nodeStat << '\n';
     }
 
     void printMpoleCoeffs(std::ofstream& f) {
@@ -59,6 +56,6 @@ public:
     void mpoleToLocalTest();
     //void iListTest();
 
-private:
-    cmplxVec phis;
+//private:
+//    cmplxVec phis;
 };

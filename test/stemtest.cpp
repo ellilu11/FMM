@@ -34,8 +34,8 @@ void Stem::mpoleToLocalTest() {
         cout << " Computing downward pass... (" << " P = " << p << " )\n";
         buildLocalCoeffs();
 
-        leafNode->evaluatePhi();
-        leafNode->printPhi(outFile);
+        leafNode->evaluateSolAtParticles();
+        // leafNode->printPhi(outFile);
         outFile << '\n';
 
         if (p < P) {

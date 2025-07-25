@@ -2,7 +2,9 @@
 
 using enum Dir;
 
-int Node::order = ceil(-log(Param::EPS) / log(2)); // # terms in multipole expansion
+int Node::order = ceil(-std::log(Param::EPS) / std::log(2)); // # terms in multipole expansion
+int Node::maxLvl;
+double Node::rootLeng = Param::L;
 std::vector<std::vector<uint64_t>> Node::binomTable;
 
 void Node::buildBinomTable() {
@@ -173,6 +175,7 @@ void Node::buildNearNeighbors() {
 void Node::buildInteractionList() {
     assert( !isRoot() );
 
+    buildNearNeighbors();
     auto baseNbors = base->getNearNeighbors();
 
     for (const auto& baseNbor : baseNbors)
@@ -187,44 +190,41 @@ void Node::buildInteractionList() {
 }
 
 void Node::buildMpoleToLocalCoeffs() {
-    buildNearNeighbors();
+    if ( isRoot() ) return;
 
-    if (!isRoot()) {
-        buildInteractionList();
-        localCoeffs.resize(order+1);
+    buildInteractionList();
+    localCoeffs.resize(order+1);
 
-        for (const auto& iNode : iList) {
-            auto mpoleCoeffs( iNode->getMpoleCoeffs() );
-            auto dz( iNode->getCenter() - center );
-            auto mdz2k( cmplx(1,0) );
+    for (const auto& iNode : iList) {
+        auto mpoleCoeffs( iNode->getMpoleCoeffs() );
+        auto dz( iNode->getCenter() - center );
+        auto mdz2k( cmplx(1,0) );
 
-            cmplxVec innerCoeffs; // innerCoeffs[k] = mpoleCoeffs[k] / (-dz)^k
-            for (size_t k = 0; k <= order; ++k) {
-                innerCoeffs.push_back(mpoleCoeffs[k] / mdz2k);
-                mdz2k *= -dz;
-            }
-
-            localCoeffs[0] += innerCoeffs[0] * std::log(-dz);
-            for (size_t k = 1; k <= order; ++k)
-                localCoeffs[0] += innerCoeffs[k];
-
-            for (size_t l = 1; l <= order; ++l) {
-                cmplx dz2l = std::pow(dz, l);
-                localCoeffs[l] -= innerCoeffs[0] / (static_cast<double>(l) * dz2l);
-                for (size_t k = 1; k <= order; ++k)
-                    localCoeffs[l] += innerCoeffs[k] / dz2l
-                                        * static_cast<double>(binomTable[k+l-1][k-1]);
-            }
+        cmplxVec innerCoeffs; // innerCoeffs[k] = mpoleCoeffs[k] / (-dz)^k
+        for (size_t k = 0; k <= order; ++k) {
+            innerCoeffs.push_back(mpoleCoeffs[k] / mdz2k);
+            mdz2k *= -dz;
         }
 
-        if (!base->isRoot()) localCoeffs += base->getShiftedLocalCoeffs(center);
-        iList.clear();
+        localCoeffs[0] += innerCoeffs[0] * std::log(-dz);
+        for (size_t k = 1; k <= order; ++k)
+            localCoeffs[0] += innerCoeffs[k];
+
+        auto dz2l = dz;
+        for (size_t l = 1; l <= order; ++l) {
+            localCoeffs[l] -= innerCoeffs[0] / (static_cast<double>(l) * dz2l);
+            for (size_t k = 1; k <= order; ++k)
+                localCoeffs[l] += innerCoeffs[k] / dz2l
+                                    * static_cast<double>(binomTable[k+l-1][k-1]);
+            dz2l *= dz;
+        }
     }
+
+    if (!base->isRoot()) localCoeffs += base->getShiftedLocalCoeffs(center);
+    iList.clear();
 }
 
 const cmplxVec Node::getShiftedLocalCoeffs(const cmplx z0) {
-    assert( !isRoot() );
-    
     auto shiftedCoeffs( localCoeffs );
     for (size_t j = 0; j <= order - 1; ++j)
         for (size_t k = order - j - 1; k <= order - 1; ++k)
@@ -233,3 +233,30 @@ const cmplxVec Node::getShiftedLocalCoeffs(const cmplx z0) {
     return shiftedCoeffs;
 }
 
+const cmplx Node::getDirectPhiFar(const cmplx z) {
+    cmplx phi = -coeffs[0] * std::log(z-center);
+
+    for (size_t k = 1; k < order; ++k)
+        phi -= coeffs[k] / std::pow(z-center, k);
+
+    return phi;
+}
+
+const cmplx Node::getDirectPhi(const cmplx z) {
+    cmplx phi;
+    for (const auto& particle : particles)
+        phi -= particle->getCharge() * std::log(z - particle->getPos());
+    return phi;
+}
+
+const cmplxVec Node::getDirectPhis() {
+    cmplxVec phis;
+
+    for (const auto& obs : particles) {
+        cmplx phi;
+        for (const auto& src : particles)
+            if (src != obs) phi -= src->getCharge() * std::log(obs->getPos() - src->getPos());
+        phis.push_back(phi);
+    }
+    return phis;
+}

@@ -4,10 +4,8 @@
 
 class Stem final : public Node {
 public:
-    Stem(
-        ParticleVec&,
+    Stem(ParticleVec&,
         const cmplx,
-        const double,
         const int,
         const int,
         Stem* const);
@@ -31,13 +29,13 @@ public:
 
     void buildLocalCoeffs();
 
-    void printPhi(std::ofstream& f) {
-        for (const auto& branch : branches) 
-            branch->printPhi(f);
-    }
+    //void printPhi(std::ofstream& f) {
+    //    for (const auto& branch : branches) 
+    //        branch->printPhi(f);
+    //}
 
     void printNode(std::ofstream& f) {
-        f << center << " " << L_ << " " << nodeStat << '\n';
+        f << center << " " << nodeLeng << " " << nodeStat << '\n';
         for (const auto& branch : branches)
             branch->printNode(f);
     }

@@ -3,11 +3,10 @@
 Leaf::Leaf(
     ParticleVec& particles,
     const cmplx center,
-    const double L,
     const int lvl,
     const int branchIdx,
     Stem* const base)
-    : Node(particles, center, L, lvl, branchIdx, base)
+    : Node(particles, center, lvl, branchIdx, base)
 {
 }
 
@@ -23,11 +22,10 @@ void Leaf::buildMpoleCoeffs() {
 
 void Leaf::buildLocalCoeffs() {
     buildMpoleToLocalCoeffs();
-    evaluatePhi();
-    // evaluateFld();
+    evaluateSolAtParticles();
 }
 
-cmplxVec Leaf::getPhiFarSrc() {
+cmplxVec Leaf::getPhisFar() {
     //cmplxVec phis(particles.size());
     //auto evaluateLocalExp = [this](std::shared_ptr<Particle> p) {
     //    return -evaluatePoly<cmplx>(localCoeffs, p->getPos()-center);
@@ -41,7 +39,21 @@ cmplxVec Leaf::getPhiFarSrc() {
     return phis;
 }
 
-cmplxVec Leaf::getPhiNearSrc() {
+cmplxVec Leaf::getFldsFar() {
+    cmplxVec flds, dcoeffs;
+
+    for (size_t l = 1; l <= order; ++l)
+        dcoeffs.push_back(static_cast<double>(l) * localCoeffs[l]);
+
+    for (const auto& obs : particles) {
+        auto dphi = -evaluatePoly<cmplx>(dcoeffs, obs->getPos()-center);
+        flds.push_back( cmplx(-dphi.real(), dphi.imag()) ); // care with the minus signs
+    }
+
+    return flds;
+}
+
+cmplxVec Leaf::getPhisNear() {
     cmplxVec phis;
 
     for (const auto& obs : particles) {
@@ -63,8 +75,14 @@ cmplxVec Leaf::getPhiNearSrc() {
     return phis;
 }
 
-void Leaf::evaluatePhi() {
-    phis.resize(particles.size());
-    phis = getPhiFarSrc() + getPhiNearSrc();
+void Leaf::evaluateSolAtParticles() {
+    auto phis = getPhisFar() + getPhisNear();
+    auto flds = getFldsFar(); // + getFldsNear()
+
+    // any way to avoid the indexing?
+    for (size_t n = 0; n < particles.size(); ++n) {
+        particles[n]->setPhi(phis[n]);
+        particles[n]->setFld(flds[n]);
+    }
 }
 

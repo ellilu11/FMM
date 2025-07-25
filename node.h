@@ -8,6 +8,7 @@
 
 namespace Param {
     extern const int DIM;
+    extern const double L;
     extern const double EPS;
 }
 
@@ -27,17 +28,18 @@ public:
     Node(
         ParticleVec& particles,
         const cmplx center,
-        const double L,
         const int lvl,
         const int branchIdx,
         Node* const base)
-        : particles(particles), center(center), L_(L), lvl(lvl), branchIdx(branchIdx), base(base), nodeStat(0)
+        : particles(particles), center(center), lvl(lvl), branchIdx(branchIdx), base(base),
+        nodeLeng( rootLeng / static_cast<double>(std::pow(2,lvl)) ),
+        nodeStat(0)
     {
     };
 
-    static void buildBinomTable();
     static const int getExpansionOrder() { return order; }
     static void setExpansionOrder(const int p) { order = p; }
+    static void setMaxLvl(const int lvl) { maxLvl = lvl; }
 
     ParticleVec getParticles() const { return particles; }
     const cmplx getCenter() const { return center; }
@@ -52,8 +54,7 @@ public:
     cmplxVec getMpoleCoeffs() const { return coeffs; }
     cmplxVec getLocalCoeffs() const { return localCoeffs; }
 
-    void setNodeStat(int flag) { nodeStat = flag; }
-
+    static void buildBinomTable();
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
 
     void buildNearNeighbors();
@@ -65,16 +66,16 @@ public:
     void buildMpoleToLocalCoeffs();
 
     const cmplxVec getShiftedLocalCoeffs(const cmplx);
-    const cmplx getFfield(const cmplx);
+    const cmplx getDirectPhiFar(const cmplx);
     virtual const cmplx getFfieldFromLeaf(const cmplx) = 0;
-    const cmplx getAnalyticField(const cmplx);
-    const cmplxVec getAnalyticNfields();
+    const cmplx getDirectPhi(const cmplx);
+    const cmplxVec getDirectPhis();
 
     virtual void buildMpoleCoeffs() = 0;
     virtual void resetNode() = 0;
 
     virtual void buildLocalCoeffs() = 0;
-    virtual void printPhi(std::ofstream&) = 0;
+    // virtual void printPhi(std::ofstream&) = 0;
     virtual void printNode(std::ofstream&) = 0;
     virtual void printMpoleCoeffs(std::ofstream&) = 0;
     virtual void printLocalCoeffs(std::ofstream&) = 0;
@@ -83,16 +84,19 @@ public:
     // void ffieldTest(const int);
     virtual void mpoleToLocalTest() = 0;
     void nfieldTest();
+    void setNodeStat(int flag) { nodeStat = flag; }
     // virtual void iListTest() = 0;
 
 protected:
     static int order;
+    static int maxLvl;
+    static double rootLeng;
     static std::vector<std::vector<uint64_t>> binomTable;
 
     ParticleVec particles;
     const cmplx center;
-    const double L_;
     const int lvl;
+    const double nodeLeng;
     const int branchIdx;
     Node* const base;
 

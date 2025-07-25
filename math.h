@@ -67,6 +67,7 @@ bool contains(std::vector<T>& vec, T val) {
 
 // return \sum_i (coeffs[i] * z^i)
 // understand why passing coeffs by ref yields larger error
+// do not rewrite coeffs as it could be used later (to calculate fld after phi)
 template <typename T>
 const T evaluatePoly(std::vector<T> coeffs, const T z) {
     for (ptrdiff_t i = coeffs.size()-2; i >= 0; --i) 

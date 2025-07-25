@@ -20,7 +20,7 @@ pvec = pmax-numP+1:pmax;
 
 close all;
 figure(1);
-% [phi, phiAnl]
+[phiAnl, phi]
 plot(nvec, phiAnl, nvec, phi);
 legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
      'UniformOutput',false))],...

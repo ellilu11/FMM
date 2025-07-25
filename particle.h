@@ -18,6 +18,16 @@ public :
     const double getCharge() const { return charge; }
     const double getMass() const { return mass; }
 
+    void setPhi(cmplx phi_) { phi = phi_; }
+    void printPhi(std::ofstream& f) const {
+        f << phi.real() << ' ';
+    }
+
+    void setFld(cmplx fld_) { fld = fld_; }
+    void printFld(std::ofstream& f) const {
+        f << fld.real() << ' ' << fld.imag() << ' ';
+    }
+
     friend std::ostream& operator<<(std::ostream& os, Particle& p) {
         os << p.pos << " " << p.charge << " " << p.mass << '\n';
         return os;
@@ -30,8 +40,12 @@ public :
 
 private :
     cmplx pos;
+    // cmplx vel;
+    cmplx phi;
+    cmplx fld;
+
     double charge;
     double mass;
-    // cmplx vel;
+   
 };
 

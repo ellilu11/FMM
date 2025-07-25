@@ -1,33 +1,5 @@
 #include "../node.h"
 
-const cmplx Node::getFfield(const cmplx z) {
-    cmplx phi = -coeffs[0] * std::log(z-center);
-
-    for (size_t k = 1; k < order; ++k)
-        phi -= coeffs[k] / std::pow(z-center, k);
-
-    return phi;
-}
-
-const cmplx Node::getAnalyticField(const cmplx z) {
-    cmplx phi;
-    for (const auto& particle : particles)
-        phi -= particle->getCharge() * std::log(z - particle->getPos());
-    return phi;
-}
-
-const cmplxVec Node::getAnalyticNfields() {
-    cmplxVec phis;
-
-    for (const auto& obs : particles) {
-        cmplx phi;
-        for (const auto& src : particles)
-            if (src != obs) phi -= src->getCharge() * std::log(obs->getPos() - src->getPos());
-        phis.push_back(phi);
-    }
-    return phis;
-}
-
 /*
 void Node::ffieldTest(const int Nobs) {
     const double R(2.0*L_);
@@ -98,7 +70,7 @@ void Node::nfieldTest() {
         duration_ms = end - start;
         cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-        printPhi(outFile);
+        // printPhi(outFile);
         outFile << '\n';
 
         if (p < P) {
@@ -110,7 +82,7 @@ void Node::nfieldTest() {
     cout << " Computing pairwise..." << endl;
     auto start = chrono::high_resolution_clock::now();
 
-    auto phis = getAnalyticNfields();
+    auto phis = getDirectPhis();
     for (const auto& phi : phis)
         outAnlFile << phi.real() << '\n';
 
