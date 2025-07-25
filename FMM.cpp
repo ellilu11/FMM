@@ -80,12 +80,6 @@ int main(int argc, char *argv[])
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    // constexpr int NOBS = 1000;
-    // root->ffieldTest(NOBS);
-    // std::ofstream mpoleCoeffFile;
-    // mpoleCoeffFile.open("out/mpolecoeffs.txt");
-    // root->printMpoleCoeffs(mpoleCoeffFile);
-
     // ==================== Downward pass ==================== //
     cout << " Computing downward pass... (" << " Order = " << order << " )\n";
     start = chrono::high_resolution_clock::now();
@@ -100,12 +94,6 @@ int main(int argc, char *argv[])
     outFile.open("out/phi.txt");
     for (const auto& src : srcs)
         src->printPhi(outFile);
-
-    // root->mpoleToLocalTest();
-    // root->nfieldTest();
-    // std::ofstream localCoeffFile;
-    // localCoeffFile.open("out/localcoeffs.txt");
-    // root->printLocalCoeffs(localCoeffFile);
 
     // ==================== Compute pairwise ==================== //
     cout << " Computing pairwise..." << endl;

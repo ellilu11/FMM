@@ -54,6 +54,8 @@ public:
     cmplxVec getMpoleCoeffs() const { return coeffs; }
     cmplxVec getLocalCoeffs() const { return localCoeffs; }
 
+    void setNodeStat(int flag) { nodeStat = flag; }
+
     static void buildBinomTable();
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
 
@@ -67,7 +69,6 @@ public:
 
     const cmplxVec getShiftedLocalCoeffs(const cmplx);
     const cmplx getDirectPhiFar(const cmplx);
-    virtual const cmplx getFfieldFromLeaf(const cmplx) = 0;
     const cmplx getDirectPhi(const cmplx);
     const cmplxVec getDirectPhis();
 
@@ -75,17 +76,8 @@ public:
     virtual void resetNode() = 0;
 
     virtual void buildLocalCoeffs() = 0;
-    // virtual void printPhi(std::ofstream&) = 0;
+    virtual void printPhis(std::ofstream&) = 0;
     virtual void printNode(std::ofstream&) = 0;
-    virtual void printMpoleCoeffs(std::ofstream&) = 0;
-    virtual void printLocalCoeffs(std::ofstream&) = 0;
-
-    // tests (move later)
-    // void ffieldTest(const int);
-    virtual void mpoleToLocalTest() = 0;
-    void nfieldTest();
-    void setNodeStat(int flag) { nodeStat = flag; }
-    // virtual void iListTest() = 0;
 
 protected:
     static int order;

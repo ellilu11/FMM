@@ -18,6 +18,7 @@ public :
     const double getCharge() const { return charge; }
     const double getMass() const { return mass; }
 
+    const cmplx getPhi() const { return phi; }
     void setPhi(cmplx phi_) { phi = phi_; }
     void printPhi(std::ofstream& f) const {
         f << phi.real() << ' ';
