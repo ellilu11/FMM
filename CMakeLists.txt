@@ -12,7 +12,7 @@ endif()
 project ("FMM")
 
 # Add source to this project's executable.
-add_executable (FMM "FMM.cpp" "FMM.h")
+add_executable (FMM "fmm.cpp" "fmm.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET FMM PROPERTY CXX_STANDARD 20)

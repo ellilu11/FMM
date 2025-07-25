@@ -1,8 +1,6 @@
 #pragma once
 
-#include <complex>
-#include <vector>
-#include "math.h"
+#include "fmm.h"
 
 class Particle;
 
@@ -20,14 +18,14 @@ public :
     const double getCharge() const { return charge; }
     const double getMass() const { return mass; }
 
-    friend std::ostream& operator<<(std::ostream& out, Particle& p) {
-        out << p.pos << " " << p.charge << " " << p.mass << '\n';
-        return out;
+    friend std::ostream& operator<<(std::ostream& os, Particle& p) {
+        os << p.pos << " " << p.charge << " " << p.mass << '\n';
+        return os;
     }
 
-    friend std::istream& operator>>(std::istream& in, Particle& p) {
-        in >> p.pos >> p.charge >> p.mass;
-        return in;
+    friend std::istream& operator>>(std::istream& is, Particle& p) {
+        is >> p.pos >> p.charge >> p.mass;
+        return is;
     }
 
 private :
@@ -37,8 +35,3 @@ private :
     // cmplx vel;
 };
 
-//ParticleVec import_particles(const std::string& fname) {
-//    std::ifstream inFile(fname);
-//    std::istream_iterator<Particle> in_iter(inFile), eof;
-//    return ParticleVec(in_iter, eof);
-//}

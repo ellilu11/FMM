@@ -1,7 +1,3 @@
-#include <cassert>
-#include <iostream>
-#include "../leaf.h"
-#include "../math.h"
 #include "../stem.h"
 
 using namespace std;

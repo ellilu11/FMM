@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cmath>
-#include <complex>
+#include "fmm.h"
 
-using namespace std;
+#define _USE_MATH_DEFINES
 
 using cmplx = std::complex<double>;
 using realVec = std::vector<double>;
@@ -20,16 +20,16 @@ size_t cmplx2Idx(std::complex<T> z) {
     return z.real() + 2*z.imag();
 }
 
-std::ostream& operator<< (std::ostream& out, const cmplx z) {
-    out << z.real() << " " << z.imag();
-    return out;
+std::ostream& operator<< (std::ostream& os, const cmplx z) {
+    os << z.real() << " " << z.imag();
+    return os;
 }
 
-std::istream& operator>>(std::istream& in, cmplx& z) {
+std::istream& operator>>(std::istream& is, cmplx& z) {
     double real, imag;
-    if (in >> real >> imag)
+    if (is >> real >> imag)
         z = cmplx(real, imag);
-    return in;
+    return is;
 }
 
 cmplxVec operator+= (cmplxVec& zs, const cmplxVec& ws) {
@@ -37,10 +37,6 @@ cmplxVec operator+= (cmplxVec& zs, const cmplxVec& ws) {
        zs[i] += ws[i];
     return zs;
 }
-
-//cmplxVec operator+ (cmplxVec& zs, cmplxVec& ws) {
-//    return zs += ws;
-//}
 
 cmplxVec operator+ (const cmplxVec& zs, const cmplxVec& ws) {
     cmplxVec sum;
@@ -70,7 +66,12 @@ bool contains(std::vector<T>& vec, T val) {
     return std::find(vec.begin(), vec.end(), val) != vec.end();
 }
 
-
-
+// returns \sum_i coeffs[i] * z^i
+template <typename T>
+const T evaluatePoly(std::vector<T> coeffs, const T z) {
+    for (ptrdiff_t i = coeffs.size()-2; i >= 0; --i) 
+        coeffs[i] += coeffs[i+1] * z;
+    return coeffs[0];
+}
 
 

@@ -1,10 +1,4 @@
-#include "math.h"
 #include "node.h"
-#include "leaf.h"
-#include <cassert>
-#include <chrono>
-#include <iostream>
-#include <random>
 
 using enum Dir;
 
@@ -192,15 +186,50 @@ void Node::buildInteractionList() {
     assert(iList.size() <= pow(6,Param::DIM) - pow(3,Param::DIM));
 }
 
+void Node::buildLocalCoeffsFromIList() {
+    buildNearNeighbors();
+
+    if (!isRoot()) {
+        buildInteractionList();
+        localCoeffs.resize(P_+1);
+
+        for (const auto& iNode : iList) {
+            auto mpoleCoeffs( iNode->getMpoleCoeffs() );
+            auto dz( iNode->getCenter() - center );
+            auto mdz2k( cmplx(1,0) );
+
+            cmplxVec innerCoeffs; // innerCoeffs[k] = mpoleCoeffs[k] / (-dz)^k
+            for (size_t k = 0; k <= P_; ++k) {
+                innerCoeffs.push_back(mpoleCoeffs[k] / mdz2k);
+                mdz2k *= -dz;
+            }
+
+            localCoeffs[0] += innerCoeffs[0] * std::log(-dz);
+            for (size_t k = 1; k <= P_; ++k)
+                localCoeffs[0] += innerCoeffs[k];
+
+            for (size_t l = 1; l <= P_; ++l) {
+                cmplx dz2l = std::pow(dz, l);
+                localCoeffs[l] -= innerCoeffs[0] / (static_cast<double>(l) * dz2l);
+                for (size_t k = 1; k <= P_; ++k)
+                    localCoeffs[l] += innerCoeffs[k] / dz2l
+                                        * static_cast<double>(binomTable[k+l-1][k-1]);
+            }
+        }
+
+        if (!base->isRoot()) localCoeffs += base->getShiftedLocalCoeffs(center);
+        iList.clear();
+    }
+}
+
 const cmplxVec Node::getShiftedLocalCoeffs(const cmplx z0) {
     assert( !isRoot() );
     
     auto shiftedCoeffs( localCoeffs );
     for (size_t j = 0; j <= P_ - 1; ++j)
         for (size_t k = P_ - j - 1; k <= P_ - 1; ++k)
-            shiftedCoeffs[k] += (z0 - zk) * shiftedCoeffs[k+1];
+            shiftedCoeffs[k] += shiftedCoeffs[k+1] * (z0 - center);
 
     return shiftedCoeffs;
 }
-
 

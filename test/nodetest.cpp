@@ -1,16 +1,10 @@
-#include <cassert>
-#include <chrono>
-#include <iostream>
-#include <random>
-#include "../math.h"
 #include "../node.h"
-#include "../leaf.h"
 
 const cmplx Node::getFfield(const cmplx z) {
-    cmplx phi = -coeffs[0] * std::log(z-zk);
+    cmplx phi = -coeffs[0] * std::log(z-center);
 
     for (size_t k = 1; k < P_; ++k)
-        phi -= coeffs[k] / std::pow(z-zk, k);
+        phi -= coeffs[k] / std::pow(z-center, k);
 
     return phi;
 }

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-#include <complex>
 #include "node.h"
 
 class Stem final : public Node {
@@ -39,7 +37,7 @@ public:
     }
 
     void printNode(std::ofstream& f) {
-        f << zk << " " << L_ << " " << nodeStat << '\n';
+        f << center << " " << L_ << " " << nodeStat << '\n';
         for (const auto& branch : branches)
             branch->printNode(f);
     }

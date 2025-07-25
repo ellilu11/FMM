@@ -1,4 +1,9 @@
-﻿#include "FMM.h"
+﻿#include <iostream>
+#include <chrono>
+#include <cmath>
+#include <fstream>
+#include <random>
+#include "fmm.h"
 
 using namespace std;
 
@@ -10,73 +15,41 @@ namespace Param {
 
 enum class Mode {
     READ_FROM_FILE,
-    GEN_UNIFORM,
-    GEN_GAUSSIAN
+    GEN_RNG
 };
-
-template <class T, class U = T>
-ParticleVec makeRNGParticles(const int N, const double param0, const double param1) {
-
-    ParticleVec particles;
-    constexpr double Q = 1.0;
-    constexpr double M = 1.0;
-
-    random_device rd;
-    mt19937 gen(rd());
-
-    T rand0(param0, param1);
-    U rand1(param0, param1);
-    // T rand0(param0, param1);
-    // U rand1(0, 2.0 * 3.1415927);
-
-    for (int n = 0; n < N; ++n) {
-        //if constexpr (is_integral<T>::uniform_real_distribution<double>)
-        //    z(rand0(gen), imag(gen));
-        //else if constexpr (is_integral<T>::normal_distribution<double>) {
-        //    const auto R = abs(rand0(gen));
-        //    z(R * cos(rand1(gen)), R * sin(rand1(gen)));
-        //}
-        //else
-        //    throw std::runtime_error("Invalid probability distribution");
-
-        cmplx z(rand0(gen), rand1(gen));
-        // const auto R = abs(rand0(gen));
-        // cmplx z(R * cos(rand1(gen)), R * sin(rand1(gen)));
-        particles.emplace_back( make_shared<Particle>(z, Q, M) );
-    }
-    return particles;
-}
 
 int main(int argc, char *argv[])
 {
     // ==================== Make particles ==================== //
-    int Nsrcs = 10000;
-    Mode mode = Mode::GEN_UNIFORM;
+    int Nsrcs;
+    Mode mode = Mode::READ_FROM_FILE;
     ParticleVec srcs;
+    ofstream srcFile;
 
     switch (mode) {
-        // case Mode::READ_FROM_FILE :
-            // srcs = import_particles("out/srcs.txt");
-            // break;
+        case Mode::READ_FROM_FILE :
+             srcs = import_particles("config/srcs.txt");
+             Nsrcs = srcs.size();
+             break;
 
-        case Mode::GEN_UNIFORM : 
+        case Mode::GEN_RNG : 
+            Nsrcs = 5000;
             srcs = makeRNGParticles<uniform_real_distribution<double>>
                     (Nsrcs, -Param::L/2, Param::L/2);
+            srcFile.open("config/srcs.txt");
+            for (const auto& src : srcs) srcFile << *src;
             break;
-        case Mode::GEN_GAUSSIAN :
-            srcs =
-                makeRNGParticles<normal_distribution<double>, uniform_real_distribution<double>>
-                    (Nsrcs, 0.0, 0.1*Param::L);
-            break;
+        //case Mode::GEN_GAUSSIAN :
+        //    srcs =
+        //        makeRNGParticles<normal_distribution<double>, uniform_real_distribution<double>>
+        //            (Nsrcs, 0.0, 0.1*Param::L);
+        //    break;
         default : 
             throw std::runtime_error("Invalid mode");
     }
-    ofstream srcFile;
-    srcFile.open("out/srcs.txt");
-    for (const auto& src : srcs) srcFile << *src;
 
     // ==================== Partition domain ==================== //
-    cout << " Partitioning domain..." << endl;
+    cout << " Partitioning domain...    (" << " N = " << Nsrcs << " )\n";
     auto start = chrono::high_resolution_clock::now();
 
     const int Nlvl = ceil(log(Nsrcs) / log(4.0));
@@ -96,7 +69,7 @@ int main(int argc, char *argv[])
 
     // ==================== Upward pass ==================== //
     const int P = Node::getP();
-    cout << " Computing upward pass...   (" << " P = " << P << " )\n";
+    cout << " Computing upward pass...   (" << " Order = " << P << " )\n";
     start = chrono::high_resolution_clock::now();
 
     Node::buildBinomTable();
@@ -113,7 +86,7 @@ int main(int argc, char *argv[])
     // root->printMpoleCoeffs(mpoleCoeffFile);
 
     // ==================== Downward pass ==================== //
-    cout << " Computing downward pass... (" << " P = " << P << " )\n";
+    cout << " Computing downward pass... (" << " Order = " << P << " )\n";
     start = chrono::high_resolution_clock::now();
 
     root->buildLocalCoeffs();
@@ -149,5 +122,4 @@ int main(int argc, char *argv[])
     outAnlFile << '\n';
 
     return 0;
-
 }

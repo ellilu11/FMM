@@ -1,25 +1,21 @@
-﻿// FMM.h : Include file for standard system include files,
+﻿// fmm.h : Include file for standard system include files,
 // or project specific include files.
 
 #pragma once
 
 // TODO: Reference additional headers your program requires here.
-#include <iostream>
-#include <chrono>
-#include <cmath>
-#include <fstream>
-#include <random>
 
-#include "math.h"
-#include "node.h"
-#include "particle.h"
+#include <complex>
+#include <vector>
+
 #include "leaf.cpp"
 #include "node.cpp"
+#include "particle.cpp"
 #include "stem.cpp"
 #include "test/leaftest.cpp"
 #include "test/nodetest.cpp"
 #include "test/stemtest.cpp"
 
-#define _USE_MATH_DEFINES
+
 
 

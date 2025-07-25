@@ -1,7 +1,7 @@
-dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\out\";
-srcfile = strcat(dir,"srcs.txt");
-% obsfile = strcat(dir,"obss.txt");
-nodefile = strcat(dir,"nodes.txt");
+dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
+srcfile = strcat(dir,"config\srcs.txt");
+% obsfile = strcat(dir,"config\obss.txt");
+nodefile = strcat(dir,"out\nodes.txt");
 
 srcs = readmatrix(srcfile);
 % obss = readmatrix(obsfile);

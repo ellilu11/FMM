@@ -1,7 +1,6 @@
 #pragma once
 
-#include <vector>
-#include <complex>
+#include <iostream>
 #include "node.h"
 #include "stem.h"
 
@@ -42,7 +41,7 @@ public:
     }
 
     void printNode(std::ofstream& f) {
-        f << zk << " " << L_ << " " << nodeStat << '\n';
+        f << center << " " << L_ << " " << nodeStat << '\n';
     }
 
     void printMpoleCoeffs(std::ofstream& f) {

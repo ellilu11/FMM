@@ -1,8 +1,8 @@
 #pragma once
 
-#include <complex>
+#include <cassert>
+#include <chrono>
 #include <iostream>
-#include <vector>
 #include "math.h"
 #include "particle.h"
 
@@ -26,12 +26,12 @@ class Node {
 public:
     Node(
         ParticleVec& particles,
-        const cmplx zk,
+        const cmplx center,
         const double L,
         const int lvl,
         const int branchIdx,
         Node* const base)
-        : particles(particles), zk(zk), L_(L), lvl(lvl), branchIdx(branchIdx), base(base), nodeStat(0)
+        : particles(particles), center(center), L_(L), lvl(lvl), branchIdx(branchIdx), base(base), nodeStat(0)
     {
     };
 
@@ -40,7 +40,7 @@ public:
     static void setP(const int p) { P_ = p; }
 
     ParticleVec getParticles() const { return particles; }
-    const cmplx getCenter() const { return zk; }
+    const cmplx getCenter() const { return center; }
     const int getLvl() const { return lvl; }
     const std::vector<std::shared_ptr<Node>> getBranches() const { return branches; }
     Node* getBase() const { return base; }
@@ -61,6 +61,8 @@ public:
 
     void buildInteractionList();
     std::vector<std::shared_ptr<Node>> const getInteractionList()  { return iList; }
+
+    void buildLocalCoeffsFromIList();
 
     const cmplxVec getShiftedLocalCoeffs(const cmplx);
     const cmplx getFfield(const cmplx);
@@ -88,7 +90,7 @@ protected:
     static std::vector<std::vector<uint64_t>> binomTable;
 
     ParticleVec particles;
-    const cmplx zk;
+    const cmplx center;
     const double L_;
     const int lvl;
     const int branchIdx;
