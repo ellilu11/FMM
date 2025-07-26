@@ -29,19 +29,16 @@ using NodeVec = std::vector<std::shared_ptr<Node>>;
 
 class Node {
 public:
-    Node(ParticleVec&,
-        const cmplx,
-        const int,
-        Node* const);
+    Node(ParticleVec&, const int, Node* const);
 
     static const int getExpansionOrder() { return order; }
     static void setExpansionOrder(const int p) { order = p; }
     static void setMaxLvl(const int lvl) { maxLvl = lvl; }
 
     ParticleVec getParticles() const { return particles; }
-    const cmplx getCenter() const { return center; }
     const int getLvl() const { return lvl; }
     const double getLeng() const { return nodeLeng; }
+    const cmplx getCenter() const { return center; }
     Node* getBase() const { return base; }
     const NodeVec getBranches() const { return branches; }
     NodeVec const getNearNeighbors() { return nbors; }
@@ -78,11 +75,11 @@ protected:
     static std::vector<std::vector<uint64_t>> binomTable;
 
     ParticleVec particles;
-    const cmplx center;
-    const int lvl;
-    const double nodeLeng;
     const int branchIdx;
     Node* const base;
+    const double nodeLeng;
+    const cmplx center;
+    const int lvl;
 
     NodeVec branches;
     NodeVec nbors;

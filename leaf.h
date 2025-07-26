@@ -8,7 +8,6 @@ class Leaf final : public Node {
 public:
     Leaf(
         ParticleVec&,
-        const cmplx,
         const int,
         Stem* const);
 

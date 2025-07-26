@@ -57,5 +57,5 @@ phig = griddata(X, Y, phi, Xg, Yg, 'natural');
 figure(3);
 hold on;
 contour(Xg, Yg, phig, 100)
-quiver(X, Y, fldAnl(:,1), fldAnl(:,2))
+quiver(X, Y, fld(:,1), fld(:,2))
 hold off;

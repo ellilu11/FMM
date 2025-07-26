@@ -8,13 +8,15 @@ double Node::rootLeng = Param::L;
 std::vector<std::vector<uint64_t>> Node::binomTable;
 
 Node::Node(
-    ParticleVec& particles,
-    const cmplx center,
-    const int branchIdx,
+    ParticleVec& particles, 
+    const int branchIdx, 
     Node* const base)
-    : particles(particles), center(center), branchIdx(branchIdx), base(base),
-    lvl( base == nullptr ? 0 : base->getLvl() + 1),
-    nodeLeng( base == nullptr ? rootLeng : base->getLeng() / 2.0)
+    : particles(particles), branchIdx(branchIdx), base(base),
+    nodeLeng(base == nullptr ? rootLeng : base->getLeng() / 2.0),
+    center(base == nullptr ? 0.0 :
+        base->getCenter() +
+        cmplx(pow(-1, branchIdx%2+1), pow(-1, branchIdx/2+1)) * nodeLeng / 2.0),
+    lvl(base == nullptr ? 0 : base->getLvl() + 1)
 {
 };
 

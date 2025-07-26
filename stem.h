@@ -5,12 +5,10 @@
 class Stem final : public Node {
 public:
     Stem(ParticleVec&,
-        const cmplx,
         const int,
         Stem* const);
 
     void buildMpoleCoeffs();
-
     void buildLocalCoeffs();
 
     void printPhis(std::ofstream& f) {

@@ -2,10 +2,9 @@
 
 Stem::Stem(
     ParticleVec& particles,
-    const cmplx center,
     const int branchIdx,
     Stem* const base)
-    : Node(particles, center, branchIdx, base)
+    : Node(particles, branchIdx, base)
 {
     // Assign every particle in node to a branch based on its position relative to center
     std::vector<ParticleVec> branchParts(4);
@@ -14,15 +13,12 @@ Stem::Stem(
 
     // Construct branch nodes
     for (size_t k = 0; k < branchParts.size(); ++k) {
-        cmplx dz( pow(-1,k%2+1), pow(-1,k/2+1) );
-        dz *= nodeLeng / 4.0;
-
         std::shared_ptr<Node> branch;
-        // if branch has at least two particles and is not max lvl, then further subdivide it
+
         if (branchParts[k].size() > 1 && lvl < maxLvl)
-            branch = std::make_shared<Stem>(branchParts[k], center+dz, k, this);
+            branch = std::make_shared<Stem>(branchParts[k], k, this);
         else
-            branch = std::make_shared<Leaf>(branchParts[k], center+dz, k, this);
+            branch = std::make_shared<Leaf>(branchParts[k], k, this);
 
         branches.push_back(branch);
     }

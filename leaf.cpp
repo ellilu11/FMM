@@ -2,10 +2,9 @@
 
 Leaf::Leaf(
     ParticleVec& particles,
-    const cmplx center,
     const int branchIdx,
     Stem* const base)
-    : Node(particles, center, branchIdx, base)
+    : Node(particles, branchIdx, base)
 {
 }
 
@@ -13,7 +12,7 @@ void Leaf::buildMpoleCoeffs() {
     for (int k = 0; k <= order; ++k) {
         cmplx a_k;
         for (const auto& src : particles)
-            a_k += src->getCharge() * // care with operator precedence here
+            a_k += src->getCharge() * // care with operator precedence
                     ( k == 0 ? 1.0 : -pow(src->getPos()-center, k) / static_cast<double>(k) );
         coeffs.push_back(a_k);
     }
@@ -46,7 +45,7 @@ cmplxVec Leaf::getFarFlds() {
 
     for (const auto& obs : particles) {
         auto dphi = -evaluatePoly<cmplx>(dcoeffs, obs->getPos()-center);
-        flds.push_back( cmplx(-dphi.real(), dphi.imag()) ); // care with the minus signs
+        flds.push_back( cmplx(-dphi.real(), dphi.imag()) ); // care with minus signs
     }
 
     return flds;
@@ -60,13 +59,12 @@ cmplxVec Leaf::getNearSols(Func kernel) {
         cmplx sol;
         auto obsPos = obs->getPos();
 
-        // due to other particles in this node (apply reciprocity later)
-        for (const auto& src : particles) {
+        // due to other particles in this node (implement reciprocity later)
+        for (const auto& src : particles)
             if (src != obs)
                 sol += src->getCharge() * kernel(obsPos - src->getPos());
-        }
 
-        // due to particles in neighboring nodes (apply reciprocity much later)
+        // due to particles in neighboring nodes (implement reciprocity much later)
         for (const auto& nbor : nbors) {
             auto srcsNbor = nbor->getParticles();
             for (const auto& src : srcsNbor)
@@ -77,6 +75,7 @@ cmplxVec Leaf::getNearSols(Func kernel) {
     return sols;
 }
 
+// pass calculated phi and fld to particles
 void Leaf::evaluateSolAtParticles() {
     if (isRoot()) return;
 
@@ -89,9 +88,9 @@ void Leaf::evaluateSolAtParticles() {
 
     // for (auto [p, phi, fld] : std::views::zip(particles, phis, flds)) {
     for (size_t n = 0; n < particles.size(); ++n) {
-        // auto p = particles[n];
-        particles[n]->setPhi(phis[n]);
-        particles[n]->setFld(flds[n]);
+        auto p = particles[n];
+        p->setPhi(phis[n]);
+        p->setFld(flds[n]);
     }
 }
 

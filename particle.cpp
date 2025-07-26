@@ -21,7 +21,6 @@ ParticleVec importParticles(const std::string& fname) {
 
 template <class T, class U = T>
 ParticleVec makeRNGParticles(const int N, const double param0, const double param1) {
-
     ParticleVec particles;
     constexpr double e = 1.0;
     constexpr double M = 1.0;
@@ -44,9 +43,12 @@ ParticleVec makeRNGParticles(const int N, const double param0, const double para
     return particles;
 }
 
-//realVec getCharges(ParticleVec& particles) {
-//    realVec charges;
-//    for (const auto& p : particles)
-//        charges.push_back(p->getCharge());
-//    return charges;
-//}
+void printSols(ParticleVec& particles, const std::string& pname, const std::string& fname) {
+    ofstream phiFile(pname);
+    ofstream fldFile(fname);
+
+    for (const auto& p : particles) {
+        p->printPhi(phiFile);
+        p->printFld(fldFile);
+    }
+}

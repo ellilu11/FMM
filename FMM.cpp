@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
         GEN
     };
 
-    constexpr Mode mode = Mode::GEN;
+    constexpr Mode mode = Mode::READ;
     ParticleVec srcs;
     int Nsrcs;
     ofstream srcFile;
@@ -34,8 +34,6 @@ int main(int argc, char *argv[])
             Nsrcs = 5000;
             srcs = makeRNGParticles<uniform_real_distribution<double>>
                     (Nsrcs, -Param::L/2, Param::L/2);
-            /*srcs = makeRNGParticles<uniform_real_distribution<double>>
-                        (Nsrcs, 0, 1);*/
 
             srcFile.open("config/uniform.txt");
             for (const auto& src : srcs) srcFile << *src;
@@ -48,22 +46,20 @@ int main(int argc, char *argv[])
     // ==================== Partition domain ==================== //
     const int Nlvl = ceil(log(Nsrcs) / log(4.0));
     Node::setMaxLvl(Nlvl);
-    cout << " Partitioning domain...     (" << " Nsrcs = " << Nsrcs << ", Nlvl = " << Nlvl << " )\n";
+    cout << " Partitioning domain...     (" 
+         << " Nsrcs = " << Nsrcs << ", Nlvl = " << Nlvl << " )\n";
     auto start = chrono::high_resolution_clock::now();
 
-    constexpr cmplx origin(0.0, 0.0);
     shared_ptr<Node> root;
     if (Nsrcs > 1)
-        root = make_shared<Stem>(srcs, origin, 0, nullptr);
+        root = make_shared<Stem>(srcs, 0, nullptr);
     else
-        root = make_shared<Leaf>(srcs, origin, 0, nullptr);
+        root = make_shared<Leaf>(srcs, 0, nullptr);
     
     auto end = chrono::high_resolution_clock::now();
     chrono::duration<double, milli> duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-
-    std::ofstream nodeFile;
-    nodeFile.open("out/nodes.txt");
+    std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
     // ==================== Upward pass ==================== //
@@ -87,14 +83,8 @@ int main(int argc, char *argv[])
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-    
-    ofstream phiFile, fldFile;
-    phiFile.open("out/phi.txt");
-    fldFile.open("out/fld.txt");
-    for (const auto& src : srcs) {
-        src->printPhi(phiFile);
-        src->printFld(fldFile);
-    }
+
+    printSols(srcs, "out/phi.txt", "out/fld.txt");
 
     // ==================== Compute pairwise ==================== //
     cout << " Computing pairwise..." << endl;
@@ -106,15 +96,13 @@ int main(int argc, char *argv[])
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    ofstream phiAnlFile;
-    phiAnlFile.open("out/phiAnl.txt");
+    ofstream phiAnlFile("out/phiAnl.txt");
     for (const auto& phi : phisAnl)
         phiAnlFile << phi.real() << '\n';
 
     auto fldsAnl = root->getDirectFlds();
 
-    ofstream fldAnlFile;
-    fldAnlFile.open("out/fldAnl.txt");
+    ofstream fldAnlFile("out/fldAnl.txt");
     for (const auto& fld : fldsAnl)
         fldAnlFile << fld << '\n';
 

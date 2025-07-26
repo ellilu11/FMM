@@ -6,9 +6,7 @@
 #define _USE_MATH_DEFINES
 
 using cmplx = std::complex<double>;
-using realVec = std::vector<double>;
 using cmplxVec = std::vector<cmplx>;
-constexpr cmplx iu(0, 1);
 
 std::complex<bool> operator> (cmplx z, cmplx w) {
     std::complex<bool> bools(z.real() > w.real(), z.imag() > w.imag());
@@ -49,7 +47,6 @@ const uint64_t fallingFactorial(int n, int k) {
 }
 
 const uint64_t binom(int n, int k) {
-    // return fallingFactorial(n,k) / factorial(n - k);
     return fallingFactorial(n, k) / fallingFactorial(n - k, 0); 
 }
 
@@ -67,7 +64,6 @@ bool contains(std::vector<T>& vec, T val) {
 
 // return \sum_i (coeffs[i] * z^i)
 // understand why passing coeffs by ref yields larger error
-// do not rewrite coeffs as it could be used later (to calculate fld after phi)
 template <typename T>
 const T evaluatePoly(std::vector<T> coeffs, const T z) {
     for (ptrdiff_t i = coeffs.size()-2; i >= 0; --i) 

@@ -1,5 +1,5 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
-srcfile = strcat(dir,"config\srcs.txt");
+srcfile = strcat(dir,"config\uniform.txt");
 % obsfile = strcat(dir,"config\obss.txt");
 nodefile = strcat(dir,"out\nodes.txt");
 
