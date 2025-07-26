@@ -15,7 +15,7 @@ Node::Node(
     nodeLeng(base == nullptr ? rootLeng : base->getLeng() / 2.0),
     center(base == nullptr ? 0.0 :
         base->getCenter() +
-        cmplx(pow(-1, branchIdx%2+1), pow(-1, branchIdx/2+1)) * nodeLeng / 2.0),
+        vec3d(pow(-1, branchIdx%2+1), pow(-1, branchIdx/2+1)) * nodeLeng / 2.0),
     lvl(base == nullptr ? 0 : base->getLvl() + 1)
 {
 };
@@ -211,9 +211,9 @@ void Node::buildMpoleToLocalCoeffs() {
     for (const auto& iNode : iList) {
         auto mpoleCoeffs( iNode->getMpoleCoeffs() );
         auto dz( iNode->getCenter() - center );
-        auto mdz2k( cmplx(1,0) );
+        auto mdz2k( vec3d(1,0) );
 
-        cmplxVec innerCoeffs; // innerCoeffs[k] = mpoleCoeffs[k] / (-dz)^k
+        vec3dVec innerCoeffs; // innerCoeffs[k] = mpoleCoeffs[k] / (-dz)^k
         for (size_t k = 0; k <= order; ++k) {
             innerCoeffs.push_back(mpoleCoeffs[k] / mdz2k);
             mdz2k *= -dz;
@@ -237,7 +237,7 @@ void Node::buildMpoleToLocalCoeffs() {
     iList.clear();
 }
 
-const cmplxVec Node::getShiftedLocalCoeffs(const cmplx z0) {
+const vec3dVec Node::getShiftedLocalCoeffs(const vec3d z0) {
     auto shiftedCoeffs( localCoeffs );
     for (size_t j = 0; j <= order - 1; ++j)
         for (size_t k = order - j - 1; k <= order - 1; ++k)
@@ -246,8 +246,8 @@ const cmplxVec Node::getShiftedLocalCoeffs(const cmplx z0) {
     return shiftedCoeffs;
 }
 
-//const cmplx Node::getDirectPhiFar(const cmplx z) {
-//    cmplx phi = -coeffs[0] * std::log(z-center);
+//const vec3d Node::getDirectPhiFar(const vec3d z) {
+//    vec3d phi = -coeffs[0] * std::log(z-center);
 //
 //    for (size_t k = 1; k < order; ++k)
 //        phi -= coeffs[k] / std::pow(z-center, k);
@@ -255,18 +255,18 @@ const cmplxVec Node::getShiftedLocalCoeffs(const cmplx z0) {
 //    return phi;
 //}
 //
-//const cmplx Node::getDirectPhi(const cmplx z) {
-//    cmplx phi;
+//const vec3d Node::getDirectPhi(const vec3d z) {
+//    vec3d phi;
 //    for (const auto& p : particles)
 //        phi -= p->getCharge() * std::log(z - p->getPos());
 //    return phi;
 //}
 
-const cmplxVec Node::getDirectPhis() {
-    cmplxVec phis;
+const vec3dVec Node::getDirectPhis() {
+    vec3dVec phis;
 
     for (const auto& obs : particles) {
-        cmplx phi;
+        vec3d phi;
         for (const auto& src : particles)
             if (src != obs) 
                 phi -= src->getCharge() * std::log(obs->getPos() - src->getPos());
@@ -275,11 +275,11 @@ const cmplxVec Node::getDirectPhis() {
     return phis;
 }
 
-const cmplxVec Node::getDirectFlds() {
-    cmplxVec flds;
+const vec3dVec Node::getDirectFlds() {
+    vec3dVec flds;
 
     for (const auto& obs : particles) {
-        cmplx fld;
+        vec3d fld;
         for (const auto& src : particles) {
             if (src != obs) {
                 auto dz = obs->getPos() - src->getPos();

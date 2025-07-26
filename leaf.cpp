@@ -10,7 +10,7 @@ Leaf::Leaf(
 
 void Leaf::buildMpoleCoeffs() {
     for (int k = 0; k <= order; ++k) {
-        cmplx a_k;
+        vec3d a_k;
         for (const auto& src : particles)
             a_k += src->getCharge() * // care with operator precedence
                     ( k == 0 ? 1.0 : -pow(src->getPos()-center, k) / static_cast<double>(k) );
@@ -23,40 +23,40 @@ void Leaf::buildLocalCoeffs() {
     evaluateSolAtParticles();
 }
 
-cmplxVec Leaf::getFarPhis() {
-    //cmplxVec phis(particles.size());
+vec3dVec Leaf::getFarPhis() {
+    //vec3dVec phis(particles.size());
     //auto evaluateLocalExp = [this](std::shared_ptr<Particle> p) {
-    //    return -evaluatePoly<cmplx>(localCoeffs, p->getPos()-center);
+    //    return -evaluatePoly<vec3d>(localCoeffs, p->getPos()-center);
     //    };
     //std::transform(particles.begin(), particles.end(), phis.begin(), evaluateLocalExp);
 
-    cmplxVec phis;
+    vec3dVec phis;
     for (const auto& obs : particles)
-        phis.push_back( -evaluatePoly<cmplx>(localCoeffs, obs->getPos()-center) );
+        phis.push_back( -evaluatePoly<vec3d>(localCoeffs, obs->getPos()-center) );
 
     return phis;
 }
 
-cmplxVec Leaf::getFarFlds() {
-    cmplxVec flds, dcoeffs;
+vec3dVec Leaf::getFarFlds() {
+    vec3dVec flds, dcoeffs;
 
     for (size_t l = 1; l <= order; ++l)
         dcoeffs.push_back(static_cast<double>(l) * localCoeffs[l]);
 
     for (const auto& obs : particles) {
-        auto dphi = -evaluatePoly<cmplx>(dcoeffs, obs->getPos()-center);
-        flds.push_back( cmplx(-dphi.real(), dphi.imag()) ); // care with minus signs
+        auto dphi = -evaluatePoly<vec3d>(dcoeffs, obs->getPos()-center);
+        flds.push_back( vec3d(-dphi.real(), dphi.imag()) ); // care with minus signs
     }
 
     return flds;
 }
 
 template <typename Func>
-cmplxVec Leaf::getNearSols(Func kernel) {
-    cmplxVec sols;
+vec3dVec Leaf::getNearSols(Func kernel) {
+    vec3dVec sols;
 
     for (const auto& obs : particles) {
-        cmplx sol;
+        vec3d sol;
         auto obsPos = obs->getPos();
 
         // due to other particles in this node (implement reciprocity later)
@@ -80,10 +80,10 @@ void Leaf::evaluateSolAtParticles() {
     if (isRoot()) return;
 
     auto phis = getFarPhis() + getNearSols(
-        [](cmplx z) { return -std::log(z); }
+        [](vec3d z) { return -std::log(z); }
     );
     auto flds = getFarFlds() + getNearSols(
-        [](cmplx z) { return z / std::norm(z); }
+        [](vec3d z) { return z / std::norm(z); }
     );
 
     // for (auto [p, phi, fld] : std::views::zip(particles, phis, flds)) {

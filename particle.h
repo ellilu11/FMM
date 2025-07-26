@@ -10,22 +10,22 @@ using ParticleVec = std::vector<std::shared_ptr<Particle>>;
 class Particle {
 public :
     Particle() = default;
-    Particle(const cmplx z, const double q, const double m)
+    Particle(const vec3d z, const double q, const double m)
         : pos(z), charge(q), mass(m)
     {
     };
 
-    cmplx getPos() const { return pos; }
+    vec3d getPos() const { return pos; }
     double getCharge() const { return charge; }
     double getMass() const { return mass; }
 
-    const cmplx getPhi() const { return phi; }
-    void setPhi(cmplx phi_) { phi = phi_; }
+    const vec3d getPhi() const { return phi; }
+    void setPhi(vec3d phi_) { phi = phi_; }
     void printPhi(std::ofstream& f) const {
         f << phi.real() << '\n';
     }
 
-    void setFld(cmplx fld_) { fld = fld_; }
+    void setFld(vec3d fld_) { fld = fld_; }
     void printFld(std::ofstream& f) const {
         f << fld << '\n';
     }
@@ -41,10 +41,10 @@ public :
     }
 
 private :
-    cmplx pos;
-    // cmplx vel;
-    cmplx phi;
-    cmplx fld;
+    vec3d pos;
+    // vec3d vel;
+    vec3d phi;
+    vec3d fld;
 
     double charge;
     double mass;

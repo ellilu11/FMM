@@ -38,11 +38,11 @@ void Stem::buildMpoleCoeffs() {
 
             coeffs[l] -= branchCoeffs[0] * pow(dz, l) / static_cast<double>(l);
 
-            //cmplxVec innerCoeffs;
+            //vec3dVec innerCoeffs;
             //for (ptrdiff_t n = l-1; n >=0; --n)
             //    innerCoeffs.push_back( branchCoeffs[l-n] 
             //        * static_cast<double>(binomTable[l-1][l-n-1]) );
-            //coeffs[l] += evaluatePoly<cmplx>(innerCoeffs, dz);
+            //coeffs[l] += evaluatePoly<vec3d>(innerCoeffs, dz);
             for (size_t k = 1; k <= l; ++k)
                 coeffs[l] += branchCoeffs[k] * pow(dz, l - k) * 
                                 static_cast<double>(binomTable[l-1][k-1]);

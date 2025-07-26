@@ -38,13 +38,13 @@ public:
     ParticleVec getParticles() const { return particles; }
     const int getLvl() const { return lvl; }
     const double getLeng() const { return nodeLeng; }
-    const cmplx getCenter() const { return center; }
+    const vec3d getCenter() const { return center; }
     Node* getBase() const { return base; }
     const NodeVec getBranches() const { return branches; }
     NodeVec const getNearNeighbors() { return nbors; }
     NodeVec const getInteractionList() { return iList; }
-    cmplxVec getMpoleCoeffs() const { return coeffs; }
-    cmplxVec getLocalCoeffs() const { return localCoeffs; }
+    vec3dVec getMpoleCoeffs() const { return coeffs; }
+    vec3dVec getLocalCoeffs() const { return localCoeffs; }
 
     const bool isRoot() const { return base == nullptr; }
 
@@ -56,11 +56,11 @@ public:
     void buildNearNeighbors();
     void buildInteractionList();
     void buildMpoleToLocalCoeffs();
-    const cmplxVec getShiftedLocalCoeffs(const cmplx);
-    //const cmplx getDirectPhiFar(const cmplx);
-    //const cmplx getDirectPhi(const cmplx);
-    const cmplxVec getDirectPhis();
-    const cmplxVec getDirectFlds();
+    const vec3dVec getShiftedLocalCoeffs(const vec3d);
+    //const vec3d getDirectPhiFar(const vec3d);
+    //const vec3d getDirectPhi(const vec3d);
+    const vec3dVec getDirectPhis();
+    const vec3dVec getDirectFlds();
 
     virtual void buildMpoleCoeffs() = 0;
     virtual void buildLocalCoeffs() = 0;
@@ -78,13 +78,13 @@ protected:
     const int branchIdx;
     Node* const base;
     const double nodeLeng;
-    const cmplx center;
+    const vec3d center;
     const int lvl;
 
     NodeVec branches;
     NodeVec nbors;
     NodeVec iList;
 
-    cmplxVec coeffs;
-    cmplxVec localCoeffs;
+    vec3dVec coeffs;
+    vec3dVec localCoeffs;
 };

@@ -34,10 +34,10 @@ ParticleVec makeRNGParticles(const int N, const double param0, const double para
     uniform_int_distribution pm(0, 0);
 
     for (int n = 0; n < N; ++n) {
-        cmplx z(rand0(gen), rand1(gen));
+        vec3d z(rand0(gen), rand1(gen));
         //const double R = sqrt(-2 * log(rand0(gen)));
         //const double th = 2.0 * 3.1415927 * rand1(gen);
-        //cmplx z(R * cos(th), R * sin(th));
+        //vec3d z(R * cos(th), R * sin(th));
         particles.emplace_back(make_shared<Particle>(z, pow(-1,pm(gen))*e, M));
     }
     return particles;
