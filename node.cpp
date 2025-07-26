@@ -7,6 +7,17 @@ int Node::maxLvl;
 double Node::rootLeng = Param::L;
 std::vector<std::vector<uint64_t>> Node::binomTable;
 
+Node::Node(
+    ParticleVec& particles,
+    const cmplx center,
+    const int branchIdx,
+    Node* const base)
+    : particles(particles), center(center), branchIdx(branchIdx), base(base),
+    lvl( base == nullptr ? 0 : base->getLvl() + 1),
+    nodeLeng( base == nullptr ? rootLeng : base->getLeng() / 2.0)
+{
+};
+
 void Node::buildBinomTable() {
     for (int n = 0; n <= 2 * order - 1; ++n) {
         std::vector<uint64_t> binomN;
@@ -233,21 +244,21 @@ const cmplxVec Node::getShiftedLocalCoeffs(const cmplx z0) {
     return shiftedCoeffs;
 }
 
-const cmplx Node::getDirectPhiFar(const cmplx z) {
-    cmplx phi = -coeffs[0] * std::log(z-center);
-
-    for (size_t k = 1; k < order; ++k)
-        phi -= coeffs[k] / std::pow(z-center, k);
-
-    return phi;
-}
-
-const cmplx Node::getDirectPhi(const cmplx z) {
-    cmplx phi;
-    for (const auto& particle : particles)
-        phi -= particle->getCharge() * std::log(z - particle->getPos());
-    return phi;
-}
+//const cmplx Node::getDirectPhiFar(const cmplx z) {
+//    cmplx phi = -coeffs[0] * std::log(z-center);
+//
+//    for (size_t k = 1; k < order; ++k)
+//        phi -= coeffs[k] / std::pow(z-center, k);
+//
+//    return phi;
+//}
+//
+//const cmplx Node::getDirectPhi(const cmplx z) {
+//    cmplx phi;
+//    for (const auto& p : particles)
+//        phi -= p->getCharge() * std::log(z - p->getPos());
+//    return phi;
+//}
 
 const cmplxVec Node::getDirectPhis() {
     cmplxVec phis;
@@ -255,8 +266,25 @@ const cmplxVec Node::getDirectPhis() {
     for (const auto& obs : particles) {
         cmplx phi;
         for (const auto& src : particles)
-            if (src != obs) phi -= src->getCharge() * std::log(obs->getPos() - src->getPos());
+            if (src != obs) 
+                phi -= src->getCharge() * std::log(obs->getPos() - src->getPos());
         phis.push_back(phi);
     }
     return phis;
+}
+
+const cmplxVec Node::getDirectFlds() {
+    cmplxVec flds;
+
+    for (const auto& obs : particles) {
+        cmplx fld;
+        for (const auto& src : particles) {
+            if (src != obs) {
+                auto dz = obs->getPos() - src->getPos();
+                fld += src->getCharge() * dz / std::norm(dz);
+            }
+        }
+        flds.push_back(fld);
+    }
+    return flds;
 }

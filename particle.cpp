@@ -23,7 +23,7 @@ template <class T, class U = T>
 ParticleVec makeRNGParticles(const int N, const double param0, const double param1) {
 
     ParticleVec particles;
-    constexpr double Q = 1.0;
+    constexpr double e = 1.0;
     constexpr double M = 1.0;
 
     random_device rd;
@@ -31,23 +31,15 @@ ParticleVec makeRNGParticles(const int N, const double param0, const double para
 
     T rand0(param0, param1);
     U rand1(param0, param1);
-    // T rand0(param0, param1);
-    // U rand1(0, 2.0 * M_PI);
+
+    uniform_int_distribution pm(0, 0);
 
     for (int n = 0; n < N; ++n) {
-        //if constexpr (is_integral<T>::uniform_real_distribution<double>)
-        //    z(rand0(gen), imag(gen));
-        //else if constexpr (is_integral<T>::normal_distribution<double>) {
-        //    const auto R = abs(rand0(gen));
-        //    z(R * cos(rand1(gen)), R * sin(rand1(gen)));
-        //}
-        //else
-        //    throw std::runtime_error("Invalid probability distribution");
-
         cmplx z(rand0(gen), rand1(gen));
-        // const auto R = abs(rand0(gen));
-        // cmplx z(R * cos(rand1(gen)), R * sin(rand1(gen)));
-        particles.emplace_back(make_shared<Particle>(z, Q, M));
+        //const double R = sqrt(-2 * log(rand0(gen)));
+        //const double th = 2.0 * 3.1415927 * rand1(gen);
+        //cmplx z(R * cos(th), R * sin(th));
+        particles.emplace_back(make_shared<Particle>(z, pow(-1,pm(gen))*e, M));
     }
     return particles;
 }

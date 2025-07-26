@@ -23,19 +23,16 @@ enum class Dir {
     N
 };
 
+class Node;
+
+using NodeVec = std::vector<std::shared_ptr<Node>>;
+
 class Node {
 public:
-    Node(
-        ParticleVec& particles,
-        const cmplx center,
-        const int lvl,
-        const int branchIdx,
-        Node* const base)
-        : particles(particles), center(center), lvl(lvl), branchIdx(branchIdx), base(base),
-        nodeLeng( rootLeng / static_cast<double>(std::pow(2,lvl)) ),
-        nodeStat(0)
-    {
-    };
+    Node(ParticleVec&,
+        const cmplx,
+        const int,
+        Node* const);
 
     static const int getExpansionOrder() { return order; }
     static void setExpansionOrder(const int p) { order = p; }
@@ -44,38 +41,33 @@ public:
     ParticleVec getParticles() const { return particles; }
     const cmplx getCenter() const { return center; }
     const int getLvl() const { return lvl; }
-    const std::vector<std::shared_ptr<Node>> getBranches() const { return branches; }
+    const double getLeng() const { return nodeLeng; }
     Node* getBase() const { return base; }
+    const NodeVec getBranches() const { return branches; }
+    NodeVec const getNearNeighbors() { return nbors; }
+    NodeVec const getInteractionList() { return iList; }
+    cmplxVec getMpoleCoeffs() const { return coeffs; }
+    cmplxVec getLocalCoeffs() const { return localCoeffs; }
+
     const bool isRoot() const { return base == nullptr; }
 
     template <typename T>
     bool isNodeType() const { return typeid(*this) == typeid(T); }
 
-    cmplxVec getMpoleCoeffs() const { return coeffs; }
-    cmplxVec getLocalCoeffs() const { return localCoeffs; }
-
-    void setNodeStat(int flag) { nodeStat = flag; }
-
     static void buildBinomTable();
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
-
     void buildNearNeighbors();
-    std::vector<std::shared_ptr<Node>> const getNearNeighbors() { return nbors; }
-
     void buildInteractionList();
-    std::vector<std::shared_ptr<Node>> const getInteractionList()  { return iList; }
-
     void buildMpoleToLocalCoeffs();
-
     const cmplxVec getShiftedLocalCoeffs(const cmplx);
-    const cmplx getDirectPhiFar(const cmplx);
-    const cmplx getDirectPhi(const cmplx);
+    //const cmplx getDirectPhiFar(const cmplx);
+    //const cmplx getDirectPhi(const cmplx);
     const cmplxVec getDirectPhis();
+    const cmplxVec getDirectFlds();
 
     virtual void buildMpoleCoeffs() = 0;
-    virtual void resetNode() = 0;
-
     virtual void buildLocalCoeffs() = 0;
+    virtual void resetNode() = 0;
     virtual void printPhis(std::ofstream&) = 0;
     virtual void printNode(std::ofstream&) = 0;
 
@@ -92,12 +84,10 @@ protected:
     const int branchIdx;
     Node* const base;
 
-    std::vector<std::shared_ptr<Node>> branches;
-    std::vector<std::shared_ptr<Node>> nbors;
-    std::vector<std::shared_ptr<Node>> iList;
+    NodeVec branches;
+    NodeVec nbors;
+    NodeVec iList;
 
     cmplxVec coeffs;
     cmplxVec localCoeffs;
-
-    int nodeStat;
 };

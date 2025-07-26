@@ -12,6 +12,8 @@ nvec = 1:size(phi,1);
 pmax = size(phi,2);
 
 %%
+% pmax = 4;
+% pvec = pmax-numP+1:pmax;
 pmin = 2;
 pvec = 1:5; % pmin:pmax;
 

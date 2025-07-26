@@ -7,7 +7,6 @@ public:
     Stem(ParticleVec&,
         const cmplx,
         const int,
-        const int,
         Stem* const);
 
     void buildMpoleCoeffs();
@@ -20,7 +19,7 @@ public:
     }
 
     void printNode(std::ofstream& f) {
-        f << center << " " << nodeLeng << " " << nodeStat << '\n';
+        f << center << " " << nodeLeng << " " << '\n';
         for (const auto& branch : branches)
             branch->printNode(f);
     }
@@ -35,6 +34,6 @@ public:
     }
 
 //private:
-//    std::vector<std::shared_ptr<Node>> branches;
+//    NodeVec branches;
 
 };

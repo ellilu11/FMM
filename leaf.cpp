@@ -3,10 +3,9 @@
 Leaf::Leaf(
     ParticleVec& particles,
     const cmplx center,
-    const int lvl,
     const int branchIdx,
     Stem* const base)
-    : Node(particles, center, lvl, branchIdx, base)
+    : Node(particles, center, branchIdx, base)
 {
 }
 
@@ -14,8 +13,8 @@ void Leaf::buildMpoleCoeffs() {
     for (int k = 0; k <= order; ++k) {
         cmplx a_k;
         for (const auto& src : particles)
-            a_k += src->getCharge() *
-            k == 0 ? 1 : -pow(src->getPos()-center, k) / static_cast<double>(k);
+            a_k += src->getCharge() * // care with operator precedence here
+                    ( k == 0 ? 1.0 : -pow(src->getPos()-center, k) / static_cast<double>(k) );
         coeffs.push_back(a_k);
     }
 }
@@ -25,7 +24,7 @@ void Leaf::buildLocalCoeffs() {
     evaluateSolAtParticles();
 }
 
-cmplxVec Leaf::getPhisFar() {
+cmplxVec Leaf::getFarPhis() {
     //cmplxVec phis(particles.size());
     //auto evaluateLocalExp = [this](std::shared_ptr<Particle> p) {
     //    return -evaluatePoly<cmplx>(localCoeffs, p->getPos()-center);
@@ -39,7 +38,7 @@ cmplxVec Leaf::getPhisFar() {
     return phis;
 }
 
-cmplxVec Leaf::getFldsFar() {
+cmplxVec Leaf::getFarFlds() {
     cmplxVec flds, dcoeffs;
 
     for (size_t l = 1; l <= order; ++l)
@@ -53,34 +52,44 @@ cmplxVec Leaf::getFldsFar() {
     return flds;
 }
 
-cmplxVec Leaf::getPhisNear() {
-    cmplxVec phis;
+template <typename Func>
+cmplxVec Leaf::getNearSols(Func kernel) {
+    cmplxVec sols;
 
     for (const auto& obs : particles) {
-        cmplx phi;
+        cmplx sol;
         auto obsPos = obs->getPos();
 
-        // phi due to other particles in this node (apply reciprocity later)
-        for (const auto& src : particles)
-            if (src != obs) phi -= src->getCharge() * std::log(obsPos - src->getPos());
+        // due to other particles in this node (apply reciprocity later)
+        for (const auto& src : particles) {
+            if (src != obs)
+                sol += src->getCharge() * kernel(obsPos - src->getPos());
+        }
 
-        // phi due to particles in neighboring nodes
+        // due to particles in neighboring nodes (apply reciprocity much later)
         for (const auto& nbor : nbors) {
             auto srcsNbor = nbor->getParticles();
             for (const auto& src : srcsNbor)
-                phi -= src->getCharge() * std::log(obsPos - src->getPos());
+                sol += src->getCharge() * kernel(obsPos - src->getPos());
         }
-        phis.push_back(phi);
+        sols.push_back(sol);
     }
-    return phis;
+    return sols;
 }
 
 void Leaf::evaluateSolAtParticles() {
-    auto phis = getPhisFar() + getPhisNear();
-    auto flds = getFldsFar(); // + getFldsNear()
+    if (isRoot()) return;
 
-    // any way to avoid the indexing?
+    auto phis = getFarPhis() + getNearSols(
+        [](cmplx z) { return -std::log(z); }
+    );
+    auto flds = getFarFlds() + getNearSols(
+        [](cmplx z) { return z / std::norm(z); }
+    );
+
+    // for (auto [p, phi, fld] : std::views::zip(particles, phis, flds)) {
     for (size_t n = 0; n < particles.size(); ++n) {
+        // auto p = particles[n];
         particles[n]->setPhi(phis[n]);
         particles[n]->setFld(flds[n]);
     }

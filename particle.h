@@ -1,6 +1,7 @@
 #pragma once
 
-#include "fmm.h"
+#include <random>
+#include "math.h"
 
 class Particle;
 
@@ -15,18 +16,18 @@ public :
     };
 
     cmplx getPos() const { return pos; }
-    const double getCharge() const { return charge; }
-    const double getMass() const { return mass; }
+    double getCharge() const { return charge; }
+    double getMass() const { return mass; }
 
     const cmplx getPhi() const { return phi; }
     void setPhi(cmplx phi_) { phi = phi_; }
     void printPhi(std::ofstream& f) const {
-        f << phi.real() << ' ';
+        f << phi.real() << '\n';
     }
 
     void setFld(cmplx fld_) { fld = fld_; }
     void printFld(std::ofstream& f) const {
-        f << fld.real() << ' ' << fld.imag() << ' ';
+        f << fld << '\n';
     }
 
     friend std::ostream& operator<<(std::ostream& os, Particle& p) {

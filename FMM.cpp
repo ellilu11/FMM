@@ -1,8 +1,6 @@
-﻿#include <iostream>
-#include <chrono>
-#include <cmath>
+﻿#include <chrono>
 #include <fstream>
-#include <random>
+#include <iostream>
 #include "fmm.h"
 
 using namespace std;
@@ -18,29 +16,28 @@ int main(int argc, char *argv[])
     // ==================== Make particles ==================== //
     enum class Mode {
         READ,
-        RNG,
-        REGULAR
+        GEN
     };
 
-    constexpr Mode mode = Mode::RNG;
+    constexpr Mode mode = Mode::GEN;
     ParticleVec srcs;
     int Nsrcs;
     ofstream srcFile;
 
     switch (mode) {
         case Mode::READ :
-             srcs = importParticles("config/srcs.txt");
+             srcs = importParticles("config/uniform.txt");
              Nsrcs = srcs.size();
              break;
 
-        case Mode::RNG : 
-            Nsrcs = 1000;
+        case Mode::GEN : 
+            Nsrcs = 5000;
             srcs = makeRNGParticles<uniform_real_distribution<double>>
                     (Nsrcs, -Param::L/2, Param::L/2);
-            // src = makeRNGParticles<normal_distribution<double>, uniform_real_distribution<double>>
-            // (Nsrcs, 0.0, 0.1*Param::L);
+            /*srcs = makeRNGParticles<uniform_real_distribution<double>>
+                        (Nsrcs, 0, 1);*/
 
-            srcFile.open("config/srcs.txt");
+            srcFile.open("config/uniform.txt");
             for (const auto& src : srcs) srcFile << *src;
             break;
 
@@ -54,11 +51,12 @@ int main(int argc, char *argv[])
     cout << " Partitioning domain...     (" << " Nsrcs = " << Nsrcs << ", Nlvl = " << Nlvl << " )\n";
     auto start = chrono::high_resolution_clock::now();
 
+    constexpr cmplx origin(0.0, 0.0);
     shared_ptr<Node> root;
     if (Nsrcs > 1)
-        root = make_shared<Stem>(srcs, 0.0, 0, 0, nullptr);
+        root = make_shared<Stem>(srcs, origin, 0, nullptr);
     else
-        root = make_shared<Leaf>(srcs, 0.0, 0, 0, nullptr);
+        root = make_shared<Leaf>(srcs, origin, 0, nullptr);
     
     auto end = chrono::high_resolution_clock::now();
     chrono::duration<double, milli> duration_ms = end - start;
@@ -90,10 +88,13 @@ int main(int argc, char *argv[])
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
     
-    ofstream outFile;
-    outFile.open("out/phi.txt");
-    for (const auto& src : srcs)
-        src->printPhi(outFile);
+    ofstream phiFile, fldFile;
+    phiFile.open("out/phi.txt");
+    fldFile.open("out/fld.txt");
+    for (const auto& src : srcs) {
+        src->printPhi(phiFile);
+        src->printFld(fldFile);
+    }
 
     // ==================== Compute pairwise ==================== //
     cout << " Computing pairwise..." << endl;
@@ -105,11 +106,18 @@ int main(int argc, char *argv[])
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    ofstream outAnlFile;
-    outAnlFile.open("out/phiAnl.txt");
+    ofstream phiAnlFile;
+    phiAnlFile.open("out/phiAnl.txt");
     for (const auto& phi : phisAnl)
-        outAnlFile << phi.real() << ' ';
-    outAnlFile << '\n';
+        phiAnlFile << phi.real() << '\n';
+
+    auto fldsAnl = root->getDirectFlds();
+
+    ofstream fldAnlFile;
+    fldAnlFile.open("out/fldAnl.txt");
+    for (const auto& fld : fldsAnl)
+        fldAnlFile << fld << '\n';
 
     return 0;
+
 }

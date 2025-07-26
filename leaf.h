@@ -10,15 +10,14 @@ public:
         ParticleVec&,
         const cmplx,
         const int,
-        const int,
         Stem* const);
 
     void buildMpoleCoeffs();
     void buildLocalCoeffs();
-    cmplxVec getPhisFar();
-    cmplxVec getPhisNear();
-    cmplxVec getFldsFar();
-    cmplxVec getFldsNear();
+
+    cmplxVec getFarPhis();
+    cmplxVec getFarFlds();
+    template <typename Func> cmplxVec getNearSols(Func);
     void evaluateSolAtParticles();
 
     void printPhis(std::ofstream& f) {
@@ -27,7 +26,7 @@ public:
     }
 
     void printNode(std::ofstream& f) {
-        f << center << " " << nodeLeng << " " << nodeStat << '\n';
+        f << center << " " << nodeLeng << " " << '\n';
     }
 
     void resetNode() {
