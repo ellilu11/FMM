@@ -10,6 +10,7 @@ namespace Param {
     extern const int DIM;
     extern const double L;
     extern const double EPS;
+    extern const int maxPartsPerNode;
 }
 
 enum class Dir {
@@ -33,10 +34,8 @@ public:
 
     static const int getExpansionOrder() { return order; }
     static void setExpansionOrder(const int p) { order = p; }
-    static void setMaxLvl(const int lvl) { maxLvl = lvl; }
 
     ParticleVec getParticles() const { return particles; }
-    const int getLvl() const { return lvl; }
     const double getLeng() const { return nodeLeng; }
     const vec3d getCenter() const { return center; }
     Node* getBase() const { return base; }
@@ -71,6 +70,7 @@ public:
 protected:
     static int order;
     static int maxLvl;
+    static int maxPartsPerNode;
     static double rootLeng;
     static std::vector<std::vector<uint64_t>> binomTable;
 
@@ -79,7 +79,6 @@ protected:
     Node* const base;
     const double nodeLeng;
     const vec3d center;
-    const int lvl;
 
     NodeVec branches;
     NodeVec nbors;

@@ -9,6 +9,7 @@ namespace Param {
     extern constexpr int    DIM     = 2;
     extern constexpr double L       = 10.0;
     extern constexpr double EPS     = 1.0E-1;
+    extern constexpr int maxPartsPerNode = 5;
 }
 
 int main(int argc, char *argv[])
@@ -26,7 +27,7 @@ int main(int argc, char *argv[])
 
     switch (mode) {
         case Mode::READ :
-             srcs = importParticles("config/uniform.txt");
+             srcs = importParticles("config/uniform_minusQ.txt");
              Nsrcs = srcs.size();
              break;
 
@@ -44,10 +45,9 @@ int main(int argc, char *argv[])
     }
 
     // ==================== Partition domain ==================== //
-    const int Nlvl = ceil(log(Nsrcs) / log(4.0));
-    Node::setMaxLvl(Nlvl);
-    cout << " Partitioning domain...     (" 
-         << " Nsrcs = " << Nsrcs << ", Nlvl = " << Nlvl << " )\n";
+    //const int Nlvl = ceil(log(Nsrcs) / log(4.0));
+    //Node::setMaxLvl(Nlvl);
+    cout << " Partitioning domain...     (" << " Nsrcs = " << Nsrcs << " )\n";
     auto start = chrono::high_resolution_clock::now();
 
     shared_ptr<Node> root;

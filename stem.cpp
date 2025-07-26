@@ -15,7 +15,7 @@ Stem::Stem(
     for (size_t k = 0; k < branchParts.size(); ++k) {
         std::shared_ptr<Node> branch;
 
-        if (branchParts[k].size() > 1 && lvl < maxLvl)
+        if (branchParts[k].size() >= maxPartsPerNode)
             branch = std::make_shared<Stem>(branchParts[k], k, this);
         else
             branch = std::make_shared<Leaf>(branchParts[k], k, this);

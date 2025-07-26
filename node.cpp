@@ -3,7 +3,7 @@
 using enum Dir;
 
 int Node::order = ceil(-std::log(Param::EPS) / std::log(2)); // # terms in multipole expansion
-int Node::maxLvl;
+int Node::maxPartsPerNode = Param::maxPartsPerNode;
 double Node::rootLeng = Param::L;
 std::vector<std::vector<uint64_t>> Node::binomTable;
 
@@ -15,8 +15,7 @@ Node::Node(
     nodeLeng(base == nullptr ? rootLeng : base->getLeng() / 2.0),
     center(base == nullptr ? 0.0 :
         base->getCenter() +
-        vec3d(pow(-1, branchIdx%2+1), pow(-1, branchIdx/2+1)) * nodeLeng / 2.0),
-    lvl(base == nullptr ? 0 : base->getLvl() + 1)
+        vec3d(pow(-1, branchIdx%2+1), pow(-1, branchIdx/2+1)) * nodeLeng / 2.0)
 {
 };
 
