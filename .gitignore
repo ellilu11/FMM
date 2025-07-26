@@ -372,3 +372,5 @@ FodyWeavers.xsd
 /test/leaftest.cpp
 /test/nodetest.cpp
 /test/stemtest.cpp
+/plotCoeffs.m
+/plotPhi.m
