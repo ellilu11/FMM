@@ -1,5 +1,5 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
-srcfile = strcat(dir,"config\uniform.txt");
+srcfile = strcat(dir,"config\uniform_minusQ.txt");
 srcs = readmatrix(srcfile);
 
 phiFile = strcat(dir,"out\phi.txt");
@@ -16,35 +16,35 @@ fldAnl = readmatrix(fldAnlFile);
 
 nvec = 1:size(phi,1);
 % Nobs = 1000;
-%%
-phi = sortrows(phi);
-phiAnl = sortrows(phiAnl);
-
 close all;
+%%
+phiSort = sortrows(phi);
+phiAnlSort = sortrows(phiAnl);
+
 figure(1);
 % [phiAnl, phi]
-plot(nvec, phiAnl, nvec, phi);
+plot(nvec, phiAnlSort, nvec, phiSort);
 legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
      'UniformOutput',false))],...
      'Location','southeast');
 
 figure(2);
-relErr = abs(phi-phiAnl)./abs(phiAnl);
+relErr = abs(phiSort-phiAnlSort)./abs(phiAnlSort);
 semilogy(nvec, relErr, '-o');
 
 %%
 ele = 2; 
-fld = sortrows(fld,ele);
-fldAnl = sortrows(fldAnl,ele);
+fldSort = sortrows(fld,ele);
+fldAnlSort = sortrows(fldAnl,ele);
 
 figure(1);
-plot(nvec, fldAnl(:,ele), nvec, fld(:,ele));
+plot(nvec, fldAnlSort(:,ele), nvec, fldSort(:,ele));
 legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
      'UniformOutput',false))],...
      'Location','southeast');
 
 figure(2);
-relErrFld = abs(fld-fldAnl)./abs(fldAnl);
+relErrFld = abs(fldSort-fldAnlSort)./abs(fldAnlSort);
 semilogy(nvec, relErrFld, '-o');
 
 %%
