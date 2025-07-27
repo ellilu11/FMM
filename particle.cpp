@@ -34,6 +34,7 @@ ParticleVec makeParticles(const int N,
 
     T rand0(param0, param1);
     U rand1(param0, param1);
+    V rand2(param0, param1);
 
     cmplx z;
     int pm;
@@ -41,7 +42,7 @@ ParticleVec makeParticles(const int N,
     for (int n = 0; n < N; ++n) {
         switch (dist) {
             case Dist::UNIFORM : 
-                z = cmplx(rand0(gen), rand1(gen));
+                z = vec3d(rand0(gen), rand1(gen), rand2(gen));
                 break;
             case Dist::GAUSSIAN: {
                 const double R = sqrt(-2 * log(rand0(gen)));
