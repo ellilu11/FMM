@@ -1,7 +1,7 @@
 #include "stem.h"
 
 Stem::Stem(
-    ParticleVec& particles,
+    const ParticleVec& particles,
     const int branchIdx,
     Stem* const base)
     : Node(particles, branchIdx, base)
@@ -15,7 +15,7 @@ Stem::Stem(
     for (size_t k = 0; k < branchParts.size(); ++k) {
         std::shared_ptr<Node> branch;
 
-        if (branchParts[k].size() >= maxPartsPerNode)
+        if (branchParts[k].size() >= maxNodeParts)
             branch = std::make_shared<Stem>(branchParts[k], k, this);
         else
             branch = std::make_shared<Leaf>(branchParts[k], k, this);

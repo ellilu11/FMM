@@ -1,7 +1,7 @@
 #include "leaf.h"
 
 Leaf::Leaf(
-    ParticleVec& particles,
+    const ParticleVec& particles,
     const int branchIdx,
     Stem* const base)
     : Node(particles, branchIdx, base)

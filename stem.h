@@ -4,7 +4,8 @@
 
 class Stem final : public Node {
 public:
-    Stem(ParticleVec&,
+    Stem(
+        const ParticleVec&,
         const int,
         Stem* const);
 

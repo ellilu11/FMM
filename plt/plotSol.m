@@ -1,5 +1,5 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
-srcfile = strcat(dir,"config\uniform_minusQ.txt");
+srcfile = strcat(dir,"config\gauss_plus.txt");
 srcs = readmatrix(srcfile);
 
 phiFile = strcat(dir,"out\phi.txt");

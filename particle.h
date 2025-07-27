@@ -1,6 +1,7 @@
 #pragma once
 
 #include <random>
+#include "config.h"
 #include "math.h"
 
 class Particle;
