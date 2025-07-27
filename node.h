@@ -3,15 +3,11 @@
 #include <cassert>
 #include <chrono>
 #include <iostream>
+#include "config.h"
 #include "math.h"
 #include "particle.h"
 
-namespace Param {
-    extern const int DIM;
-    extern const double L;
-    extern const double EPS;
-    extern const int maxPartsPerNode;
-}
+extern const int DIM;
 
 enum class Dir {
     SW,
@@ -30,7 +26,7 @@ using NodeVec = std::vector<std::shared_ptr<Node>>;
 
 class Node {
 public:
-    Node(ParticleVec&, const int, Node* const);
+    Node(const ParticleVec&, const int, Node* const);
 
     static const int getExpansionOrder() { return order; }
     static void setExpansionOrder(const int p) { order = p; }
@@ -50,6 +46,7 @@ public:
     template <typename T>
     bool isNodeType() const { return typeid(*this) == typeid(T); }
 
+    static void setNodeParams(const Config&);
     static void buildBinomTable();
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
     void buildNearNeighbors();
@@ -69,8 +66,7 @@ public:
 
 protected:
     static int order;
-    static int maxLvl;
-    static int maxPartsPerNode;
+    static int maxNodeParts;
     static double rootLeng;
     static std::vector<std::vector<uint64_t>> binomTable;
 

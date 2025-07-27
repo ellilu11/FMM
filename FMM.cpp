@@ -1,55 +1,57 @@
 ﻿#include <chrono>
 #include <fstream>
 #include <iostream>
+#include "config.h"
 #include "fmm.h"
 
 using namespace std;
 
-namespace Param {
-    extern constexpr int    DIM     = 2;
-    extern constexpr double L       = 10.0;
-    extern constexpr double EPS     = 1.0E-1;
-    extern constexpr int maxPartsPerNode = 5;
-}
+extern constexpr int DIM = 2;
 
 int main(int argc, char *argv[])
 {
-    // ==================== Make particles ==================== //
-    enum class Mode {
-        READ,
-        GEN
-    };
+    Config config("config/config.txt");
 
-    constexpr Mode mode = Mode::READ;
+    // ==================== Make particles ==================== //
+    const auto fname = makeFname(config);
     ParticleVec srcs;
     int Nsrcs;
-    ofstream srcFile;
-
-    switch (mode) {
+    
+    switch (config.mode) {
         case Mode::READ :
-             srcs = importParticles("config/uniform_minusQ.txt");
-             Nsrcs = srcs.size();
-             break;
-
-        case Mode::GEN : 
-            Nsrcs = 5000;
-            srcs = makeRNGParticles<uniform_real_distribution<double>>
-                    (Nsrcs, -Param::L/2, Param::L/2);
-
-            srcFile.open("config/uniform.txt");
-            for (const auto& src : srcs) srcFile << *src;
+            srcs = importParticles(fname);
+            Nsrcs = srcs.size();
             break;
 
+        case Mode::GEN: {
+            Nsrcs = config.nsrcs;
+            ofstream srcFile(fname);
+            if (config.dist == Dist::UNIFORM)
+                srcs = makeParticles<uniform_real_distribution<double>>
+                        (Nsrcs, -config.L/2, config.L/2, config.dist, config.cdist);
+            else
+                srcs = makeParticles<uniform_real_distribution<double>>
+                        (Nsrcs, 0, 1, config.dist, config.cdist);
+
+            for (const auto& src : srcs) srcFile << *src;
+            break;
+        }
         default : 
             throw std::runtime_error("Invalid mode");
     }
 
+    cout << " Mode:         " << (config.mode == Mode::READ ? "READ" : "GEN") << '\n';
+    cout << " Src file:     " << fname << '\n';
+    cout << " Nsrcs:        " << Nsrcs << '\n';
+    cout << " Root length:  " << config.L << '\n';
+    cout << " EPS:          " << config.EPS << '\n';
+    cout << " maxNodeParts: " << config.maxNodeParts << '\n' << '\n';
+
     // ==================== Partition domain ==================== //
-    //const int Nlvl = ceil(log(Nsrcs) / log(4.0));
-    //Node::setMaxLvl(Nlvl);
-    cout << " Partitioning domain...     (" << " Nsrcs = " << Nsrcs << " )\n";
+    cout << " Setting up domain...\n";
     auto start = chrono::high_resolution_clock::now();
 
+    Node::setNodeParams(config);
     shared_ptr<Node> root;
     if (Nsrcs > 1)
         root = make_shared<Stem>(srcs, 0, nullptr);
@@ -64,7 +66,7 @@ int main(int argc, char *argv[])
 
     // ==================== Upward pass ==================== //
     const int order = Node::getExpansionOrder();
-    cout << " Computing upward pass...   (" << " Order = " << order << " )\n";
+    cout << " Computing upward pass...   (" << " Expansion order: " << order << " )\n";
     start = chrono::high_resolution_clock::now();
 
     Node::buildBinomTable();
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     // ==================== Downward pass ==================== //
-    cout << " Computing downward pass... (" << " Order = " << order << " )\n";
+    cout << " Computing downward pass...\n";
     start = chrono::high_resolution_clock::now();
 
     root->buildLocalCoeffs();
@@ -86,8 +88,9 @@ int main(int argc, char *argv[])
 
     printSols(srcs, "out/phi.txt", "out/fld.txt");
 
-    // ==================== Compute pairwise ==================== //
-    cout << " Computing pairwise..." << endl;
+    // ==================== Compute direct ==================== //
+    if (!config.evalDirect) return 0;
+    cout << " Computing direct..." << endl;
     start = chrono::high_resolution_clock::now();
 
     auto phisAnl = root->getDirectPhis();

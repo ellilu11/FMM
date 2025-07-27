@@ -7,7 +7,7 @@
 class Leaf final : public Node {
 public:
     Leaf(
-        ParticleVec&,
+        const ParticleVec&,
         const int,
         Stem* const);
 

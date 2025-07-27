@@ -2,13 +2,28 @@
 
 using enum Dir;
 
-int Node::order = ceil(-std::log(Param::EPS) / std::log(2)); // # terms in multipole expansion
-int Node::maxPartsPerNode = Param::maxPartsPerNode;
-double Node::rootLeng = Param::L;
+int Node::order; // # terms in multipole expansion
+int Node::maxNodeParts;
+double Node::rootLeng;
 std::vector<std::vector<uint64_t>> Node::binomTable;
 
+void Node::setNodeParams(const Config& config) {
+    order = ceil(-std::log(config.EPS) / std::log(2));
+    maxNodeParts = config.maxNodeParts;
+    rootLeng = config.L;
+}
+
+void Node::buildBinomTable() {
+    for (int n = 0; n <= 2 * order - 1; ++n) {
+        std::vector<uint64_t> binomN;
+        for (int k = 0; k <= std::min(n, order-1); ++k)
+            binomN.push_back(binom(n, k));
+        binomTable.push_back(binomN);
+    }
+}
+
 Node::Node(
-    ParticleVec& particles, 
+    const ParticleVec& particles, 
     const int branchIdx, 
     Node* const base)
     : particles(particles), branchIdx(branchIdx), base(base),
@@ -18,15 +33,6 @@ Node::Node(
         cmplx(pow(-1, branchIdx%2+1), pow(-1, branchIdx/2+1)) * nodeLeng / 2.0)
 {
 };
-
-void Node::buildBinomTable() {
-    for (int n = 0; n <= 2 * order - 1; ++n) {
-        std::vector<uint64_t> binomN;
-        for (int k = 0; k <= std::min(n,order-1); ++k)
-            binomN.emplace_back(binom(n, k));
-        binomTable.push_back( binomN );
-    }
-}
 
 std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
     if ( isRoot() ) return nullptr;
@@ -174,7 +180,7 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 }
 
 void Node::buildNearNeighbors() {
-    const int nDir = std::pow(3, Param::DIM) - 1;
+    const int nDir = std::pow(3, DIM) - 1;
     for (int i = 0; i < nDir; ++i) {
         Dir dir = static_cast<Dir>(i);
         auto nbor = getNeighborGeqSize(dir);
@@ -198,7 +204,7 @@ void Node::buildInteractionList() {
                 if (!contains<std::shared_ptr<Node>>(nbors, branch))
                     iList.push_back(branch);
 
-    assert(iList.size() <= pow(6,Param::DIM) - pow(3,Param::DIM));
+    assert(iList.size() <= pow(6,DIM) - pow(3,DIM));
 }
 
 void Node::buildMpoleToLocalCoeffs() {
