@@ -1,10 +1,17 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
-srcs = readmatrix(strcat(dir,"config\uniform_dip.txt"));
-phi = readmatrix(strcat(dir,"out\phi.txt"));
-fld = readmatrix(strcat(dir,"out\fld.txt"));
+srcs = readmatrix(strcat(dir,"config\gauss_quad.txt"));
 
-phiAnl = readmatrix(strcat(dir,"out\phiAnl.txt"));
-fldAnl = readmatrix(strcat(dir,"out\fldAnl.txt"));
+phiFile = strcat(dir,"out\phi.txt");
+phi = readmatrix(phiFile);
+
+fldFile = strcat(dir,"out\fld.txt");
+fld = readmatrix(fldFile);
+
+phiAnlFile = strcat(dir,"out\phiAnl.txt");
+phiAnl = readmatrix(phiAnlFile);
+
+fldAnlFile = strcat(dir,"out\fldAnl.txt");
+fldAnl = readmatrix(fldAnlFile);
 
 nvec = 1:size(phi,1);
 % Nobs = 1000;

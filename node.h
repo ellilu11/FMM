@@ -44,7 +44,7 @@ public:
     const bool isRoot() const { return base == nullptr; }
 
     template <typename T>
-    bool isNodeType() const { return typeid(*this) == typeid(T); }
+    const bool isNodeType() const { return typeid(*this) == typeid(T); }
 
     static void setNodeParams(const Config&);
     static void buildBinomTable();

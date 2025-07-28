@@ -14,6 +14,7 @@ int main(int argc, char *argv[])
 
     // ==================== Make particles ==================== //
     const auto fname = makeFname(config);
+    // const auto fname = "config/srcs.txt";
     ParticleVec srcs;
     int Nsrcs;
     
@@ -23,16 +24,11 @@ int main(int argc, char *argv[])
             Nsrcs = srcs.size();
             break;
 
-        case Mode::GEN: {
+        case Mode::GEN : {
+            srcs = makeParticles<uniform_real_distribution<double>>(config);
             Nsrcs = config.nsrcs;
-            ofstream srcFile(fname);
-            if (config.dist == Dist::UNIFORM)
-                srcs = makeParticles<uniform_real_distribution<double>>
-                        (Nsrcs, -config.L/2, config.L/2, config.dist, config.cdist);
-            else
-                srcs = makeParticles<uniform_real_distribution<double>>
-                        (Nsrcs, 0, 1, config.dist, config.cdist);
 
+            ofstream srcFile(fname);
             for (const auto& src : srcs) srcFile << *src;
             break;
         }
@@ -40,20 +36,20 @@ int main(int argc, char *argv[])
             throw std::runtime_error("Invalid mode");
     }
 
-    cout << " Mode:         " << (config.mode == Mode::READ ? "READ" : "GEN") << '\n';
-    cout << " Src file:     " << fname << '\n';
-    cout << " Nsrcs:        " << Nsrcs << '\n';
-    cout << " Root length:  " << config.L << '\n';
-    cout << " EPS:          " << config.EPS << '\n';
-    cout << " maxNodeParts: " << config.maxNodeParts << '\n' << '\n';
+    cout << " Mode:           " << (config.mode == Mode::READ ? "READ" : "GEN") << '\n';
+    cout << " Source file:    " << fname << '\n';
+    cout << " # sources:      " << Nsrcs << '\n';
+    cout << " Root length:    " << config.L << '\n';
+    cout << " Error tol.:     " << config.EPS << '\n';
+    cout << " Max node parts: " << config.maxNodeParts << '\n' << '\n';
 
-    // ==================== Partition domain ==================== //
+    // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
     auto start = chrono::high_resolution_clock::now();
 
     Node::setNodeParams(config);
     shared_ptr<Node> root;
-    if (Nsrcs > 1)
+    if (Nsrcs > config.maxNodeParts)
         root = make_shared<Stem>(srcs, 0, nullptr);
     else
         root = make_shared<Leaf>(srcs, 0, nullptr);
@@ -110,5 +106,4 @@ int main(int argc, char *argv[])
         fldAnlFile << fld << '\n';
 
     return 0;
-
 }

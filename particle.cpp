@@ -20,10 +20,8 @@ ParticleVec importParticles(const std::string& fname) {
     return particles;
 }
 
-template <class T, class U = T>
-ParticleVec makeParticles(const int N, 
-    const double param0, const double param1, 
-    const Dist dist, const ChargeDist cdist) 
+template <class dist0, class dist1 = dist0>
+ParticleVec makeParticles(const Config& config) 
 {
     ParticleVec particles;
     constexpr double e = 1.0;
@@ -36,43 +34,46 @@ ParticleVec makeParticles(const int N,
     U rand1(param0, param1);
     V rand2(param0, param1);
 
-    cmplx z;
-    int pm;
+    switch (config.dist) {
+        case Dist::UNIFORM:
+            rand0 = dist0(-config.L/2, config.L/2);
+            rand1 = dist1(-config.L/2, config.L/2);
+            break;
+        case Dist::GAUSSIAN:
+            rand0 = dist0(0, 1);
+            rand1 = dist1(0, 1);
+            break;
+        default:
+            throw std::runtime_error("Invalid distribution");
+    }
 
-    for (int n = 0; n < N; ++n) {
-        switch (dist) {
-            case Dist::UNIFORM : 
-                z = vec3d(rand0(gen), rand1(gen), rand2(gen));
-                break;
-            case Dist::GAUSSIAN: {
-                const double R = sqrt(-2 * log(rand0(gen)));
-                const double th = 2.0 * 3.1415927 * rand1(gen);
-                z = cmplx(R * cos(th), R * sin(th));
-                break;
-            }
-            default :
-                throw std::runtime_error("Invalid distribution");
-                break;
-        }
+    for (int n = 0; n < config.nsrcs; ++n) {
+        cmplx z = [&] {
+            switch (config.dist) {
+                case Dist::UNIFORM:
+                    return cmplx(rand0(gen), rand1(gen));
+                case Dist::GAUSSIAN: {
+                    const double R = sqrt(-2 * log(rand0(gen)));
+                    const double th = 2.0 * 3.1415927 * rand1(gen);
+                    return cmplx(R * cos(th), R * sin(th));
+                }
+            } } ();
 
-        switch (cdist) {
-            case ChargeDist::PLUS : pm = 1;            break;
-            case ChargeDist::MINUS: pm = 0;            break;
-            case ChargeDist::DIP:   pm = z.real() > 0; break;
-            case ChargeDist::QUAD: {
-                auto idx = bools2Idx(z > 0);
-                pm = (idx == 0 || idx == 3);
-                break;
-            }
-            case ChargeDist::RAND: {
-                uniform_int_distribution randi(0,1);
-                pm = randi(gen);
-                break;
-            }
-            default :
-                throw std::runtime_error("Invalid charge distribution");
-                break;
-        }
+        int pm = [&] () -> int {
+            switch (config.cdist) {
+                case ChargeDist::PLUS:  return 1;
+                case ChargeDist::MINUS: return 0;
+                case ChargeDist::DIP:   
+                    return z.real() > 0;
+                case ChargeDist::QUAD: {
+                    auto idx = bools2Idx(z > 0);
+                    return (idx == 0 || idx == 3);
+                }
+                case ChargeDist::RAND: {
+                    uniform_int_distribution randi(0, 1);
+                    return randi(gen);
+                }
+            } } ();
         pm = 2*pm-1;
         particles.emplace_back(make_shared<Particle>(z, pm*e, M));
     }

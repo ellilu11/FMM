@@ -7,6 +7,7 @@
 
 #include <array>
 #include <complex>
+#include <memory>
 #include <vector>
 
 #include "leaf.cpp"
