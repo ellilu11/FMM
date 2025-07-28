@@ -49,21 +49,18 @@ struct Config {
     bool evalDirect;
 };
 
-const std::string& makeFname(const Config& config) {
+const std::string makeFname(const Config& config) {
     std::string distStr = (config.dist == Dist::UNIFORM ? "uniform" : "gauss");
-    std::string cdistStr;
+    std::string cdistStr = 
+        [&] () -> std::string { 
+            switch (config.cdist) {
+                case ChargeDist::PLUS:  return "plus";
+                case ChargeDist::MINUS: return "minus"; 
+                case ChargeDist::DIP:   return "dip";
+                case ChargeDist::QUAD:  return "quad";
+                case ChargeDist::RAND:  return "rand";
+            }
+        }();
 
-    switch (config.cdist) {
-        case ChargeDist::PLUS:  cdistStr = "plus";  break;
-        case ChargeDist::MINUS: cdistStr = "minus"; break;
-        case ChargeDist::DIP:   cdistStr = "dip";   break;
-        case ChargeDist::QUAD:  cdistStr = "quad";  break;
-        case ChargeDist::RAND:  cdistStr = "rand";  break;
-        default:
-            throw std::runtime_error("Invalid charge distribution");
-            break;
-    }
-
-    static const auto outStr = "config/" + distStr + "_" + cdistStr + ".txt";
-    return outStr;
+    return "config/" + distStr + "_" + cdistStr + ".txt";
 }

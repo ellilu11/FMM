@@ -36,15 +36,15 @@ public:
     const cmplx getCenter() const { return center; }
     Node* getBase() const { return base; }
     const NodeVec getBranches() const { return branches; }
-    NodeVec const getNearNeighbors() { return nbors; }
-    NodeVec const getInteractionList() { return iList; }
+    NodeVec getNearNeighbors() const { return nbors; }
+    NodeVec getInteractionList() const { return iList; }
     cmplxVec getMpoleCoeffs() const { return coeffs; }
     cmplxVec getLocalCoeffs() const { return localCoeffs; }
 
     const bool isRoot() const { return base == nullptr; }
 
     template <typename T>
-    bool isNodeType() const { return typeid(*this) == typeid(T); }
+    const bool isNodeType() const { return typeid(*this) == typeid(T); }
 
     static void setNodeParams(const Config&);
     static void buildBinomTable();
