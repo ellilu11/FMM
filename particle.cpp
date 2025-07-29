@@ -20,7 +20,7 @@ ParticleVec importParticles(const std::string& fname) {
     return particles;
 }
 
-template <class dist0, class dist1 = dist0>
+template <class dist0, class dist1 = dist0, class dist2 = dist0>
 ParticleVec makeParticles(const Config& config) 
 {
     ParticleVec particles;
@@ -30,14 +30,15 @@ ParticleVec makeParticles(const Config& config)
     random_device rd;
     mt19937 gen(rd());
 
-    T rand0(param0, param1);
-    U rand1(param0, param1);
-    V rand2(param0, param1);
+    dist0 rand0;
+    dist1 rand1;
+    dist2 rand2;
 
     switch (config.dist) {
         case Dist::UNIFORM:
             rand0 = dist0(-config.L/2, config.L/2);
             rand1 = dist1(-config.L/2, config.L/2);
+            rand2 = dist2(-config.L/2, config.L/2);
             break;
         case Dist::GAUSSIAN:
             rand0 = dist0(0, 1);
@@ -48,34 +49,36 @@ ParticleVec makeParticles(const Config& config)
     }
 
     for (int n = 0; n < config.nsrcs; ++n) {
-        cmplx z = [&] {
+        vec3d X = [&] {
             switch (config.dist) {
                 case Dist::UNIFORM:
-                    return cmplx(rand0(gen), rand1(gen));
+                    return vec3d{ rand0(gen), rand1(gen), rand2(gen) };
+                    // return cart2Sph(vec3d(rand0(gen), rand1(gen), rand2(gen)));
                 case Dist::GAUSSIAN: {
                     const double R = sqrt(-2 * log(rand0(gen)));
                     const double th = 2.0 * 3.1415927 * rand1(gen);
-                    return cmplx(R * cos(th), R * sin(th));
+                    const double ph = rand2(gen);
+                    return vec3d{ R,th,ph };
                 }
             } } ();
-
+        
+        auto [x, y, z] = X;
+        auto idx = bools2Idx(X > zeroVec);
         int pm = [&] () -> int {
             switch (config.cdist) {
                 case ChargeDist::PLUS:  return 1;
                 case ChargeDist::MINUS: return 0;
-                case ChargeDist::DIP:   
-                    return z.real() > 0;
-                case ChargeDist::QUAD: {
-                    auto idx = bools2Idx(z > 0);
-                    return (idx == 0 || idx == 3);
-                }
+                case ChargeDist::DIP:   return x > 0;
+                case ChargeDist::QUAD:
+                    return (idx == 0 || idx == 3 || idx == 4 || idx == 7);
+                case ChargeDist::OCT:
+                    return (idx == 0 || idx == 3 || idx == 5 || idx == 6);
                 case ChargeDist::RAND: {
                     uniform_int_distribution randi(0, 1);
                     return randi(gen);
                 }
-            } } ();
-        pm = 2*pm-1;
-        particles.emplace_back(make_shared<Particle>(z, pm*e, M));
+            } } () * 2 - 1;
+        particles.emplace_back(make_shared<Particle>(X, pm*e, M));
     }
     return particles;
 }

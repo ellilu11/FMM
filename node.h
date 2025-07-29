@@ -38,7 +38,7 @@ public:
     const NodeVec getBranches() const { return branches; }
     NodeVec const getNearNeighbors() { return nbors; }
     NodeVec const getInteractionList() { return iList; }
-    vec3dVec getMpoleCoeffs() const { return coeffs; }
+    std::vector<cmplxVec> getMpoleCoeffs() const { return coeffs; }
     vec3dVec getLocalCoeffs() const { return localCoeffs; }
 
     const bool isRoot() const { return base == nullptr; }
@@ -47,7 +47,8 @@ public:
     const bool isNodeType() const { return typeid(*this) == typeid(T); }
 
     static void setNodeParams(const Config&);
-    static void buildBinomTable();
+    static void buildSphHarmonicTable();
+    cmplx sphHarmonic(const double, const double, int, int);
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
     void buildNearNeighbors();
     void buildInteractionList();
@@ -68,7 +69,7 @@ protected:
     static int order;
     static int maxNodeParts;
     static double rootLeng;
-    static std::vector<std::vector<uint64_t>> binomTable;
+    static std::vector<std::vector<double>> sphHarmonicTable;
 
     ParticleVec particles;
     const int branchIdx;
@@ -80,6 +81,6 @@ protected:
     NodeVec nbors;
     NodeVec iList;
 
-    vec3dVec coeffs;
+    std::vector<cmplxVec> coeffs;
     vec3dVec localCoeffs;
 };

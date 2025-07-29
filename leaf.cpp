@@ -9,12 +9,17 @@ Leaf::Leaf(
 }
 
 void Leaf::buildMpoleCoeffs() {
-    for (int k = 0; k <= order; ++k) {
-        vec3d a_k;
-        for (const auto& src : particles)
-            a_k += src->getCharge() * // care with operator precedence
-                    ( k == 0 ? 1.0 : -pow(src->getPos()-center, k) / static_cast<double>(k) );
-        coeffs.push_back(a_k);
+    for (int l = 0; l <= order; ++l) {
+        cmplxVec coeffsL;
+        for (int m = -l; m <= l; ++m) {
+            cmplx a_lm;
+            for (const auto& src : particles) {
+                auto [r, th, ph] = src->getPos();
+                a_lm += src->getCharge() * pow(r, l) * sphHarmonic(th, ph, l, -m);
+            }
+            coeffsL.push_back(a_lm);
+        }
+        coeffs.push_back(coeffsL);
     }
 }
 
@@ -31,8 +36,8 @@ vec3dVec Leaf::getFarPhis() {
     //std::transform(particles.begin(), particles.end(), phis.begin(), evaluateLocalExp);
 
     vec3dVec phis;
-    for (const auto& obs : particles)
-        phis.push_back( -evaluatePoly<vec3d>(localCoeffs, obs->getPos()-center) );
+    //for (const auto& obs : particles)
+    //    phis.push_back( -evaluatePoly<vec3d>(localCoeffs, obs->getPos()-center) );
 
     return phis;
 }
@@ -40,13 +45,13 @@ vec3dVec Leaf::getFarPhis() {
 vec3dVec Leaf::getFarFlds() {
     vec3dVec flds, dcoeffs;
 
-    for (size_t l = 1; l <= order; ++l)
-        dcoeffs.push_back(static_cast<double>(l) * localCoeffs[l]);
+    //for (size_t l = 1; l <= order; ++l)
+    //    dcoeffs.push_back(static_cast<double>(l) * localCoeffs[l]);
 
-    for (const auto& obs : particles) {
-        auto dphi = -evaluatePoly<vec3d>(dcoeffs, obs->getPos()-center);
-        flds.push_back( vec3d(-dphi.real(), dphi.imag()) ); // care with minus signs
-    }
+    //for (const auto& obs : particles) {
+    //    auto dphi = -evaluatePoly<vec3d>(dcoeffs, obs->getPos()-center);
+    //    flds.push_back( vec3d(-dphi.real(), dphi.imag()) ); // care with minus signs
+    //}
 
     return flds;
 }
@@ -79,11 +84,12 @@ vec3dVec Leaf::getNearSols(Func kernel) {
 void Leaf::evaluateSolAtParticles() {
     if (isRoot()) return;
 
+    /*
     auto phis = getFarPhis() + getNearSols(
-        [](vec3d z) { return -std::log(z); }
+        [](vec3d X) { return 1 / abs(X); }
     );
     auto flds = getFarFlds() + getNearSols(
-        [](vec3d z) { return z / std::norm(z); }
+        [](vec3d X) { return X / pow(abs(X),3); }
     );
 
     // for (auto [p, phi, fld] : std::views::zip(particles, phis, flds)) {
@@ -91,6 +97,6 @@ void Leaf::evaluateSolAtParticles() {
         auto p = particles[n];
         p->setPhi(phis[n]);
         p->setFld(flds[n]);
-    }
+    }*/
 }
 

@@ -18,6 +18,7 @@ enum class ChargeDist {
     MINUS,
     DIP,
     QUAD,
+    OCT,
     RAND
 };
 
@@ -58,9 +59,10 @@ const std::string makeFname(const Config& config) {
                 case ChargeDist::MINUS: return "minus"; 
                 case ChargeDist::DIP:   return "dip";
                 case ChargeDist::QUAD:  return "quad";
+                case ChargeDist::OCT:   return "oct";
                 case ChargeDist::RAND:  return "rand";
             }
         }();
 
-    return "config/" + distStr + "_" + cdistStr + ".txt";
+    return "config/part3D/" + distStr + "_" + cdistStr + ".txt";
 }

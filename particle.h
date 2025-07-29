@@ -11,8 +11,8 @@ using ParticleVec = std::vector<std::shared_ptr<Particle>>;
 class Particle {
 public :
     Particle() = default;
-    Particle(const vec3d z, const double q, const double m)
-        : pos(z), charge(q), mass(m)
+    Particle(const vec3d X, const double q, const double m)
+        : pos(X), charge(q), mass(m)
     {
     };
 
@@ -20,10 +20,10 @@ public :
     double getCharge() const { return charge; }
     double getMass() const { return mass; }
 
-    const vec3d getPhi() const { return phi; }
-    void setPhi(vec3d phi_) { phi = phi_; }
+    const double getPhi() const { return phi; }
+    void setPhi(double phi_) { phi = phi_; }
     void printPhi(std::ofstream& f) const {
-        f << phi.real() << '\n';
+        f << phi << '\n';
     }
 
     void setFld(vec3d fld_) { fld = fld_; }
@@ -44,7 +44,7 @@ public :
 private :
     vec3d pos;
     // vec3d vel;
-    vec3d phi;
+    double phi;
     vec3d fld;
 
     double charge;

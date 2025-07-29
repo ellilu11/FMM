@@ -5,7 +5,7 @@ using enum Dir;
 int Node::order; // # terms in multipole expansion
 int Node::maxNodeParts;
 double Node::rootLeng;
-std::vector<std::vector<uint64_t>> Node::binomTable;
+std::vector<std::vector<double>> Node::sphHarmonicTable;
 
 void Node::setNodeParams(const Config& config) {
     order = ceil(-std::log(config.EPS) / std::log(2));
@@ -13,13 +13,20 @@ void Node::setNodeParams(const Config& config) {
     rootLeng = config.L;
 }
 
-void Node::buildBinomTable() {
-    for (int n = 0; n <= 2 * order - 1; ++n) {
-        std::vector<uint64_t> binomN;
-        for (int k = 0; k <= std::min(n, order-1); ++k)
-            binomN.push_back(binom(n, k));
-        binomTable.push_back(binomN);
+void Node::buildSphHarmonicTable() {
+    for (int l = 0; l <= order; ++l) {
+        std::vector<double> sphHarmonicL;
+        for (int m = -l; m <= l; ++m)
+            sphHarmonicL.push_back(sphHarmonicCoeff(l,m));
+        sphHarmonicTable.push_back(sphHarmonicL);
     }
+}
+
+cmplx Node::sphHarmonic(const double th, const double ph, int l, int m) {
+    assert(abs(m) <= l);
+    return sphHarmonicTable[l][m] * 
+        legendreLM(std::cos(th),l,m) * 
+        std::exp(iu*static_cast<double>(m)*ph);
 }
 
 Node::Node(
@@ -28,9 +35,8 @@ Node::Node(
     Node* const base)
     : particles(particles), branchIdx(branchIdx), base(base),
     nodeLeng(base == nullptr ? rootLeng : base->getLeng() / 2.0),
-    center(base == nullptr ? 0.0 :
-        base->getCenter() +
-        vec3d(pow(-1, branchIdx%2+1), pow(-1, branchIdx/2+1)) * nodeLeng / 2.0)
+    center(base == nullptr ? zeroVec :
+        base->getCenter() + nodeLeng / 2.0 * idx2pm(branchIdx) )
 {
 };
 
@@ -210,7 +216,7 @@ void Node::buildInteractionList() {
 void Node::buildMpoleToLocalCoeffs() {
     if ( isRoot() ) return;
 
-    buildInteractionList();
+    /*buildInteractionList();
     localCoeffs.resize(order+1);
 
     for (const auto& iNode : iList) {
@@ -239,14 +245,14 @@ void Node::buildMpoleToLocalCoeffs() {
     }
 
     if (!base->isRoot()) localCoeffs += base->getShiftedLocalCoeffs(center);
-    iList.clear();
+    iList.clear();*/
 }
 
 const vec3dVec Node::getShiftedLocalCoeffs(const vec3d z0) {
     auto shiftedCoeffs( localCoeffs );
-    for (size_t j = 0; j <= order - 1; ++j)
-        for (size_t k = order - j - 1; k <= order - 1; ++k)
-            shiftedCoeffs[k] += shiftedCoeffs[k+1] * (z0 - center);
+    //for (size_t j = 0; j <= order - 1; ++j)
+    //    for (size_t k = order - j - 1; k <= order - 1; ++k)
+    //        shiftedCoeffs[k] += shiftedCoeffs[k+1] * (z0 - center);
 
     return shiftedCoeffs;
 }
@@ -270,28 +276,28 @@ const vec3dVec Node::getShiftedLocalCoeffs(const vec3d z0) {
 const vec3dVec Node::getDirectPhis() {
     vec3dVec phis;
 
-    for (const auto& obs : particles) {
-        vec3d phi;
-        for (const auto& src : particles)
-            if (src != obs) 
-                phi -= src->getCharge() * std::log(obs->getPos() - src->getPos());
-        phis.push_back(phi);
-    }
+    //for (const auto& obs : particles) {
+    //    vec3d phi;
+    //    for (const auto& src : particles)
+    //        if (src != obs) 
+    //            phi -= src->getCharge() * std::log(obs->getPos() - src->getPos());
+    //    phis.push_back(phi);
+    //}
     return phis;
 }
 
 const vec3dVec Node::getDirectFlds() {
     vec3dVec flds;
 
-    for (const auto& obs : particles) {
-        vec3d fld;
-        for (const auto& src : particles) {
-            if (src != obs) {
-                auto dz = obs->getPos() - src->getPos();
-                fld += src->getCharge() * dz / std::norm(dz);
-            }
-        }
-        flds.push_back(fld);
-    }
+    //for (const auto& obs : particles) {
+    //    vec3d fld;
+    //    for (const auto& src : particles) {
+    //        if (src != obs) {
+    //            auto dz = obs->getPos() - src->getPos();
+    //            fld += src->getCharge() * dz / std::norm(dz);
+    //        }
+    //    }
+    //    flds.push_back(fld);
+    //}
     return flds;
 }

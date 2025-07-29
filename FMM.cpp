@@ -6,7 +6,7 @@
 
 using namespace std;
 
-extern constexpr int DIM = 2;
+extern constexpr int DIM = 3;
 
 int main(int argc, char *argv[])
 {
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     cout << " Computing upward pass...   (" << " Expansion order: " << order << " )\n";
     start = chrono::high_resolution_clock::now();
 
-    Node::buildBinomTable();
+    Node::buildSphHarmonicTable();
     root->buildMpoleCoeffs();
 
     end = chrono::high_resolution_clock::now();
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 
     ofstream phiAnlFile("out/phiAnl.txt");
     for (const auto& phi : phisAnl)
-        phiAnlFile << phi.real() << '\n';
+        phiAnlFile << phi << '\n';
 
     auto fldsAnl = root->getDirectFlds();
 

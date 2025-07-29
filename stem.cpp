@@ -7,10 +7,12 @@ Stem::Stem(
     : Node(particles, branchIdx, base)
 {
     // Assign every particle in node to a branch based on its position relative to center
-    std::vector<ParticleVec> branchParts(4);
-    for (const auto& p : particles)
-        branchParts[bools2Idx(p->getPos() > center)].push_back(p);
-
+    constexpr int nbranch = 8; //  std::pow(2, DIM);
+    std::vector<ParticleVec> branchParts(nbranch);
+    for (const auto& p : particles) {
+        auto k = bools2Idx(p->getPos() > center);
+        branchParts[k].push_back(p);
+    }
     // Construct branch nodes
     for (size_t k = 0; k < branchParts.size(); ++k) {
         std::shared_ptr<Node> branch;
@@ -27,27 +29,22 @@ Stem::Stem(
 void Stem::buildMpoleCoeffs() {
     coeffs.resize(order+1);
 
-    for (const auto& branch : branches) {
-        branch->buildMpoleCoeffs();
-        auto branchCoeffs = branch->getMpoleCoeffs();
-        coeffs[0] += branchCoeffs[0];
+    //for (const auto& branch : branches) {
+    //    branch->buildMpoleCoeffs();
+    //    auto branchCoeffs = branch->getMpoleCoeffs();
+    //    coeffs[0] += branchCoeffs[0];
 
-        for (size_t l = 1; l <= order; ++l) {
-            auto branchCoeffs = branch->getMpoleCoeffs();
-            auto dz = branch->getCenter() - center;
+    //    for (size_t l = 1; l <= order; ++l) {
+    //        auto branchCoeffs = branch->getMpoleCoeffs();
+    //        auto dz = branch->getCenter() - center;
 
-            coeffs[l] -= branchCoeffs[0] * pow(dz, l) / static_cast<double>(l);
+    //        coeffs[l] -= branchCoeffs[0] * pow(dz, l) / static_cast<double>(l);
 
-            //vec3dVec innerCoeffs;
-            //for (ptrdiff_t n = l-1; n >=0; --n)
-            //    innerCoeffs.push_back( branchCoeffs[l-n] 
-            //        * static_cast<double>(binomTable[l-1][l-n-1]) );
-            //coeffs[l] += evaluatePoly<vec3d>(innerCoeffs, dz);
-            for (size_t k = 1; k <= l; ++k)
-                coeffs[l] += branchCoeffs[k] * pow(dz, l - k) * 
-                                static_cast<double>(binomTable[l-1][k-1]);
-        }
-    }
+    //        for (size_t k = 1; k <= l; ++k)
+    //            coeffs[l] += branchCoeffs[k] * pow(dz, l - k) * 
+    //                            static_cast<double>(binomTable[l-1][k-1]);
+    //    }
+    //}
 }
 
 void Stem::buildLocalCoeffs() {

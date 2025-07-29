@@ -20,8 +20,8 @@ public:
     void evaluateSolAtParticles();
 
     void printPhis(std::ofstream& f) {
-        for (const auto& p : particles)
-            f << p->getPhi().real() << ' ';
+        //for (const auto& p : particles)
+        //    f << p->getPhi().real() << ' ';
     }
 
     void printNode(std::ofstream& f) {
