@@ -9,10 +9,9 @@ Stem::Stem(
     // Assign every particle in node to a branch based on its position relative to center
     constexpr int nbranch = 8; //  std::pow(2, DIM);
     std::vector<ParticleVec> branchParts(nbranch);
-    for (const auto& p : particles) {
-        auto k = bools2Idx(p->getPos() > center);
-        branchParts[k].push_back(p);
-    }
+    for (const auto& p : particles)
+        branchParts[bools2Idx(p->getPos() > center)].push_back(p);
+ 
     // Construct branch nodes
     for (size_t k = 0; k < branchParts.size(); ++k) {
         std::shared_ptr<Node> branch;

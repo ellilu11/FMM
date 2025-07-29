@@ -10,14 +10,9 @@
 extern const int DIM;
 
 enum class Dir {
-    SW,
-    SE,
-    NW,
-    NE,
-    S,
-    W,
-    E,
-    N
+    DSW, DSE, DNW, DNE, DS, DW, DE, DN, D,
+    SW, SE, NW, NE, S, W, E, N,
+    USW, USE, UNW, UNE, US, UW, UE, UN, U
 };
 
 class Node;

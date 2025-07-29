@@ -14,7 +14,7 @@ void Leaf::buildMpoleCoeffs() {
         for (int m = -l; m <= l; ++m) {
             cmplx a_lm;
             for (const auto& src : particles) {
-                auto [r, th, ph] = src->getPos();
+                auto [r, th, ph] = src->getSph();
                 a_lm += src->getCharge() * pow(r, l) * sphHarmonic(th, ph, l, -m);
             }
             coeffsL.push_back(a_lm);

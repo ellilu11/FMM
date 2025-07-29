@@ -49,17 +49,26 @@ ParticleVec makeParticles(const Config& config)
     }
 
     for (int n = 0; n < config.nsrcs; ++n) {
-        vec3d X = [&] {
+        vec3d X, R;
+        X = [&] {
             switch (config.dist) {
                 case Dist::UNIFORM:
                     return vec3d{ rand0(gen), rand1(gen), rand2(gen) };
-                    // return cart2Sph(vec3d(rand0(gen), rand1(gen), rand2(gen)));
                 case Dist::GAUSSIAN: {
-                    const double R = sqrt(-2 * log(rand0(gen)));
-                    const double th = 2.0 * 3.1415927 * rand1(gen);
-                    const double ph = rand2(gen);
-                    return vec3d{ R,th,ph };
+                    return sph2Cart(R);
                 }
+            } } ();
+
+        R = [&] {
+            switch (config.dist) {
+            case Dist::UNIFORM:
+                return cart2Sph(X);
+            case Dist::GAUSSIAN: {
+                const double r = sqrt(-2 * log(rand0(gen))); // fix
+                const double th = 2.0 * 3.1415927 * rand1(gen); // fix
+                const double ph = rand2(gen);
+                return vec3d{ r,th,ph };
+            }
             } } ();
         
         auto [x, y, z] = X;
@@ -78,7 +87,7 @@ ParticleVec makeParticles(const Config& config)
                     return randi(gen);
                 }
             } } () * 2 - 1;
-        particles.emplace_back(make_shared<Particle>(X, pm*e, M));
+        particles.emplace_back(make_shared<Particle>(X, R, pm*e, M));
     }
     return particles;
 }
