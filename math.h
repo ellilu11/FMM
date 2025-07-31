@@ -42,12 +42,13 @@ cmplxVec operator+ (const cmplxVec& zs, const cmplxVec& ws) {
     return sum;
 }
 
+// return factorial(n) / factorial(n-k)
 const uint64_t fallingFactorial(int n, int k) {
-    return n == k ? 1 : n * fallingFactorial(n - 1, k);
+    return k == 0 ? 1 : n * fallingFactorial(n - 1, k - 1);
 }
 
 const uint64_t binom(int n, int k) {
-    return fallingFactorial(n, k) / fallingFactorial(n - k, 0); 
+    return fallingFactorial(n, k) / fallingFactorial(k,k); 
 }
 
 std::ostream& operator<<(std::ostream& out, const cmplxVec& vec) {
