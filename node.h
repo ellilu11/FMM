@@ -43,6 +43,7 @@ public:
 
     static void setNodeParams(const Config&);
     static void buildTables();
+    static const double legendreLM(const double, int, int);
     static const cmplx sphHarmonic(const double, const double, int, int);
 
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);

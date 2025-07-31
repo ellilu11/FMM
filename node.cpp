@@ -21,39 +21,41 @@ void Node::buildTables() {
         };
 
     for (int l = 0; l <= order; ++l) {
-        realVec sphHarmonicL, legendreSumL;
-        for (int m = -l; m <= l; ++m) {
-            int absm = abs(m);
-            sphHarmonicL.push_back( sphHarmonicCoeff(l, absm) );
-            legendreSumL.push_back( binom(l,absm) * binom((l+absm-1)/2.0,l) );
+        realVec sphHarmonicL, fallingFactL, legendreSumL;
+        for (int m = 0; m <= l; ++m) {
+            sphHarmonicL.push_back( sphHarmonicCoeff(l, m) );
+            fallingFactL.push_back( fallingFactorial(l, m) );
+            legendreSumL.push_back( binom(l, m) * binom((l+m-1)/2.0, l) );
         }
         sphHarmonicTable.push_back(sphHarmonicL);
+        fallingFactTable.push_back(fallingFactL);
         legendreSumTable.push_back(legendreSumL);
 
-        std::cout << "l = " << l << '\n';
-        for (int m = -l; m <= l; ++m)
-            std::cout << legendreSumTable[l][m+l] << ' ';
-        std::cout << '\n';
+        //std::cout << "l = " << l << '\n';
+        //for (int m = 0; m <= l; ++m)
+        //    std::cout << legendreSumTable[l][m] << ' ';
+        //std::cout << '\n';
     }
 }
 
-const cmplx Node::sphHarmonic(const double th, const double ph, int l, int m) {
-    assert(std::abs(m) <= l);
+// Ylm except constant coefficients and \exp(i m \phi) phase factor
+const double Node::legendreLM(const double th, int l, int absm) {
+    assert(absm <= l);
 
     const auto costh = cos(th);
     const auto sinth = sin(th);
     double legendreSum = 0;
 
-    // legendreSumTable is zero for l-k odd
-    for (ptrdiff_t kdiff = l; kdiff >= m; kdiff -= 2) {
-        auto k = static_cast<int>(kdiff);
-        legendreSum += fallingFactorial(k, m) * legendreSumTable[l][kdiff+l] * pow(costh, k-m);
-    }
+    // legendreSumTable_{lk} is zero for l-k odd
+    for (int k = l; k >= absm; k -= 2)
+        legendreSum += fallingFactTable[k][absm] * legendreSumTable[l][k] * pow(costh, k-absm);
 
-    return sphHarmonicTable[l][m+l] * 
-        pow(sinth, static_cast<double>(m)) * legendreSum * 
-        std::exp(iu*static_cast<double>(m)*ph);
+    return sphHarmonicTable[l][absm] * pow(sinth, absm) * legendreSum;
 }
+
+//const cmplx Node::sphHarmonic(const double th, const double ph, int l, int m) {
+//    return legendreLM(th,l,std::abs(m)) * std::exp(iu*static_cast<double>(m)*ph);
+//}
 
 Node::Node(
     const ParticleVec& particles, 

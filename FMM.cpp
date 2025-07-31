@@ -61,24 +61,29 @@ int main(int argc, char *argv[])
     root->printNode(nodeFile);
 
     // ==================== Tests ==================== //
-    cout << " Expansion order: " << Node::getExpansionOrder() << " \n";
+    //const int order = Node::getExpansionOrder();
+    //Node::buildTables();
 
-    Node::buildTables();
+    //double th = PI/4;
+    //double ph = 0;
 
-    double th = 0;
-    double ph = 0;
-    int l = 0;
-    int m = 0;
-    auto Ylm = Node::sphHarmonic(th, ph, l, m);
+    //start = chrono::high_resolution_clock::now();
+    //for (int l = 0; l < order; ++l) {
+    //    for (int m = -l; m <= l; ++m) {
+    //        auto Ylm = Node::legendreLM(th, l, abs(m));
+    //        cout << (abs(Ylm) > 1.0E-9 ? Ylm : 0.0 ) << ' ';
+    //    }
+    //    cout << '\n';
+    //}
+    //end = chrono::high_resolution_clock::now();
+    //duration_ms = end - start;
+    //cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    cout << '\n';
-    cout << "th=" << th << " ph=" << ph << " l=" << l << " m=" << m
-        << " Ylm(th,ph)=" << Ylm << '\n';
-    return 0;
+    //return 0;
 
     // ==================== Upward pass ==================== //
     const int order = Node::getExpansionOrder();
-    cout << " Computing upward pass...   (" << " Expansion order: " << order << ')\n';
+    cout << " Computing upward pass...   (" << " Expansion order: " << order << ")\n";
     start = chrono::high_resolution_clock::now();
 
     Node::buildTables();
@@ -87,6 +92,7 @@ int main(int argc, char *argv[])
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+    return 0;
 
     // ==================== Downward pass ==================== //
     cout << " Computing downward pass...\n";

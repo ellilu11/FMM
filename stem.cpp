@@ -26,24 +26,24 @@ Stem::Stem(
 }
 
 void Stem::buildMpoleCoeffs() {
-    coeffs.resize(order+1);
+    coeffs.resize(pow(order+1, 2));
 
-    //for (const auto& branch : branches) {
-    //    branch->buildMpoleCoeffs();
-    //    auto branchCoeffs = branch->getMpoleCoeffs();
-    //    coeffs[0] += branchCoeffs[0];
+    for (const auto& branch : branches) {
+        branch->buildMpoleCoeffs();
+        /*auto branchCoeffs = branch->getMpoleCoeffs();
+        coeffs[0] += branchCoeffs[0];
 
-    //    for (size_t l = 1; l <= order; ++l) {
-    //        auto branchCoeffs = branch->getMpoleCoeffs();
-    //        auto dz = branch->getCenter() - center;
+        for (size_t l = 1; l <= order; ++l) {
+            auto branchCoeffs = branch->getMpoleCoeffs();
+            auto dz = branch->getCenter() - center;
 
-    //        coeffs[l] -= branchCoeffs[0] * pow(dz, l) / static_cast<double>(l);
+            coeffs[l] -= branchCoeffs[0] * pow(dz, l) / static_cast<double>(l);
 
-    //        for (size_t k = 1; k <= l; ++k)
-    //            coeffs[l] += branchCoeffs[k] * pow(dz, l - k) * 
-    //                            static_cast<double>(binomTable[l-1][k-1]);
-    //    }
-    //}
+            for (size_t k = 1; k <= l; ++k)
+                coeffs[l] += branchCoeffs[k] * pow(dz, l - k) * 
+                                static_cast<double>(binomTable[l-1][k-1]);
+        }*/
+    }
 }
 
 void Stem::buildLocalCoeffs() {

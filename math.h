@@ -47,6 +47,10 @@ vec3d cart2Sph(const vec3d& X) {
     return vec3d{ r, acos(z/r), atan(y/x) }; // care with atan
 }
 
+size_t lm2Idx(const int l, const int m) {
+    return l*l + l + m;
+}
+
 template <typename T>
 bool contains(std::vector<T>& vec, T val) {
     return std::find(vec.begin(), vec.end(), val) != vec.end();
@@ -56,7 +60,7 @@ bool contains(std::vector<T>& vec, T val) {
 // understand why passing coeffs by ref yields larger error
 template <typename T>
 const T evaluatePoly(std::vector<T> coeffs, const T z) {
-    for (ptrdiff_t i = coeffs.size()-2; i >= 0; --i) 
+    for (ptrdiff_t i = coeffs.size()-2; i >= 0; --i)
         coeffs[i] += coeffs[i+1] * z;
     return coeffs[0];
 }
@@ -76,6 +80,10 @@ const int factorial(int n) {
 
 const double sphHarmonicCoeff(int l, int absm) {
     assert(absm <= l);
-    return sqrt(factorial(l-absm) / factorial(l+absm)) * 
+    return // sqrt(factorial(l-absm) / factorial(l+absm)) * 
         pm(absm) * pow(2.0, l);
+}
+
+const cmplx cmplxPhase(const double ph, const int m) {
+    return std::exp(iu*static_cast<double>(m)*ph);
 }
