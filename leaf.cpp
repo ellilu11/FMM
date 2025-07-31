@@ -10,17 +10,16 @@ Leaf::Leaf(
 
 void Leaf::buildMpoleCoeffs() {
     for (int l = 0; l <= order; ++l) {
-        cmplxVec coeffsL;
         for (int m = -l; m <= l; ++m) {
             cmplx a_lm;
             for (const auto& src : particles) {
-                auto [r, th, ph] = src->getSph();
+                auto [r, th, ph] = cart2Sph(src->getPos() - center);
                 a_lm += src->getCharge() * pow(r, l) * sphHarmonic(th, ph, l, -m);
             }
-            coeffsL.push_back(a_lm);
+            coeffs.push_back(a_lm);
         }
-        coeffs.push_back(coeffsL);
     }
+    assert(coeffs.size() == pow(order+2, 2));
 }
 
 void Leaf::buildLocalCoeffs() {

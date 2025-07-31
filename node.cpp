@@ -5,7 +5,9 @@ using enum Dir;
 int Node::order; // # terms in multipole expansion
 int Node::maxNodeParts;
 double Node::rootLeng;
-std::vector<std::vector<double>> Node::sphHarmonicTable;
+std::vector<realVec> Node::sphHarmonicTable;
+std::vector<realVec> Node::fallingFactTable;
+std::vector<realVec> Node::legendreSumTable;
 
 void Node::setNodeParams(const Config& config) {
     order = ceil(-std::log(config.EPS) / std::log(2));
@@ -13,19 +15,43 @@ void Node::setNodeParams(const Config& config) {
     rootLeng = config.L;
 }
 
-void Node::buildSphHarmonicTable() {
+void Node::buildTables() {
+    auto binom = [](double x, int k) {
+        return fallingFactorial(x, k) / factorial(k);
+        };
+
     for (int l = 0; l <= order; ++l) {
-        std::vector<double> sphHarmonicL;
-        for (int m = -l; m <= l; ++m)
-            sphHarmonicL.push_back(sphHarmonicCoeff(l,m));
+        realVec sphHarmonicL, legendreSumL;
+        for (int m = -l; m <= l; ++m) {
+            int absm = abs(m);
+            sphHarmonicL.push_back( sphHarmonicCoeff(l, absm) );
+            legendreSumL.push_back( binom(l,absm) * binom((l+absm-1)/2.0,l) );
+        }
         sphHarmonicTable.push_back(sphHarmonicL);
+        legendreSumTable.push_back(legendreSumL);
+
+        std::cout << "l = " << l << '\n';
+        for (int m = -l; m <= l; ++m)
+            std::cout << legendreSumTable[l][m+l] << ' ';
+        std::cout << '\n';
     }
 }
 
-cmplx Node::sphHarmonic(const double th, const double ph, int l, int m) {
-    assert(abs(m) <= l);
-    return sphHarmonicTable[l][m] * 
-        legendreLM(std::cos(th),l,m) * 
+const cmplx Node::sphHarmonic(const double th, const double ph, int l, int m) {
+    assert(std::abs(m) <= l);
+
+    const auto costh = cos(th);
+    const auto sinth = sin(th);
+    double legendreSum = 0;
+
+    // legendreSumTable is zero for l-k odd
+    for (ptrdiff_t kdiff = l; kdiff >= m; kdiff -= 2) {
+        auto k = static_cast<int>(kdiff);
+        legendreSum += fallingFactorial(k, m) * legendreSumTable[l][kdiff+l] * pow(costh, k-m);
+    }
+
+    return sphHarmonicTable[l][m+l] * 
+        pow(sinth, static_cast<double>(m)) * legendreSum * 
         std::exp(iu*static_cast<double>(m)*ph);
 }
 

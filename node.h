@@ -4,7 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include "config.h"
-#include "math.h"
+#include "vec3d.h"
 #include "particle.h"
 
 extern const int DIM;
@@ -33,7 +33,7 @@ public:
     const NodeVec getBranches() const { return branches; }
     NodeVec const getNearNeighbors() { return nbors; }
     NodeVec const getInteractionList() { return iList; }
-    std::vector<cmplxVec> getMpoleCoeffs() const { return coeffs; }
+    cmplxVec getMpoleCoeffs() const { return coeffs; }
     vec3dVec getLocalCoeffs() const { return localCoeffs; }
 
     const bool isRoot() const { return base == nullptr; }
@@ -42,8 +42,9 @@ public:
     const bool isNodeType() const { return typeid(*this) == typeid(T); }
 
     static void setNodeParams(const Config&);
-    static void buildSphHarmonicTable();
-    cmplx sphHarmonic(const double, const double, int, int);
+    static void buildTables();
+    static const cmplx sphHarmonic(const double, const double, int, int);
+
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
     void buildNearNeighbors();
     void buildInteractionList();
@@ -64,7 +65,9 @@ protected:
     static int order;
     static int maxNodeParts;
     static double rootLeng;
-    static std::vector<std::vector<double>> sphHarmonicTable;
+    static std::vector<realVec> sphHarmonicTable;
+    static std::vector<realVec> fallingFactTable;
+    static std::vector<realVec> legendreSumTable;
 
     ParticleVec particles;
     const int branchIdx;
@@ -76,6 +79,6 @@ protected:
     NodeVec nbors;
     NodeVec iList;
 
-    std::vector<cmplxVec> coeffs;
+    cmplxVec coeffs;
     vec3dVec localCoeffs;
 };

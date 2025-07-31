@@ -60,12 +60,28 @@ int main(int argc, char *argv[])
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
+    // ==================== Tests ==================== //
+    cout << " Expansion order: " << Node::getExpansionOrder() << " \n";
+
+    Node::buildTables();
+
+    double th = 0;
+    double ph = 0;
+    int l = 0;
+    int m = 0;
+    auto Ylm = Node::sphHarmonic(th, ph, l, m);
+
+    cout << '\n';
+    cout << "th=" << th << " ph=" << ph << " l=" << l << " m=" << m
+        << " Ylm(th,ph)=" << Ylm << '\n';
+    return 0;
+
     // ==================== Upward pass ==================== //
     const int order = Node::getExpansionOrder();
-    cout << " Computing upward pass...   (" << " Expansion order: " << order << " )\n";
+    cout << " Computing upward pass...   (" << " Expansion order: " << order << ')\n';
     start = chrono::high_resolution_clock::now();
 
-    Node::buildSphHarmonicTable();
+    Node::buildTables();
     root->buildMpoleCoeffs();
 
     end = chrono::high_resolution_clock::now();
