@@ -18,7 +18,7 @@ public:
     }
 
     void printNode(std::ofstream& f) {
-        f << center << " " << nodeLeng << " " << '\n';
+        f << center << " " << nodeLeng << " " << nodeStat << '\n';
         for (const auto& branch : branches)
             branch->printNode(f);
     }
@@ -32,7 +32,6 @@ public:
             branch->resetNode();
     }
 
-//private:
-//    NodeVec branches;
-
+    // test methods
+    std::shared_ptr<Node> getRandNode(int);
 };

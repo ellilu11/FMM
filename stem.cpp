@@ -30,18 +30,24 @@ void Stem::buildMpoleCoeffs() {
 
     for (const auto& branch : branches) {
         branch->buildMpoleCoeffs();
-        /*auto branchCoeffs = branch->getMpoleCoeffs();
-        coeffs[0] += branchCoeffs[0];
+        auto branchCoeffs = branch->getMpoleCoeffs();
+        auto [r, th, ph] = cart2Sph(branch->getCenter() - center);
+        // auto Rmatrix = rotationMatrix(branch->getBranchIdx());
+        // branchCoeffs *= Rmatrix;
+        int idx = 0;
 
-        for (size_t l = 1; l <= order; ++l) {
-            auto branchCoeffs = branch->getMpoleCoeffs();
-            auto dz = branch->getCenter() - center;
+        /*for (int j = 0; j <= order; ++j) {
+            for (int k = -j; k <= j; ++k) {
 
-            coeffs[l] -= branchCoeffs[0] * pow(dz, l) / static_cast<double>(l);
-
-            for (size_t k = 1; k <= l; ++k)
-                coeffs[l] += branchCoeffs[k] * pow(dz, l - k) * 
-                                static_cast<double>(binomTable[l-1][k-1]);
+                for (int n = 0; n < j; ++n) {
+                    for (int m = -n; m < n; ++m) {
+                        auto idx2 = lm2Idx(j-n, k-m);
+                        coeffs[idx] += 
+                            branchCoeffs[idx2] * pow(iu, )
+                    }
+                }
+                idx++;
+            }
         }*/
     }
 }
@@ -52,3 +58,4 @@ void Stem::buildLocalCoeffs() {
     for (const auto& branch : branches)
         branch->buildLocalCoeffs();
 }
+

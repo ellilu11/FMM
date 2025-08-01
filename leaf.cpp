@@ -24,7 +24,7 @@ void Leaf::buildMpoleCoeffs() {
             for (int m = -l; m <= l; ++m) {
                 coeffs[idx] += 
                     src->getCharge() * r2l *
-                    legendreLMCoeffs[std::abs(m)] * cmplxPhase(ph, -m);
+                    legendreLMCoeffs[std::abs(m)] * phaseFactor(ph, -m);
                 idx++;
             }
             r2l *= r;
@@ -108,4 +108,3 @@ void Leaf::evaluateSolAtParticles() {
         p->setFld(flds[n]);
     }*/
 }
-

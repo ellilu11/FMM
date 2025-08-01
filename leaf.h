@@ -25,7 +25,7 @@ public:
     }
 
     void printNode(std::ofstream& f) {
-        f << center << " " << nodeLeng << " " << '\n';
+        f << center << " " << nodeLeng << " " << nodeStat << '\n';
     }
 
     void resetNode() {
@@ -34,4 +34,7 @@ public:
         nbors.clear();
         iList.clear();
     }
+
+    // test methods
+    std::shared_ptr<Node> getRandNode(int);
 };

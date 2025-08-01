@@ -57,9 +57,12 @@ int main(int argc, char *argv[])
     auto end = chrono::high_resolution_clock::now();
     chrono::duration<double, milli> duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+
+    root->setRandNodeStats();
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
+    return 0;
     // ==================== Tests ==================== //
     //const int order = Node::getExpansionOrder();
     //Node::buildTables();
@@ -92,7 +95,6 @@ int main(int argc, char *argv[])
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-    return 0;
 
     // ==================== Downward pass ==================== //
     cout << " Computing downward pass...\n";

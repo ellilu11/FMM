@@ -33,12 +33,12 @@ public :
     }
 
     friend std::ostream& operator<<(std::ostream& os, Particle& p) {
-        os << p.pos << " " << p.sph << " " << p.charge << " " << p.mass << '\n';
+        os << p.pos << " " << " " << p.charge << " " << p.mass << '\n';
         return os;
     }
 
     friend std::istream& operator>>(std::istream& is, Particle& p) {
-        is >> p.pos >> p.sph >> p.charge >> p.mass;
+        is >> p.pos >> p.charge >> p.mass;
         return is;
     }
 

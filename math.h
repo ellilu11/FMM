@@ -27,6 +27,8 @@ vec3d idx2pm(const int x) {
     return res;
 }
 
+// bool operator==()
+
 double pm(const int k) {
     return k % 2 ? -1 : 1;
 }
@@ -80,10 +82,10 @@ const int factorial(int n) {
 
 const double sphHarmonicCoeff(int l, int absm) {
     assert(absm <= l);
-    return // sqrt(factorial(l-absm) / factorial(l+absm)) * 
+    return sqrt(factorial(l-absm) / factorial(l+absm)) * 
         pm(absm) * pow(2.0, l);
 }
 
-const cmplx cmplxPhase(const double ph, const int m) {
+const cmplx phaseFactor(const double ph, const int m) {
     return std::exp(iu*static_cast<double>(m)*ph);
 }

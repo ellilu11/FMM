@@ -14,7 +14,7 @@
 #include "node.cpp"
 #include "particle.cpp"
 #include "stem.cpp"
-
+#include "test/nodetest.cpp"
 
 
 

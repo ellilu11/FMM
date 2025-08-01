@@ -10,9 +10,9 @@
 extern const int DIM;
 
 enum class Dir {
-    DSW, DSE, DNW, DNE, DS, DW, DE, DN, D,
-    SW, SE, NW, NE, S, W, E, N,
-    USW, USE, UNW, UNE, US, UW, UE, UN, U
+    U, D, N, S, E, W,
+    UN, DS, US, DN, UE, DW, UW, DE, NE, SW, NW, SE,
+    UNE, DSW, UNW, DSE, USE, DNW, USW, DNE
 };
 
 class Node;
@@ -43,8 +43,8 @@ public:
 
     static void setNodeParams(const Config&);
     static void buildTables();
-    static const double legendreLM(const double, int, int);
-    static const cmplx sphHarmonic(const double, const double, int, int);
+    static const double legendreLM(const double, const int, const int);
+    // static const cmplx sphHarmonic(const double, const double, int, int);
 
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
     void buildNearNeighbors();
@@ -62,6 +62,11 @@ public:
     virtual void printPhis(std::ofstream&) = 0;
     virtual void printNode(std::ofstream&) = 0;
 
+    // test methods
+    void setNodeStat(int stat) { nodeStat = stat; }
+    virtual std::shared_ptr<Node> getRandNode(int) = 0;
+    void setRandNodeStats();
+
 protected:
     static int order;
     static int maxNodeParts;
@@ -69,6 +74,7 @@ protected:
     static std::vector<realVec> sphHarmonicTable;
     static std::vector<realVec> fallingFactTable;
     static std::vector<realVec> legendreSumTable;
+    static std::vector<realVec> A;
 
     ParticleVec particles;
     const int branchIdx;
@@ -82,4 +88,7 @@ protected:
 
     cmplxVec coeffs;
     vec3dVec localCoeffs;
+
+    // test members
+    int nodeStat;
 };
