@@ -118,14 +118,17 @@ const cmplx expI(const double arg) {
 Eigen::MatrixXcd rotationMatrix(const pair2d& angles, const int l) {
     using namespace std;
     auto [th, ph] = angles;
-    pair<double, cmplx> xi(cos(th/2.0), sin(th/2.0) * expI(-ph));
-    // double a0 = cos(th/2.0), a1 = sin(th/2.0)*sin(ph), a2 = -sin(th/2.0)*cos(ph);
+    // pair<double, cmplx> xi(cos(th/2.0), sin(th/2.0) * expI(-ph));
+    double a0 = cos(th/2.0), a1 = sin(th/2.0)*sin(ph), a2 = -sin(th/2.0)*cos(ph);
 
-    auto sumCoeff = [xi, l](int m, int n, int s) {
+    auto sumCoeff = [a0, a1, a2, l](int m, int n, int s) {
         double alpha0 = l+m-s, alpha1 = n-m+s, alpha2 = s, alpha3 = l-n-s;
-        return pow(xi.first, alpha0) * pow(xi.second, alpha1) * 
-                pow(-conj(xi.second), alpha2) * pow(xi.first, alpha3) *
-                factorial(alpha0) * factorial(alpha1) * factorial(alpha2) * factorial(alpha3);
+        //return pow(xi.first, alpha0) * pow(xi.second, alpha1) * 
+        //        pow(-conj(xi.second), alpha2) * pow(xi.first, alpha3) *
+        //        factorial(alpha0) * factorial(alpha1) * factorial(alpha2) * factorial(alpha3);
+        return pow(a0, alpha0) * pow(-iu*a1-a2, alpha1) * 
+            pow(-iu*a1+a2, alpha2) * pow(a0, alpha3) *
+            factorial(alpha0) * factorial(alpha1) * factorial(alpha2) * factorial(alpha3);
     };
 
     Eigen::MatrixXcd mat = Eigen::MatrixXcd::Zero(2*l+1, 2*l+1);

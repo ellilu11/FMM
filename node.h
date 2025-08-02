@@ -4,8 +4,9 @@
 #include <chrono>
 #include <iostream>
 #include "config.h"
-#include "vec3d.h"
+#include "math.h"
 #include "particle.h"
+#include "vec3d.h"
 
 extern const int DIM;
 
@@ -62,8 +63,7 @@ public:
     void buildInteractionList();
     void buildMpoleToLocalCoeffs();
     const vecXcdVec getShiftedLocalCoeffs(const vec3d);
-    //const vec3d getDirectPhiFar(const vec3d);
-    //const vec3d getDirectPhi(const vec3d);
+
     const vec3dVec getDirectPhis();
     const vec3dVec getDirectFlds();
 
@@ -73,17 +73,26 @@ public:
     virtual void printPhis(std::ofstream&) = 0;
     virtual void printNode(std::ofstream&) = 0;
 
-    // test methods
+    // === Test methods ===
     int getLvl() { return std::round(std::log(rootLeng/nodeLeng)/std::log(2)); }
     void setNodeStat(int stat) { nodeStat = stat; }
-    virtual std::shared_ptr<Node> getRandNode(int) = 0;
+
+    // definition under test/nodetest.cpp
     void setRandNodeStats();
+    const double getDirectPhi(const vec3d&);
+    const cmplx getDirectPhiFromMpole(const vec3d&);
+    void ffieldTest(const std::pair<int,int>&);
+    // void nfieldTest();
+
+    // definition under test/[stemtest.cpp, leaftest.cpp]
+    virtual std::shared_ptr<Node> getRandNode(int) = 0;
+    virtual const cmplx getFfieldFromLeaf(const vec3d&) = 0;
 
 protected:
     static int order;
     static int maxNodeParts;
     static double rootLeng;
-    static std::vector<realVec> sphHarmonicTable;
+    static std::vector<realVec> coeffYlmTable;
     static std::vector<realVec> fallingFactTable;
     static std::vector<realVec> legendreSumTable;
     static std::vector<realVec> A;

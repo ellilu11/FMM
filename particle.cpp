@@ -36,9 +36,12 @@ ParticleVec makeParticles(const Config& config)
 
     switch (config.dist) {
         case Dist::UNIFORM:
-            rand0 = dist0(-config.L/2, config.L/2);
-            rand1 = dist1(-config.L/2, config.L/2);
-            rand2 = dist2(-config.L/2, config.L/2);
+            //rand0 = dist0(-config.L/2, config.L/2);
+            //rand1 = dist1(-config.L/2, config.L/2);
+            //rand2 = dist2(-config.L/2, config.L/2);
+            rand0 = dist0(0.0, config.L/2);
+            rand1 = dist1(0.0, config.L/2);
+            rand2 = dist2(0.0, config.L/2);
             break;
         case Dist::GAUSSIAN:
             rand0 = dist0(0, 1);

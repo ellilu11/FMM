@@ -7,7 +7,7 @@ const int numDir = std::pow(3, DIM) - 1;
 int Node::order; // # terms in multipole expansion
 int Node::maxNodeParts;
 double Node::rootLeng;
-std::vector<realVec> Node::sphHarmonicTable;
+std::vector<realVec> Node::coeffYlmTable;
 std::vector<realVec> Node::fallingFactTable;
 std::vector<realVec> Node::legendreSumTable;
 std::vector<realVec> Node::A;
@@ -34,7 +34,7 @@ void Node::buildTables() {
             legendreSum_l.push_back( binom(l, m) * binom((l+m-1)/2.0, l) );
             A_l.push_back( pm_l / std::sqrt(factorial(l-m)*factorial(l+m)) );
         }
-        sphHarmonicTable.push_back(sphHarmonic_l);
+        coeffYlmTable.push_back(sphHarmonic_l);
         fallingFactTable.push_back(fallingFact_l);
         legendreSumTable.push_back(legendreSum_l);
         A.push_back(A_l);
@@ -84,7 +84,7 @@ const double Node::legendreLM(const double th, const int l, const int abs_m) {
     for (int k = l; k >= abs_m; k -= 2)
         legendreSum += fallingFactTable[k][abs_m] * legendreSumTable[l][k] * pow(cos_th, k-abs_m);
 
-    return sphHarmonicTable[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
+    return coeffYlmTable[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
 }
 
 //const cmplx Node::sphHarmonic(const double th, const double ph, int l, int m) {
@@ -641,22 +641,6 @@ const vecXcdVec Node::getShiftedLocalCoeffs(const vec3d z0) {
 
     return shiftedCoeffs;
 }
-
-//const vec3d Node::getDirectPhiFar(const vec3d z) {
-//    vec3d phi = -coeffs[0] * std::log(z-center);
-//
-//    for (size_t k = 1; k < order; ++k)
-//        phi -= coeffs[k] / std::pow(z-center, k);
-//
-//    return phi;
-//}
-//
-//const vec3d Node::getDirectPhi(const vec3d z) {
-//    vec3d phi;
-//    for (const auto& p : particles)
-//        phi -= p->getCharge() * std::log(z - p->getPos());
-//    return phi;
-//}
 
 const vec3dVec Node::getDirectPhis() {
     vec3dVec phis;

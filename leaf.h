@@ -19,6 +19,8 @@ public:
     template <typename Func> vec3dVec getNearSols(Func);
     void evaluateSolAtParticles();
 
+
+
     void printPhis(std::ofstream& f) {
         //for (const auto& p : particles)
         //    f << p->getPhi().real() << ' ';
@@ -28,13 +30,8 @@ public:
         f << center << " " << nodeLeng << " " << nodeStat << '\n';
     }
 
-    void resetNode() {
-        coeffs.clear();
-        localCoeffs.clear();
-        nbors.clear();
-        iList.clear();
-    }
-
     // test methods
     std::shared_ptr<Node> getRandNode(int);
+    const cmplx getFfieldFromLeaf(const vec3d&);
+    void resetNode();
 };

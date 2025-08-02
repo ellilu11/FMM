@@ -58,32 +58,28 @@ int main(int argc, char *argv[])
     chrono::duration<double, milli> duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    // ==================== Tests ==================== //
-    root->setRandNodeStats();
-    std::ofstream nodeFile("out/nodes.txt");
-    root->printNode(nodeFile);
-
-    Node::setNodeParams(config);
-    cout << " Expansion order: " << Node::getExpansionOrder() << "\n";
-
-    cout << " Building rotation matrices...\n";
+    // ==================== Build tables ==================== //
+    cout << " Building tables..\n";
     start = chrono::high_resolution_clock::now();
 
+    Node::buildTables();
     Node::buildRotationMats();
-    int l = 1;
-    for (int dir = 0; dir < 1; ++dir) {
-        auto mat = Node::getRotationMatrixAlongDir(dir)[l];
-        // cout << mat << '\n' << mat.adjoint() << '\n' << '\n';
-        // cout << mat * mat.adjoint() << '\n' << '\n';
-    }
-    // cout << rotationMatrix(pair2d(0, PI), 1) << '\n';
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    //const int order = Node::getExpansionOrder();
-    //Node::buildTables();
+    // ==================== Tests ==================== //
+    root->setRandNodeStats();
+    std::ofstream nodeFile("out/nodes.txt");
+    root->printNode(nodeFile);
+
+    //int l = 1;
+    //for (int dir = 0; dir < 1; ++dir) {
+    //    auto mat = Node::getRotationMatrixAlongDir(dir)[l];
+    //     cout << mat << "\n\n" << mat.adjoint() << "\n\n";
+    //     cout << mat * mat.adjoint() << "\n\n";
+    //}
 
     //double th = PI/4;
     //double ph = 0;
@@ -96,19 +92,21 @@ int main(int argc, char *argv[])
     //    cout << '\n';
     //}
 
+    pair<int, int> angles(10, 20);
+    root->ffieldTest(angles);
+
+    return 0;
+
     // ==================== Upward pass ==================== //
     const int order = Node::getExpansionOrder();
-    cout << " Computing upward pass...   (" << " Expansion order: " << order << ")\n";
+    cout << " Computing upward pass...   (" << "Expansion order: " << order << ")\n";
     start = chrono::high_resolution_clock::now();
 
-    Node::buildTables();
-    root->buildMpoleCoeffs();
+    // root->buildMpoleCoeffs();
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-
-    return 0;
 
     // ==================== Downward pass ==================== //
     cout << " Computing downward pass...\n";

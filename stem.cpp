@@ -26,11 +26,11 @@ Stem::Stem(
 }
 
 void Stem::buildMpoleCoeffs() {
-    coeffs.resize(order+1);
-    for (int l = 0; l < coeffs.size(); ++l)
-        coeffs[l] = vecXcd(2*l+1);
+    for (int l = 0; l <= order; ++l)
+        coeffs.emplace_back(vecXcd::Zero(2*l+1)) ;
 
-    realVec legendreLMCoeffs(order+1);
+    // precompute as LUT
+    realVec legendreLMCoeffs;
     for (int n = 0; n <= order; ++n)
         legendreLMCoeffs.push_back(legendreLM(0, n, 0));
 
@@ -47,16 +47,17 @@ void Stem::buildMpoleCoeffs() {
             //    << '(' << branchCoeffs[l].rows() << ',' << branchCoeffs[l].cols() << ")\n";    
             branchCoeffs[l] = rotationMat[branchIdx][l] * branchCoeffs[l];
         }
-        // +6 to skip matrices for cardinal direction rotations (used later for downward pass)
-            // branchCoeffs[l] *= rotationMat[branch->getBranchIdx()+6][l];
 
-        auto dR = toSph(branch->getCenter() - center);
-        auto r = dR[0], th = dR[1], ph = dR[2];
+        //auto dR = toSph(branch->getCenter() - center);
+        //auto r = dR[0];
+        double r = (branch->getCenter() - center).norm();
 
         for (size_t j = 0; j <= order; ++j) {
             vecXcd rotatedBranchCoeffs_j(2*j+1);
+
             for (int k = -j; k <= j; ++k) {
                 size_t k_ = k+j;
+
                 for (size_t n = 0; n <= j; ++n)
                     rotatedBranchCoeffs_j[k_] +=
                         branchCoeffs[j-n][k_] * A[n][0] * A[j-n][k_] / A[j][k_] *

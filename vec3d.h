@@ -5,8 +5,13 @@
 // using vec3d = std::array<double, 3>; 
 using vec3d = Eigen::Vector3d;
 using vec3dVec = std::vector<vec3d>;
+
+using vec3cd = Eigen::Vector3cd;
+using vec3cdVec = std::vector<vec3cd>;
+
 using vecXcd = Eigen::VectorXcd;
 using vecXcdVec = std::vector<vecXcd>;
+
 using matXcd = Eigen::MatrixXcd;
 using matXcdVec = std::vector<matXcd>;
 

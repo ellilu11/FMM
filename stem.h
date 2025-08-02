@@ -23,15 +23,9 @@ public:
             branch->printNode(f);
     }
 
-    void resetNode() {
-        coeffs.clear();
-        localCoeffs.clear();
-        nbors.clear();
-        iList.clear();
-        for (const auto& branch : branches)
-            branch->resetNode();
-    }
-
     // test methods
     std::shared_ptr<Node> getRandNode(int);
+    const cmplx getFfieldFromLeaf(const vec3d&);
+    void resetNode();
+
 };

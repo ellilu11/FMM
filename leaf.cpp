@@ -9,9 +9,8 @@ Leaf::Leaf(
 }
 
 void Leaf::buildMpoleCoeffs() {
-    coeffs.resize(order+1);
-    for (int l = 0; l < coeffs.size(); ++l)
-        coeffs[l] = vecXcd(2*l+1);
+    for (int l = 0; l <= order; ++l)
+        coeffs.emplace_back(vecXcd::Zero(2*l+1));
 
     for (const auto& src : particles) {
         auto dR = toSph(src->getPos() - center);
@@ -19,18 +18,23 @@ void Leaf::buildMpoleCoeffs() {
         double r2l = 1;
 
         for (int l = 0; l <= order; ++l) {
-            realVec legendreLMCoeffs(l+1);
+            realVec legendreLMCoeffs;
             for (int m = 0; m <= l; ++m)
                 legendreLMCoeffs.push_back(legendreLM(th, l, m));
 
             for (int m = -l; m <= l; ++m) {
-                coeffs[l][m+l] +=
-                    src->getCharge() * r2l *
+                (coeffs[l])[m+l] +=
+                    src->getCharge() * std::pow(r, l) *
                     legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(-m)*ph);
             }
-            r2l *= r;
+            // r2l *= r;
         }
     }
+
+    //for (int l = 0; l <= order; ++l) {
+    //    for (int m = -l; m <= l; ++m)
+    //        std::cout << l << ' ' << m << ' ' << (coeffs[l])[m+l] << '\n';
+    //}
 }
 
 void Leaf::buildLocalCoeffs() {
