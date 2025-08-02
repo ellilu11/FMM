@@ -2,6 +2,8 @@
 
 using enum Dir;
 
+const int numDir = std::pow(3, DIM) - 1;
+
 int Node::order; // # terms in multipole expansion
 int Node::maxNodeParts;
 double Node::rootLeng;
@@ -9,6 +11,8 @@ std::vector<realVec> Node::sphHarmonicTable;
 std::vector<realVec> Node::fallingFactTable;
 std::vector<realVec> Node::legendreSumTable;
 std::vector<realVec> Node::A;
+
+std::vector<matXcdVec> Node::rotationMat;
 
 void Node::setNodeParams(const Config& config) {
     order = ceil(-std::log(config.EPS) / std::log(2));
@@ -22,15 +26,18 @@ void Node::buildTables() {
         };
 
     for (int l = 0; l <= order; ++l) {
-        realVec sphHarmonicL, fallingFactL, legendreSumL;
+        realVec sphHarmonic_l, fallingFact_l, legendreSum_l, A_l;
+        auto pm_l = pm(l);
         for (int m = 0; m <= l; ++m) {
-            sphHarmonicL.push_back( sphHarmonicCoeff(l, m) );
-            fallingFactL.push_back( fallingFactorial(l, m) );
-            legendreSumL.push_back( binom(l, m) * binom((l+m-1)/2.0, l) );
+            sphHarmonic_l.push_back( sphHarmonicCoeff(l, m) );
+            fallingFact_l.push_back( fallingFactorial(l, m) );
+            legendreSum_l.push_back( binom(l, m) * binom((l+m-1)/2.0, l) );
+            A_l.push_back( pm_l / std::sqrt(factorial(l-m)*factorial(l+m)) );
         }
-        sphHarmonicTable.push_back(sphHarmonicL);
-        fallingFactTable.push_back(fallingFactL);
-        legendreSumTable.push_back(legendreSumL);
+        sphHarmonicTable.push_back(sphHarmonic_l);
+        fallingFactTable.push_back(fallingFact_l);
+        legendreSumTable.push_back(legendreSum_l);
+        A.push_back(A_l);
 
         //std::cout << "l = " << l << '\n';
         //for (int m = 0; m <= l; ++m)
@@ -39,19 +46,45 @@ void Node::buildTables() {
     }
 }
 
-// Ylm except constant coefficients and \exp(i m \phi) phase factor
-const double Node::legendreLM(const double th, const int l, const int absm) {
-    assert(absm <= l);
+void Node::buildRotationMats() {
+    
+    // vertex directions
+    for (int dir = 18; dir < numDir; ++dir)
+        rotationMat.push_back(rotationMatrixAlongDir(dir));
+}
 
-    const auto costh = cos(th);
-    const auto sinth = sin(th);
+ matXcdVec Node::rotationMatrixAlongDir(int dir) {
+    vec3d R;
+    if (dir >= 18) R = toSph(-idx2pm(dir-=18));
+    else if (dir < 8) {
+        // do cardinal direction case
+    } else
+        throw std::runtime_error("Invalid rotation direction");
+
+    pair2d angles(R[1], R[2]);
+    // std::cout << dir << ' ' << idx2pm(dir) << ' ' << angles.first << ' ' << angles.second << '\n';
+        
+    matXcdVec mats;
+    for (int l = 0; l <= order; ++l) {
+        mats.push_back(rotationMatrix(angles, l));
+    }
+
+    return mats;
+}
+
+// Ylm except constant coefficients and \exp(i m \phi) phase factor
+const double Node::legendreLM(const double th, const int l, const int abs_m) {
+    assert(abs_m <= l);
+
+    const auto cos_th = cos(th);
+    const auto sin_th = sin(th);
     double legendreSum = 0;
 
-    // legendreSumTable_{lk} is zero for l-k odd
-    for (int k = l; k >= absm; k -= 2)
-        legendreSum += fallingFactTable[k][absm] * legendreSumTable[l][k] * pow(costh, k-absm);
+    // term is zero for l-k odd
+    for (int k = l; k >= abs_m; k -= 2)
+        legendreSum += fallingFactTable[k][abs_m] * legendreSumTable[l][k] * pow(cos_th, k-abs_m);
 
-    return sphHarmonicTable[l][absm] * pow(sinth, absm) * legendreSum;
+    return sphHarmonicTable[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
 }
 
 //const cmplx Node::sphHarmonic(const double th, const double ph, int l, int m) {
@@ -386,7 +419,6 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
                         case 7: return base->getNeighborGeqSize(UNE);
                     } } ();
                     if (nbor == nullptr) return nbor;
-                    // do not double count neighbor that will be found along a cardinal direction
                     if (nbor->isNodeType<Leaf>()) return nullptr;
                     return nbor->branches[7-branchIdx];
             }
@@ -538,21 +570,20 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 }
 
 void Node::buildNearNeighbors() {
-    const int nDir = std::pow(3, DIM) - 1;
-    // for (int i = 0; i < 18; ++i) {
-    for (int i = 0; i < nDir; ++i) {
+    for (int i = 0; i < numDir; ++i) {
         Dir dir = static_cast<Dir>(i);
         auto nbor = getNeighborGeqSize(dir);
         if (nbor != nullptr)
             nbors.push_back(nbor);
     }
-    assert(nbors.size() <= nDir);
+    assert(nbors.size() <= numDir);
 }
 
 void Node::buildInteractionList() {
     assert( !isRoot() );
 
-    buildNearNeighbors();
+    // buildNearNeighbors(); // comment out for iList test
+    base->buildNearNeighbors(); // uncomment for iList test
     auto baseNbors = base->getNearNeighbors();
 
     for (const auto& baseNbor : baseNbors)
@@ -563,7 +594,8 @@ void Node::buildInteractionList() {
                 if (!contains<std::shared_ptr<Node>>(nbors, branch))
                     iList.push_back(branch);
 
-    assert(iList.size() <= pow(6,DIM) - pow(3,DIM));
+    const int maxSize = constPow(6, DIM) - constPow(3, DIM);
+    assert(iList.size() <= maxSize);
 }
 
 void Node::buildMpoleToLocalCoeffs() {
@@ -601,7 +633,7 @@ void Node::buildMpoleToLocalCoeffs() {
     iList.clear();*/
 }
 
-const vec3dVec Node::getShiftedLocalCoeffs(const vec3d z0) {
+const vecXcdVec Node::getShiftedLocalCoeffs(const vec3d z0) {
     auto shiftedCoeffs( localCoeffs );
     //for (size_t j = 0; j <= order - 1; ++j)
     //    for (size_t k = order - j - 1; k <= order - 1; ++k)

@@ -58,19 +58,36 @@ int main(int argc, char *argv[])
     chrono::duration<double, milli> duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
+    // ==================== Tests ==================== //
     root->setRandNodeStats();
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
-    return 0;
-    // ==================== Tests ==================== //
+    Node::setNodeParams(config);
+    cout << " Expansion order: " << Node::getExpansionOrder() << "\n";
+
+    cout << " Building rotation matrices...\n";
+    start = chrono::high_resolution_clock::now();
+
+    Node::buildRotationMats();
+    int l = 1;
+    for (int dir = 0; dir < 1; ++dir) {
+        auto mat = Node::getRotationMatrixAlongDir(dir)[l];
+        // cout << mat << '\n' << mat.adjoint() << '\n' << '\n';
+        // cout << mat * mat.adjoint() << '\n' << '\n';
+    }
+    // cout << rotationMatrix(pair2d(0, PI), 1) << '\n';
+
+    end = chrono::high_resolution_clock::now();
+    duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+
     //const int order = Node::getExpansionOrder();
     //Node::buildTables();
 
     //double th = PI/4;
     //double ph = 0;
 
-    //start = chrono::high_resolution_clock::now();
     //for (int l = 0; l < order; ++l) {
     //    for (int m = -l; m <= l; ++m) {
     //        auto Ylm = Node::legendreLM(th, l, abs(m));
@@ -78,11 +95,6 @@ int main(int argc, char *argv[])
     //    }
     //    cout << '\n';
     //}
-    //end = chrono::high_resolution_clock::now();
-    //duration_ms = end - start;
-    //cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-
-    //return 0;
 
     // ==================== Upward pass ==================== //
     const int order = Node::getExpansionOrder();
@@ -95,6 +107,8 @@ int main(int argc, char *argv[])
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+
+    return 0;
 
     // ==================== Downward pass ==================== //
     cout << " Computing downward pass...\n";

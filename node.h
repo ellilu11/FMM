@@ -10,10 +10,16 @@
 extern const int DIM;
 
 enum class Dir {
-    U, D, N, S, E, W,
-    UN, DS, US, DN, UE, DW, UW, DE, NE, SW, NW, SE,
-    UNE, DSW, UNW, DSE, USE, DNW, USW, DNE
+    W, E, S, N, D, U,
+    SW, SE, NW, NE, DW, DE, UW, UE, DS, DN, US, UN,
+    DSW, DSE, DNW, DNE, USW, USE, UNW, UNE
 };
+
+//enum class Dir {
+//    D, U, S, N, W, E,
+//    DS, US, DN, UN, DW, DE, UW, UE, SW, NW, SE, NE,
+//    DSW, USW, DNW, UNW, DSE, USE, DNE, UNE
+//};
 
 class Node;
 
@@ -25,16 +31,19 @@ public:
 
     static const int getExpansionOrder() { return order; }
     static void setExpansionOrder(const int p) { order = p; }
+    
+    static matXcdVec getRotationMatrixAlongDir(int dir) { return rotationMat[dir]; }
 
     ParticleVec getParticles() const { return particles; }
+    const int getBranchIdx() const { return branchIdx; }
     const double getLeng() const { return nodeLeng; }
     const vec3d getCenter() const { return center; }
     Node* getBase() const { return base; }
     const NodeVec getBranches() const { return branches; }
     NodeVec const getNearNeighbors() { return nbors; }
     NodeVec const getInteractionList() { return iList; }
-    cmplxVec getMpoleCoeffs() const { return coeffs; }
-    vec3dVec getLocalCoeffs() const { return localCoeffs; }
+    vecXcdVec getMpoleCoeffs() const { return coeffs; }
+    vecXcdVec getLocalCoeffs() const { return localCoeffs; }
 
     const bool isRoot() const { return base == nullptr; }
 
@@ -43,14 +52,16 @@ public:
 
     static void setNodeParams(const Config&);
     static void buildTables();
+    static void buildRotationMats();
+    static matXcdVec rotationMatrixAlongDir(const int);
+
     static const double legendreLM(const double, const int, const int);
-    // static const cmplx sphHarmonic(const double, const double, int, int);
 
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
     void buildNearNeighbors();
     void buildInteractionList();
     void buildMpoleToLocalCoeffs();
-    const vec3dVec getShiftedLocalCoeffs(const vec3d);
+    const vecXcdVec getShiftedLocalCoeffs(const vec3d);
     //const vec3d getDirectPhiFar(const vec3d);
     //const vec3d getDirectPhi(const vec3d);
     const vec3dVec getDirectPhis();
@@ -63,6 +74,7 @@ public:
     virtual void printNode(std::ofstream&) = 0;
 
     // test methods
+    int getLvl() { return std::round(std::log(rootLeng/nodeLeng)/std::log(2)); }
     void setNodeStat(int stat) { nodeStat = stat; }
     virtual std::shared_ptr<Node> getRandNode(int) = 0;
     void setRandNodeStats();
@@ -75,6 +87,7 @@ protected:
     static std::vector<realVec> fallingFactTable;
     static std::vector<realVec> legendreSumTable;
     static std::vector<realVec> A;
+    static std::vector<matXcdVec> rotationMat;
 
     ParticleVec particles;
     const int branchIdx;
@@ -86,8 +99,8 @@ protected:
     NodeVec nbors;
     NodeVec iList;
 
-    cmplxVec coeffs;
-    vec3dVec localCoeffs;
+    vecXcdVec coeffs;
+    vecXcdVec localCoeffs;
 
     // test members
     int nodeStat;

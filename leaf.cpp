@@ -9,11 +9,13 @@ Leaf::Leaf(
 }
 
 void Leaf::buildMpoleCoeffs() {
-    coeffs.resize(pow(order+1, 2));
+    coeffs.resize(order+1);
+    for (int l = 0; l < coeffs.size(); ++l)
+        coeffs[l] = vecXcd(2*l+1);
 
     for (const auto& src : particles) {
-        auto [r, th, ph] = cart2Sph(src->getPos() - center);
-        size_t idx = 0;
+        auto dR = toSph(src->getPos() - center);
+        auto r = dR[0], th = dR[1], ph = dR[2];
         double r2l = 1;
 
         for (int l = 0; l <= order; ++l) {
@@ -22,10 +24,9 @@ void Leaf::buildMpoleCoeffs() {
                 legendreLMCoeffs.push_back(legendreLM(th, l, m));
 
             for (int m = -l; m <= l; ++m) {
-                coeffs[idx] += 
+                coeffs[l][m+l] +=
                     src->getCharge() * r2l *
-                    legendreLMCoeffs[std::abs(m)] * phaseFactor(ph, -m);
-                idx++;
+                    legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(-m)*ph);
             }
             r2l *= r;
         }

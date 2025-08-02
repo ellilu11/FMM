@@ -55,14 +55,14 @@ ParticleVec makeParticles(const Config& config)
                 case Dist::UNIFORM:
                     return vec3d{ rand0(gen), rand1(gen), rand2(gen) };
                 case Dist::GAUSSIAN: {
-                    return sph2Cart(R);
+                    return toCart(R);
                 }
             } } ();
 
         R = [&] {
             switch (config.dist) {
             case Dist::UNIFORM:
-                return cart2Sph(X);
+                return toSph(X);
             case Dist::GAUSSIAN: {
                 const double r = sqrt(-2 * log(rand0(gen))); // fix
                 const double th = 2.0 * 3.1415927 * rand1(gen); // fix
@@ -71,8 +71,8 @@ ParticleVec makeParticles(const Config& config)
             }
             } } ();
         
-        auto [x, y, z] = X;
-        auto idx = bools2Idx(X > zeroVec);
+        auto x = X[0], y = X[1], z = X[2];
+        auto idx = bools2Idx(X > zeroVec );
         int pm = [&] () -> int {
             switch (config.cdist) {
                 case ChargeDist::PLUS:  return 1;
