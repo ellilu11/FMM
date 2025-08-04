@@ -36,12 +36,12 @@ ParticleVec makeParticles(const Config& config)
 
     switch (config.dist) {
         case Dist::UNIFORM:
-            //rand0 = dist0(-config.L/2, config.L/2);
-            //rand1 = dist1(-config.L/2, config.L/2);
-            //rand2 = dist2(-config.L/2, config.L/2);
-            rand0 = dist0(0.0, config.L/2);
-            rand1 = dist1(0.0, config.L/2);
-            rand2 = dist2(0.0, config.L/2);
+            rand0 = dist0(-config.L/2, config.L/2);
+            rand1 = dist1(-config.L/2, config.L/2);
+            rand2 = dist2(-config.L/2, config.L/2);
+            //rand0 = dist0(0.0, config.L/2);
+            //rand1 = dist1(0.0, config.L/2);
+            //rand2 = dist2(0.0, config.L/2);
             break;
         case Dist::GAUSSIAN:
             rand0 = dist0(0, 1);
@@ -52,26 +52,17 @@ ParticleVec makeParticles(const Config& config)
     }
 
     for (int n = 0; n < config.nsrcs; ++n) {
-        vec3d X, R;
+        vec3d X;
         X = [&] {
             switch (config.dist) {
                 case Dist::UNIFORM:
                     return vec3d{ rand0(gen), rand1(gen), rand2(gen) };
                 case Dist::GAUSSIAN: {
-                    return toCart(R);
+                    const double r = sqrt(-2 * log(rand0(gen))); // fix
+                    const double th = 2.0 * 3.1415927 * rand1(gen); // fix
+                    const double ph = rand2(gen);
+                    return toCart(vec3d(r,th,ph));
                 }
-            } } ();
-
-        R = [&] {
-            switch (config.dist) {
-            case Dist::UNIFORM:
-                return toSph(X);
-            case Dist::GAUSSIAN: {
-                const double r = sqrt(-2 * log(rand0(gen))); // fix
-                const double th = 2.0 * 3.1415927 * rand1(gen); // fix
-                const double ph = rand2(gen);
-                return vec3d{ r,th,ph };
-            }
             } } ();
         
         auto x = X[0], y = X[1], z = X[2];
@@ -90,7 +81,7 @@ ParticleVec makeParticles(const Config& config)
                     return randi(gen);
                 }
             } } () * 2 - 1;
-        particles.emplace_back(make_shared<Particle>(X, R, pm*e, M));
+        particles.emplace_back(make_shared<Particle>(X, pm*e, M));
     }
     return particles;
 }

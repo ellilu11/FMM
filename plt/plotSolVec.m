@@ -1,29 +1,28 @@
 %%
-phiFile = strcat(dir,"nf.txt");
-
-phiAnlFile = strcat(dir,"nfAnl.txt");
+dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
+phiFile = strcat(dir,"out\ff.txt");
+phiAnlFile = strcat(dir,"out\ffAnl.txt");
 
 phi = readmatrix(phiFile)';
-phiAnl = readmatrix(phiAnlFile);
+phiAnl = readmatrix(phiAnlFile)';
 
-phi = sortrows(phi,1);
-phiAnl = sortrows(phiAnl,1);
+% phi = sortrows(phi,1);
+% phiAnl = sortrows(phiAnl,1);
 nvec = 1:size(phi,1);
-pmax = size(phi,2);
+numP = size(phi,2);
 
 %%
-% pmax = 4;
-% pvec = pmax-numP+1:pmax;
-pmin = 2;
-pvec = 1:5; % pmin:pmax;
+pmin = 1;
+pmax = pmin+numP-1;
+pvec = pmin:pmax;
 
+close all;
 figure(1);
 [phi(:,1), phiAnl(:,1)]
 plot(nvec, phiAnl, nvec, phi(:,pvec));
-% plot(nvec, phiAnl(:,2), nvec, phi(:,2));
 legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
      'UniformOutput',false))],...
-     'Location','southeast');
+     'Location','northeast');
 
 figure(2);
 relErr = abs(phi-phiAnl)./abs(phiAnl);
@@ -32,7 +31,7 @@ semilogy(nvec, relErr(:,pvec), '-o');
 legend(strcat(" p = ", arrayfun(@num2str,pvec,...
     'UniformOutput',false)) );
 
-figure(3);
-meanRelErr = mean(relErr,1);
-semilogy(pvec,meanRelErr(pvec), '-o');
+% figure(3);
+% meanRelErr = mean(relErr,1);
+% semilogy(pvec,meanRelErr(pvec), '-o');
 

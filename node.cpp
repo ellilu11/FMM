@@ -4,15 +4,12 @@ using enum Dir;
 
 const int numDir = std::pow(3, DIM) - 1;
 
-int Node::order; // # terms in multipole expansion
+int Node::order;
 int Node::maxNodeParts;
 double Node::rootLeng;
-std::vector<realVec> Node::coeffYlmTable;
-std::vector<realVec> Node::fallingFactTable;
-std::vector<realVec> Node::legendreSumTable;
-std::vector<realVec> Node::A;
-
+Tables Node::tables;
 std::vector<matXcdVec> Node::rotationMat;
+std::vector<matXcdVec> Node::rotationInvMat;
 
 void Node::setNodeParams(const Config& config) {
     order = ceil(-std::log(config.EPS) / std::log(2));
@@ -26,38 +23,45 @@ void Node::buildTables() {
         };
 
     for (int l = 0; l <= order; ++l) {
-        realVec sphHarmonic_l, fallingFact_l, legendreSum_l, A_l;
-        auto pm_l = pm(l);
+        realVec coeffYlm_l, fallingFact_l, legendreSum_l, A_l;
+
         for (int m = 0; m <= l; ++m) {
-            sphHarmonic_l.push_back( sphHarmonicCoeff(l, m) );
+            coeffYlm_l.push_back( coeffYlm(l, m) );
             fallingFact_l.push_back( fallingFactorial(l, m) );
             legendreSum_l.push_back( binom(l, m) * binom((l+m-1)/2.0, l) );
-            A_l.push_back( pm_l / std::sqrt(factorial(l-m)*factorial(l+m)) );
         }
-        coeffYlmTable.push_back(sphHarmonic_l);
-        fallingFactTable.push_back(fallingFact_l);
-        legendreSumTable.push_back(legendreSum_l);
-        A.push_back(A_l);
+
+        auto pm_l = pm(l);
+        for (int m = -l; m <= l; ++m)
+            A_l.push_back(pm_l /
+                std::sqrt(static_cast<double>(factorial(l-m)*factorial(l+m))) );
+
+        tables.coeffYlm.push_back(coeffYlm_l);
+        tables.fallingFact.push_back(fallingFact_l);
+        tables.legendreSum.push_back(legendreSum_l);
+        tables.A.push_back(A_l);
 
         //std::cout << "l = " << l << '\n';
         //for (int m = 0; m <= l; ++m)
-        //    std::cout << legendreSumTable[l][m] << ' ';
+        //    std::cout << tables.legendreSum[l][m] << ' ';
         //std::cout << '\n';
     }
 }
 
 void Node::buildRotationMats() {
-    
-    // vertex directions
-    for (int dir = 18; dir < numDir; ++dir)
-        rotationMat.push_back(rotationMatrixAlongDir(dir));
+    // do cardinal directions
+
+    for (int dir = 18; dir < numDir; ++dir) {
+        rotationMat.push_back(rotationMatrixAlongDir(dir, 0));
+        rotationInvMat.push_back(rotationMatrixAlongDir(dir, 1));
+    }
 }
 
- matXcdVec Node::rotationMatrixAlongDir(int dir) {
+ matXcdVec Node::rotationMatrixAlongDir(int dir, const bool isInv) {
     vec3d R;
     if (dir >= 18) R = toSph(-idx2pm(dir-=18));
     else if (dir < 8) {
-        // do cardinal direction case
+        // do cardinal direction
     } else
         throw std::runtime_error("Invalid rotation direction");
 
@@ -65,9 +69,11 @@ void Node::buildRotationMats() {
     // std::cout << dir << ' ' << idx2pm(dir) << ' ' << angles.first << ' ' << angles.second << '\n';
         
     matXcdVec mats;
-    for (int l = 0; l <= order; ++l) {
-        mats.push_back(rotationMatrix(angles, l));
-    }
+    for (int l = 0; l <= order; ++l)
+        mats.push_back(!isInv ?
+            rotationMatrix(angles, l) :
+            rotationMatrix(angles, l).inverse()
+        );
 
     return mats;
 }
@@ -78,13 +84,13 @@ const double Node::legendreLM(const double th, const int l, const int abs_m) {
 
     const auto cos_th = cos(th);
     const auto sin_th = sin(th);
-    double legendreSum = 0;
+    double legendreSum = 0.0;
 
     // term is zero for l-k odd
     for (int k = l; k >= abs_m; k -= 2)
-        legendreSum += fallingFactTable[k][abs_m] * legendreSumTable[l][k] * pow(cos_th, k-abs_m);
+        legendreSum += tables.fallingFact[k][abs_m] * tables.legendreSum[l][k] * pow(cos_th, k-abs_m);
 
-    return coeffYlmTable[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
+    return tables.coeffYlm[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
 }
 
 //const cmplx Node::sphHarmonic(const double th, const double ph, int l, int m) {

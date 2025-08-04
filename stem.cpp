@@ -26,13 +26,14 @@ Stem::Stem(
 }
 
 void Stem::buildMpoleCoeffs() {
+    using namespace std;
     for (int l = 0; l <= order; ++l)
-        coeffs.emplace_back(vecXcd::Zero(2*l+1)) ;
+        coeffs.emplace_back(vecXcd::Zero(2*l+1));
 
     // precompute as LUT
-    realVec legendreLMCoeffs;
-    for (int n = 0; n <= order; ++n)
-        legendreLMCoeffs.push_back(legendreLM(0, n, 0));
+    realVec legendreL0Coeffs;
+    for (int l = 0; l <= order; ++l)
+        legendreL0Coeffs.push_back(legendreLM(0.0, l, 0));
 
     for (const auto& branch : branches) {
         branch->buildMpoleCoeffs();
@@ -40,32 +41,39 @@ void Stem::buildMpoleCoeffs() {
         auto branchIdx = branch->getBranchIdx();
 
         // apply rotation
-        for (int l = 0; l < branchCoeffs.size(); ++l) {
-            //auto mat = rotationMat[branchIdx][l];
-            //std::cout << branchIdx << ' ' << l << ' '
-            //    << '(' << mat.rows() << ',' << mat.cols() << ") "
-            //    << '(' << branchCoeffs[l].rows() << ',' << branchCoeffs[l].cols() << ")\n";    
+        for (size_t l = 0; l < branchCoeffs.size(); ++l)
             branchCoeffs[l] = rotationMat[branchIdx][l] * branchCoeffs[l];
-        }
 
-        //auto dR = toSph(branch->getCenter() - center);
-        //auto r = dR[0];
-        double r = (branch->getCenter() - center).norm();
+        auto dR = toSph(branch->getCenter() - center);
+        double r = dR[0], th = dR[1], ph = dR[2];
+        // double r = (branch->getCenter() - center).norm();
 
-        for (size_t j = 0; j <= order; ++j) {
-            vecXcd rotatedBranchCoeffs_j(2*j+1);
+        for (int j = 0; j <= order; ++j) {
+            vecXcd rotatedBranchCoeffs_j = vecXcd::Zero(2*j+1);
 
             for (int k = -j; k <= j; ++k) {
-                size_t k_ = k+j;
+                // int k_ = k + j;
+                for (int n = 0; n <= min(j+k,j-k); ++n) {
+                    // int k__ = k_ - n;
 
-                for (size_t n = 0; n <= j; ++n)
-                    rotatedBranchCoeffs_j[k_] +=
-                        branchCoeffs[j-n][k_] * A[n][0] * A[j-n][k_] / A[j][k_] *
-                        pow(r, n) * legendreLMCoeffs[n];
+                    rotatedBranchCoeffs_j[k+j] +=
+                        branchCoeffs[j-n][k+j-n] * tables.A[n][n] * tables.A[j-n][k+j-n] / tables.A[j][k+j] *
+                        pow(r, n) * legendreL0Coeffs[n];
+
+                    //for (int m = max(k+n-j,-n); m <= min(k+j-n,n); ++m) {
+                    //    int m_ = m + n;
+                    //    coeffs[j][k_] +=
+                    //        branchCoeffs[j-n][k_-m_] * pow(iu, abs(k)-abs(m)-abs(k-m)) *
+                    //        tables.A[n][m_] * tables.A[j-n][k_-m_] / tables.A[j][k_] *
+                    //        pow(r, n) * legendreLM(th, n, abs(-m)) * expI(static_cast<double>(-m)*ph);
+                    //}
+                }
             }
             // apply inverse rotation
-            // assume rotationMat is unitary, so its adjoint is its inverse
-            coeffs[j] += rotationMat[branchIdx][j].adjoint() * rotatedBranchCoeffs_j;
+            coeffs[j] += rotationInvMat[branchIdx][j] * rotatedBranchCoeffs_j;
+            //
+            // apply inverse rotation, assuming rotationMat is unitary
+            // coeffs[j] += rotationMat[branchIdx][j].adjoint() * rotatedBranchCoeffs_j;
         }
     }
 }

@@ -16,11 +16,13 @@ enum class Dir {
     DSW, DSE, DNW, DNE, USW, USE, UNW, UNE
 };
 
-//enum class Dir {
-//    D, U, S, N, W, E,
-//    DS, US, DN, UN, DW, DE, UW, UE, SW, NW, SE, NE,
-//    DSW, USW, DNW, UNW, DSE, USE, DNE, UNE
-//};
+struct Tables {
+    std::vector<realVec> coeffYlm;
+    std::vector<realVec> fallingFact;
+    std::vector<realVec> legendreSum;
+    std::vector<realVec> A;
+    // std::vector<realVec> quadWeights;
+};
 
 class Node;
 
@@ -54,7 +56,7 @@ public:
     static void setNodeParams(const Config&);
     static void buildTables();
     static void buildRotationMats();
-    static matXcdVec rotationMatrixAlongDir(const int);
+    static matXcdVec rotationMatrixAlongDir(int, const bool);
 
     static const double legendreLM(const double, const int, const int);
 
@@ -80,23 +82,22 @@ public:
     // definition under test/nodetest.cpp
     void setRandNodeStats();
     const double getDirectPhi(const vec3d&);
-    const cmplx getDirectPhiFromMpole(const vec3d&);
-    void ffieldTest(const std::pair<int,int>&);
+    const cmplx getPhiFromMpole(const vec3d&);
+    void ffieldTest(const int, const int, const int);
     // void nfieldTest();
 
     // definition under test/[stemtest.cpp, leaftest.cpp]
     virtual std::shared_ptr<Node> getRandNode(int) = 0;
-    virtual const cmplx getFfieldFromLeaf(const vec3d&) = 0;
+    virtual const cmplx getPhiFromBranchMpole(const vec3d&, const int) = 0;
+    virtual void printMpoleCoeffs(std::ofstream&) = 0;
 
 protected:
     static int order;
     static int maxNodeParts;
     static double rootLeng;
-    static std::vector<realVec> coeffYlmTable;
-    static std::vector<realVec> fallingFactTable;
-    static std::vector<realVec> legendreSumTable;
-    static std::vector<realVec> A;
+    static Tables tables;
     static std::vector<matXcdVec> rotationMat;
+    static std::vector<matXcdVec> rotationInvMat;
 
     ParticleVec particles;
     const int branchIdx;

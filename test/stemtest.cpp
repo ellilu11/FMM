@@ -16,12 +16,28 @@ shared_ptr<Node> Stem::getRandNode(int minLvl) {
     return node;
 }
 
-const cmplx Stem::getFfieldFromLeaf(const vec3d& R) {
+const cmplx Stem::getPhiFromBranchMpole(const vec3d& R, int maxLvl) {
     cmplx phi;
+    std::cout << "Branch" << getLvl() << ' ';
+    if (getLvl() >= maxLvl) return getPhiFromMpole(R);
+
     for (const auto& branch : branches)
-        phi += branch->getFfieldFromLeaf(R);
+        phi += branch->getPhiFromBranchMpole(R, maxLvl);
     return phi;
 };
+
+void Stem::printMpoleCoeffs(std::ofstream& f) {
+    f << "Branch " << branchIdx << '\n';
+    for (int l = 0; l < coeffs.size(); ++l) {
+        for (int m = -l; m <= l; ++m)
+            f << l << ' ' << m << ' ' << coeffs[l][m+l] << ' ';
+        f << '\n';
+    }
+    f << '\n';
+        
+    for (const auto& branch : branches)
+        branch->printMpoleCoeffs(f);
+}
 
 void Stem::resetNode() {
     coeffs.clear();

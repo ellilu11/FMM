@@ -11,13 +11,12 @@ using ParticleVec = std::vector<std::shared_ptr<Particle>>;
 class Particle {
 public :
     Particle() = default;
-    Particle(const vec3d X, const vec3d R, const double q, const double m)
-        : pos(X), sph(R), charge(q), mass(m)
+    Particle(const vec3d X, const double q, const double m)
+        : pos(X), charge(q), mass(m), phi(0.0), fld(vec3d::Zero())
     {
     };
 
     vec3d getPos() const { return pos; }
-    vec3d getSph() const { return sph; }
     double getCharge() const { return charge; }
     double getMass() const { return mass; }
 
@@ -33,7 +32,7 @@ public :
     }
 
     friend std::ostream& operator<<(std::ostream& os, Particle& p) {
-        os << p.pos << " " << " " << p.charge << " " << p.mass << '\n';
+        os << p.pos << " " << p.charge << " " << p.mass << '\n';
         return os;
     }
 
@@ -44,7 +43,6 @@ public :
 
 private :
     vec3d pos;
-    vec3d sph;
     // vec3d vel;
     double phi;
     vec3d fld;

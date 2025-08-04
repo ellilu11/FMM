@@ -15,16 +15,16 @@ void Node::setRandNodeStats() {
         iNode->setNodeStat(2);
 }
 
-const double Node::getDirectPhi(const vec3d& R) {
+const double Node::getDirectPhi(const vec3d& X) {
     double phi = 0;
-    auto X = toCart(R);
     for (const auto& p : particles)
         phi += p->getCharge() / (X - p->getPos()).norm();
     return phi;
 }
 
-const cmplx Node::getDirectPhiFromMpole(const vec3d& R) {
-    auto r = R[0], th = R[1], ph = R[2];
+const cmplx Node::getPhiFromMpole(const vec3d& X) {
+    auto dR = toSph(X - center);
+    double r = dR[0], th = dR[1], ph = dR[2];
     cmplx phi(0, 0);
 
     for (int l = 0; l <= order; ++l) {
@@ -33,38 +33,41 @@ const cmplx Node::getDirectPhiFromMpole(const vec3d& R) {
             legendreLMCoeffs.push_back(legendreLM(th, l, m));
 
         for (int m = -l; m <= l; ++m) {
-            int m_ = m+l;
+            int m_ = m + l;
             phi += coeffs[l][m_] / pow(r, l+1) *
-                legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(-m)*ph);
+                legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
         }
     }
 
     return phi;
 }
 
-void Node::ffieldTest(const pair<int,int>& Nangles) {
-    auto [Nth, Nph] = Nangles;
-    const double r(2.0*rootLeng);
-
-    std::ofstream obsFile, outFile, outAnlFile;
+void Node::ffieldTest(const int Nr, const int Nth, const int Nph) {
+    std::ofstream obsFile, outFile, outAnlFile, coeffsFile;
     obsFile.open("config/obss.txt");
     outFile.open("out/ff.txt");
     outAnlFile.open("out/ffAnl.txt");
+    coeffsFile.open("out/mpolecoeffs.txt");
 
-    vec3dVec obss; // observer positions in spherical coordinates
-    for (int ith = 0; ith < Nth; ++ith) {
-        for (int iph = 0; iph < Nph; ++iph) {
-            const double th = PI * static_cast<double>(ith) / static_cast<double>(Nth);
-            const double ph = TAU * static_cast<double>(iph) / static_cast<double>(Nph);
-            vec3d obs(r, th, ph);
-            // vec3d obs(r*sin(th)*cos(ph), r*sin(th)*sin(ph), r*cos(th));
-            obss.push_back(obs);
-            obsFile << obs << '\n';
+    //outFile << setprecision(9);
+    //outAnlFile << setprecision(9);
+
+    vec3dVec obss;
+    for (int ir = 0; ir < Nr; ++ir){
+        double r = 5.0*(ir+1.0)*rootLeng;
+        for (int ith = 0; ith < Nth; ++ith) {
+            double th = PI * ith / static_cast<double>(Nth);
+            for (int iph = 0; iph < Nph; ++iph) {
+                double ph = TAU * iph / static_cast<double>(Nph);
+                auto obs = toCart(vec3d(r, th, ph));
+                obss.push_back(obs);
+                obsFile << obs << '\n';
+            }
         }
     }
 
     const int order = Node::getExpansionOrder();
-    for (int p = order; p <= order; ++p) {
+    for (int p = 1; p <= order; ++p) {
         Node::setExpansionOrder(p);
 
         cout << " Computing upward pass...   (" << "Expansion order: " << p << ")\n";
@@ -77,16 +80,18 @@ void Node::ffieldTest(const pair<int,int>& Nangles) {
         cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
         for (const auto& obs : obss) {
-            // auto phi = evaluateFfield(obs);
-            auto phi = getFfieldFromLeaf(obs);
-            outFile << phi.real() << "\n";
+            // auto phi = getPhiFromMpole(obs);
+            auto phi = getPhiFromBranchMpole(obs,0);
+            outFile << phi.real() << " ";
         }
         outFile << '\n';
         if (p < order) resetNode();
     }
 
+    printMpoleCoeffs(coeffsFile);
+
     for (const auto& obs : obss) 
-        outAnlFile << getDirectPhi(obs) << "\n";
+        outAnlFile << getDirectPhi(obs) << " ";
     outAnlFile << '\n';
 
 }

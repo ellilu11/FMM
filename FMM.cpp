@@ -36,18 +36,21 @@ int main(int argc, char *argv[])
             throw std::runtime_error("Invalid mode");
     }
 
-    cout << " Mode:           " << (config.mode == Mode::READ ? "READ" : "GEN") << '\n';
-    cout << " Source file:    " << fname << '\n';
-    cout << " # sources:      " << Nsrcs << '\n';
-    cout << " Root length:    " << config.L << '\n';
-    cout << " Error tol.:     " << config.EPS << '\n';
-    cout << " Max node parts: " << config.maxNodeParts << '\n' << '\n';
+    Node::setNodeParams(config);
+    const int order = Node::getExpansionOrder();
+
+    cout << " Mode:            " << (config.mode == Mode::READ ? "READ" : "GEN") << '\n';
+    cout << " Source file:     " << fname << '\n';
+    cout << " # sources:       " << Nsrcs << '\n';
+    cout << " Root length:     " << config.L << '\n';
+    cout << " Error tol.:      " << config.EPS << '\n';
+    cout << " Expansion order: " << order << '\n';
+    cout << " Max node parts:  " << config.maxNodeParts << '\n' << '\n';
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
     auto start = chrono::high_resolution_clock::now();
 
-    Node::setNodeParams(config);
     shared_ptr<Node> root;
     if (Nsrcs > config.maxNodeParts)
         root = make_shared<Stem>(srcs, 0, nullptr);
@@ -70,36 +73,38 @@ int main(int argc, char *argv[])
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     // ==================== Tests ==================== //
-    root->setRandNodeStats();
+    // root->setRandNodeStats();
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
+    // ==============================================
     //int l = 1;
     //for (int dir = 0; dir < 1; ++dir) {
     //    auto mat = Node::getRotationMatrixAlongDir(dir)[l];
     //     cout << mat << "\n\n" << mat.adjoint() << "\n\n";
     //     cout << mat * mat.adjoint() << "\n\n";
     //}
+    // ==============================================
+    //double th = 0*PI/4.0;
+    //double ph = 5*PI/4.0;
+    // cout << toSph(toCart(vec3d(1.0, th, ph))) << '\n';
 
-    //double th = PI/4;
-    //double ph = 0;
-
-    //for (int l = 0; l < order; ++l) {
+    //for (int l = 0; l <= order; ++l) {
     //    for (int m = -l; m <= l; ++m) {
-    //        auto Ylm = Node::legendreLM(th, l, abs(m));
-    //        cout << (abs(Ylm) > 1.0E-9 ? Ylm : 0.0 ) << ' ';
+    //        auto Ylm = Node::legendreLM(th, l, abs(m)) * exp(iu*static_cast<double>(m)*ph);
+    //                    // * ( m < 0 ? pm(m) : 1);
+    //        cout << (norm(Ylm) > 1.0E-6 ? Ylm : 0.0 ) << ' ';
     //    }
     //    cout << '\n';
     //}
 
-    pair<int, int> angles(10, 20);
-    root->ffieldTest(angles);
+    // ==============================================
+    root->ffieldTest(1,10,10);
 
     return 0;
 
     // ==================== Upward pass ==================== //
-    const int order = Node::getExpansionOrder();
-    cout << " Computing upward pass...   (" << "Expansion order: " << order << ")\n";
+    cout << " Computing upward pass...\n";
     start = chrono::high_resolution_clock::now();
 
     // root->buildMpoleCoeffs();

@@ -40,13 +40,13 @@ vec3d idx2pm(const int x) {
 
 // return pow(-1,k)
 double pm(const int k) {
-    return k % 2 ? -1 : 1;
+    return k % 2 ? -1.0 : 1.0;
 }
 
 vec3d toCart(const vec3d& R) {
     auto r = R[0], th = R[1], ph = R[2];
     return vec3d(
-        r *std::sin(th) * std::cos(ph), 
+        r * std::sin(th) * std::cos(ph), 
         r * std::sin(th) * std::sin(ph), 
         r * std::cos(th) );
 }
@@ -55,12 +55,12 @@ vec3d toSph(const vec3d& X) {
     auto x = X[0], y = X[1], z = X[2], r = X.norm();
     assert(r != 0);
 
-    // use the [0, 2*pi) convention
     auto toPhi = [](double x, double y) {
-        if (x == 0 && y == 0) 
-            throw std::runtime_error("Azimuthal angle undefined");
-        if (y >= 0) return std::atan2(y,x);
-        if (y < 0) return std::atan2(y,x) + TAU;
+        if (x == 0 && y == 0) return 0.0;
+            // throw std::runtime_error("Azimuthal angle undefined");
+        else return std::atan2(y, x);
+       /* if (y >= 0) return std::atan2(y,x);
+        if (y < 0) return std::atan2(y,x) + TAU;*/
     };
 
     return vec3d{ r, std::acos(z/r), toPhi(x,y) };
@@ -80,7 +80,6 @@ bool contains(std::vector<T>& vec, T val) {
 }
 
 // return \sum_i (coeffs[i] * z^i)
-// understand why passing coeffs by ref yields larger error
 template <typename T>
 const T evaluatePoly(std::vector<T> coeffs, const T z) {
     for (ptrdiff_t i = coeffs.size()-2; i >= 0; --i)
@@ -88,8 +87,7 @@ const T evaluatePoly(std::vector<T> coeffs, const T z) {
     return coeffs[0];
 }
 
-// return factorial(n) / factorial(n-k)
-const int fallingFactorial(int n, int k) {
+const uint64_t fallingFactorial(int n, int k) {
     return k == 0 ? 1 : n * fallingFactorial(n - 1, k - 1);
 }
 
@@ -97,7 +95,7 @@ const double fallingFactorial(double x, int k) {
     return k == 0 ? 1 : x * fallingFactorial(x - 1, k - 1);
 }
 
-const int factorial(int n) {
+const uint64_t factorial(int n) {
     return n == 0 ? 1 : n * factorial(n-1);
 }
 
@@ -105,10 +103,11 @@ const double factorial(double n) {
     return n == 0 ? 1 : n * factorial(n-1);
 }
 
-const double sphHarmonicCoeff(int l, int abs_m) {
+const double coeffYlm(int l, int abs_m) {
     assert(abs_m <= l);
-    return sqrt(factorial(l-abs_m) / factorial(l+abs_m)) * 
-        pm(abs_m) * pow(2.0, l);
+    return 
+        std::sqrt(factorial(l-abs_m) / static_cast<double>(factorial(l+abs_m))) * // Ylm coeffs
+        pm(abs_m) * std::pow(2.0, l) ; // legendreLM coeffs
 }
 
 const cmplx expI(const double arg) {
@@ -143,6 +142,18 @@ Eigen::MatrixXcd rotationMatrix(const pair2d& angles, const int l) {
             mat(n_, m_) *= sqrt(factorial(l+n)*factorial(l-n)*factorial(l+m)*factorial(l-m));
         }
     }
+
+    //Eigen::MatrixXcd mat = Eigen::MatrixXcd::Zero(2*order+1, 2*order+1);
+    //for (int m = -l; m <= l; ++m) {
+    //    size_t m_ = m+order;
+    //    for (int n = -l; n <= l; ++n) {
+    //        size_t n_ = n+order;
+    //        for (int s = max(m-n, 0); s <= min(l+m, l-n); ++s) {
+    //            mat(n_, m_) += sumCoeff(m, n, s);
+    //        }
+    //        mat(n_, m_) *= sqrt(factorial(l+n)*factorial(l-n)*factorial(l+m)*factorial(l-m));
+    //    }
+    //}
 
     return mat;
 }
