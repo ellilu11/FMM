@@ -12,7 +12,7 @@ class Particle {
 public :
     Particle() = default;
     Particle(const vec3d X, const double q, const double m)
-        : pos(X), charge(q), mass(m), phi(0.0), fld(vec3d::Zero())
+        : pos(X), charge(q), mass(m), phi(0.0), fld(zeroVec)
     {
     };
 

@@ -19,7 +19,7 @@ pvec = pmax-numP+1:pmax;
 % close all;
 figure(1);
 hold on;
-[phiAnl,phi(:,numP)]
+[phi(:,1), phiAnl(:,1)]
 plot(nvec, phiAnl, nvec, phi(:,1:numP));
 legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
      'UniformOutput',false))],...
@@ -35,5 +35,5 @@ legend(strcat(" p = ", arrayfun(@num2str,pvec,...
 
 figure(3);
 meanRelErr = mean(relErr,1);
-semilogy(pvec,meanRelErr(1:numP), '-o');
+semilogy(pvec,meanRelErr(pvec), '-o');
 

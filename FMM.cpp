@@ -52,10 +52,11 @@ int main(int argc, char *argv[])
     auto start = chrono::high_resolution_clock::now();
 
     shared_ptr<Node> root;
-    if (Nsrcs > config.maxNodeParts)
-        root = make_shared<Stem>(srcs, 0, nullptr);
-    else
-        root = make_shared<Leaf>(srcs, 0, nullptr);
+    root = make_shared<Stem>(srcs, 0, nullptr);
+    //if (Nsrcs > config.maxNodeParts)
+    //    root = make_shared<Stem>(srcs, 0, nullptr);
+    //else
+    //    root = make_shared<Leaf>(srcs, 0, nullptr);
     
     auto end = chrono::high_resolution_clock::now();
     chrono::duration<double, milli> duration_ms = end - start;
@@ -78,10 +79,16 @@ int main(int argc, char *argv[])
     root->printNode(nodeFile);
 
     // ==============================================
+    //const int l = 1;
+    //const double th = acos(-1.0/sqrt(3.0));
+    //cout << "th = " << th << '\n';
+    //cout << wignerD_l(th, l) << "\n\n" << wignerD_l(th, l).inverse()
+    //    << "\n\n" << wignerD_l(th, l) * wignerD_l(th, l).adjoint() << "\n\n";
+    // cout << expI_l(std::atan2(-1, -1), l) << "\n\n";
     //int l = 1;
-    //for (int dir = 0; dir < 1; ++dir) {
+    //for (int dir = 0; dir < 8; ++dir) {
     //    auto mat = Node::getRotationMatrixAlongDir(dir)[l];
-    //     cout << mat << "\n\n" << mat.adjoint() << "\n\n";
+    //     cout << mat << "\n\n";
     //     cout << mat * mat.adjoint() << "\n\n";
     //}
     // ==============================================
@@ -99,7 +106,7 @@ int main(int argc, char *argv[])
     //}
 
     // ==============================================
-    root->ffieldTest(1,10,10);
+    root->ffieldTest(1,10,20);
 
     return 0;
 

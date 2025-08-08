@@ -59,20 +59,19 @@ void Node::buildRotationMats() {
 
  matXcdVec Node::rotationMatrixAlongDir(int dir, const bool isInv) {
     vec3d R;
-    if (dir >= 18) R = toSph(-idx2pm(dir-=18));
+    if (dir >= 18) R = toSph(idx2pm(dir-=18));
     else if (dir < 8) {
         // do cardinal direction
     } else
         throw std::runtime_error("Invalid rotation direction");
 
     pair2d angles(R[1], R[2]);
-    // std::cout << dir << ' ' << idx2pm(dir) << ' ' << angles.first << ' ' << angles.second << '\n';
         
     matXcdVec mats;
     for (int l = 0; l <= order; ++l)
-        mats.push_back(!isInv ?
-            rotationMatrix(angles, l) :
-            rotationMatrix(angles, l).inverse()
+        mats.push_back(isInv ?
+            wignerD_l(angles, l) :
+            wignerD_l(angles, l).adjoint()
         );
 
     return mats;
@@ -105,7 +104,7 @@ Node::Node(
     nodeLeng(base == nullptr ? rootLeng : base->getLeng() / 2.0),
     center(base == nullptr ? zeroVec :
         base->getCenter() + nodeLeng / 2.0 * idx2pm(branchIdx) ),
-    nodeStat(0)
+    nodeStat(0), useRot(0)
 {
 };
 

@@ -24,6 +24,8 @@ const double Node::getDirectPhi(const vec3d& X) {
 
 const cmplx Node::getPhiFromMpole(const vec3d& X) {
     auto dR = toSph(X - center);
+    auto nodeR = toSph(vec3d(-1, -1, -1));
+
     double r = dR[0], th = dR[1], ph = dR[2];
     cmplx phi(0, 0);
 
@@ -43,23 +45,25 @@ const cmplx Node::getPhiFromMpole(const vec3d& X) {
 }
 
 void Node::ffieldTest(const int Nr, const int Nth, const int Nph) {
-    std::ofstream obsFile, outFile, outAnlFile, coeffsFile;
+    std::ofstream obsFile, outFile, outAnlFile, coeffsFile, coeffsRotFile;
     obsFile.open("config/obss.txt");
     outFile.open("out/ff.txt");
     outAnlFile.open("out/ffAnl.txt");
     coeffsFile.open("out/mpolecoeffs.txt");
+    coeffsRotFile.open("out/mpolecoeffs_rot.txt");
 
-    //outFile << setprecision(9);
-    //outAnlFile << setprecision(9);
+    // coeffsFile << setprecision(9) << scientific;
+    // coeffsRotFile << setprecision(9) << scientific;
 
     vec3dVec obss;
     for (int ir = 0; ir < Nr; ++ir){
         double r = 5.0*(ir+1.0)*rootLeng;
         for (int ith = 0; ith < Nth; ++ith) {
+            // double th = PI / 2.0; 
             double th = PI * ith / static_cast<double>(Nth);
             for (int iph = 0; iph < Nph; ++iph) {
-                double ph = TAU * iph / static_cast<double>(Nph);
-                auto obs = toCart(vec3d(r, th, ph));
+                double ph = 2.0 * PI * iph / static_cast<double>(Nph);
+                auto obs = fromSph(vec3d(r, th, ph));
                 obss.push_back(obs);
                 obsFile << obs << '\n';
             }
@@ -70,7 +74,7 @@ void Node::ffieldTest(const int Nr, const int Nth, const int Nph) {
     for (int p = 1; p <= order; ++p) {
         Node::setExpansionOrder(p);
 
-        cout << " Computing upward pass...   (" << "Expansion order: " << p << ")\n";
+        cout << " Computing upward pass... ( Expansion order = " << p << " )\n";
         auto start = chrono::high_resolution_clock::now();
         
         buildMpoleCoeffs();
@@ -80,15 +84,13 @@ void Node::ffieldTest(const int Nr, const int Nth, const int Nph) {
         cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
         for (const auto& obs : obss) {
-            // auto phi = getPhiFromMpole(obs);
             auto phi = getPhiFromBranchMpole(obs,0);
             outFile << phi.real() << " ";
         }
         outFile << '\n';
-        if (p < order) resetNode();
+        printMpoleCoeffs(coeffsFile);
+        resetNode();
     }
-
-    printMpoleCoeffs(coeffsFile);
 
     for (const auto& obs : obss) 
         outAnlFile << getDirectPhi(obs) << " ";

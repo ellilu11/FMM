@@ -79,11 +79,15 @@ public:
     int getLvl() { return std::round(std::log(rootLeng/nodeLeng)/std::log(2)); }
     void setNodeStat(int stat) { nodeStat = stat; }
 
+    void setUseRot(const bool flag) { useRot = flag; }
+    const bool getUseRot() { return useRot; }
+
     // definition under test/nodetest.cpp
     void setRandNodeStats();
     const double getDirectPhi(const vec3d&);
     const cmplx getPhiFromMpole(const vec3d&);
     void ffieldTest(const int, const int, const int);
+
     // void nfieldTest();
 
     // definition under test/[stemtest.cpp, leaftest.cpp]
@@ -114,4 +118,5 @@ protected:
 
     // test members
     int nodeStat;
+    bool useRot;
 };

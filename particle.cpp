@@ -30,25 +30,15 @@ ParticleVec makeParticles(const Config& config)
     random_device rd;
     mt19937 gen(rd());
 
-    dist0 rand0;
-    dist1 rand1;
-    dist2 rand2;
+    dist0 rand0(-config.L/2.0, config.L/2.0);
+    dist1 rand1(-config.L/2.0, config.L/2.0);
+    dist2 rand2(-config.L/2.0, config.L/2.0);
 
     switch (config.dist) {
-        case Dist::UNIFORM:
-            rand0 = dist0(-config.L/2, config.L/2);
-            rand1 = dist1(-config.L/2, config.L/2);
-            rand2 = dist2(-config.L/2, config.L/2);
-            //rand0 = dist0(0.0, config.L/2);
-            //rand1 = dist1(0.0, config.L/2);
-            //rand2 = dist2(0.0, config.L/2);
-            break;
         case Dist::GAUSSIAN:
             rand0 = dist0(0, 1);
             rand1 = dist1(0, 1);
             break;
-        default:
-            throw std::runtime_error("Invalid distribution");
     }
 
     for (int n = 0; n < config.nsrcs; ++n) {
@@ -56,12 +46,17 @@ ParticleVec makeParticles(const Config& config)
         X = [&] {
             switch (config.dist) {
                 case Dist::UNIFORM:
-                    return vec3d{ rand0(gen), rand1(gen), rand2(gen) };
+                    return vec3d( rand0(gen), rand1(gen), rand2(gen) );
                 case Dist::GAUSSIAN: {
                     const double r = sqrt(-2 * log(rand0(gen))); // fix
-                    const double th = 2.0 * 3.1415927 * rand1(gen); // fix
+                    const double th = 2.0 * PI * rand1(gen); // fix
                     const double ph = rand2(gen);
-                    return toCart(vec3d(r,th,ph));
+                    return fromSph(vec3d(r,th,ph));
+                }
+                case Dist::GRID: {
+                    assert(config.nsrcs <= 8);
+                    vec3d dX( rand0(gen), rand1(gen), rand2(gen) );
+                    return vec3d(config.L/4.0*idx2pm(n) + 0.25*dX);
                 }
             } } ();
         

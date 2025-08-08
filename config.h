@@ -10,7 +10,8 @@ enum class Mode {
 
 enum class Dist {
     UNIFORM,
-    GAUSSIAN
+    GAUSSIAN,
+    GRID
 };
 
 enum class ChargeDist {
@@ -51,7 +52,14 @@ struct Config {
 };
 
 const std::string makeFname(const Config& config) {
-    std::string distStr = (config.dist == Dist::UNIFORM ? "uniform" : "gauss");
+    std::string distStr =
+        [&]() -> std::string {
+            switch (config.dist) {
+                case Dist::UNIFORM:  return "uniform";
+                case Dist::GAUSSIAN: return "gauss";
+                case Dist::GRID:     return "grid";
+            }
+        }();
     std::string cdistStr = 
         [&] () -> std::string { 
             switch (config.cdist) {
