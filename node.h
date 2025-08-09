@@ -4,8 +4,8 @@
 #include <chrono>
 #include <iostream>
 #include "config.h"
-#include "math.h"
 #include "particle.h"
+#include "tables.h"
 #include "vec3d.h"
 
 extern const int DIM;
@@ -14,14 +14,6 @@ enum class Dir {
     W, E, S, N, D, U,
     SW, SE, NW, NE, DW, DE, UW, UE, DS, DN, US, UN,
     DSW, DSE, DNW, DNE, USW, USE, UNW, UNE
-};
-
-struct Tables {
-    std::vector<realVec> coeffYlm;
-    std::vector<realVec> fallingFact;
-    std::vector<realVec> legendreSum;
-    std::vector<realVec> A;
-    // std::vector<realVec> quadWeights;
 };
 
 class Node;
@@ -34,7 +26,7 @@ public:
 
     static const int getExpansionOrder() { return order; }
     static void setExpansionOrder(const int p) { order = p; }
-    
+
     static matXcdVec getRotationMatrixAlongDir(int dir) { return rotationMat[dir]; }
 
     ParticleVec getParticles() const { return particles; }
@@ -54,19 +46,22 @@ public:
     const bool isNodeType() const { return typeid(*this) == typeid(T); }
 
     static void setNodeParams(const Config&);
-    static void buildTables();
+    static void buildTables(const Config&);
     static void buildRotationMats();
     static matXcdVec rotationMatrixAlongDir(int, const bool);
 
-    static const double legendreLM(const double, const int, const int);
+    static const double legendreLM(const double, const pair2i&);
 
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
     void buildNearNeighbors();
     void buildInteractionList();
     void buildMpoleToLocalCoeffs();
-    const vecXcdVec getShiftedLocalCoeffs(const vec3d);
+    const vecXcdVec getShiftedLocalCoeffs(const int);
 
-    const vec3dVec getDirectPhis();
+    const vecXcdVec getMpoleToExpCoeffsFromNode();
+
+    const double getDirectPhi(const vec3d&);
+    const realVec getDirectPhis();
     const vec3dVec getDirectFlds();
 
     virtual void buildMpoleCoeffs() = 0;
@@ -84,11 +79,10 @@ public:
 
     // definition under test/nodetest.cpp
     void setRandNodeStats();
-    const double getDirectPhi(const vec3d&);
     const cmplx getPhiFromMpole(const vec3d&);
     void ffieldTest(const int, const int, const int);
-
-    // void nfieldTest();
+    void mpoleToLocalTest();
+    void nfieldTest();
 
     // definition under test/[stemtest.cpp, leaftest.cpp]
     virtual std::shared_ptr<Node> getRandNode(int) = 0;
@@ -97,6 +91,7 @@ public:
 
 protected:
     static int order;
+    static int orderExp;
     static int maxNodeParts;
     static double rootLeng;
     static Tables tables;
@@ -116,7 +111,7 @@ protected:
     vecXcdVec coeffs;
     vecXcdVec localCoeffs;
 
-    // test members
+    // === Test members ===
     int nodeStat;
     bool useRot;
 };

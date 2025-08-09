@@ -23,7 +23,7 @@ public :
     const double getPhi() const { return phi; }
     void setPhi(double phi_) { phi = phi_; }
     void printPhi(std::ofstream& f) const {
-        f << phi << '\n';
+        f << phi << ' ';
     }
 
     void setFld(vec3d fld_) { fld = fld_; }

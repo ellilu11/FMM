@@ -6,6 +6,7 @@ Leaf::Leaf(
     Stem* const base)
     : Node(particles, branchIdx, base)
 {
+    // std::cout << "Leaf has " << particles.size() << " particles\n";
 }
 
 void Leaf::buildMpoleCoeffs() {
@@ -15,12 +16,12 @@ void Leaf::buildMpoleCoeffs() {
     for (const auto& src : particles) {
         auto dR = toSph(src->getPos() - center);
         double r = dR[0], th = dR[1], ph = dR[2];
-        double r2l = 1;
+        double r2l = 1.0;
 
         for (int l = 0; l <= order; ++l) {
             realVec legendreLMCoeffs;
             for (int m = 0; m <= l; ++m)
-                legendreLMCoeffs.push_back(legendreLM(th, l, m));
+                legendreLMCoeffs.push_back(legendreLM(th, pair2i(l,m)));
 
             for (int m = -l; m <= l; ++m) {
                 coeffs[l][m+l] +=
@@ -34,19 +35,28 @@ void Leaf::buildMpoleCoeffs() {
 
 void Leaf::buildLocalCoeffs() {
     buildMpoleToLocalCoeffs();
-    evaluateSolAtParticles();
+    // evaluateSolAtParticles();
 }
 
-vec3dVec Leaf::getFarPhis() {
-    //vec3dVec phis(particles.size());
-    //auto evaluateLocalExp = [this](std::shared_ptr<Particle> p) {
-    //    return -evaluatePoly<vec3d>(localCoeffs, p->getPos()-center);
-    //    };
-    //std::transform(particles.begin(), particles.end(), phis.begin(), evaluateLocalExp);
+realVec Leaf::getFarPhis() {
+    realVec phis;
+    for (const auto& obs : particles) {
+        auto dR = toSph(obs->getPos() - center);
 
-    vec3dVec phis;
-    //for (const auto& obs : particles)
-    //    phis.push_back( -evaluatePoly<vec3d>(localCoeffs, obs->getPos()-center) );
+        double r = dR[0], th = dR[1], ph = dR[2];
+        cmplx phi(0, 0);
+
+        for (int l = 0; l <= order; ++l) {
+            realVec legendreLMCoeffs;
+            for (int m = 0; m <= l; ++m)
+                legendreLMCoeffs.push_back(legendreLM(th, pair2i(l,m)));
+
+            for (int m = -l; m <= l; ++m)
+                phi += localCoeffs[l][m+l] * pow(r, l) *
+                    legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
+        }
+        phis.push_back(phi.real());
+    }
 
     return phis;
 }
@@ -66,11 +76,11 @@ vec3dVec Leaf::getFarFlds() {
 }
 
 template <typename Func>
-vec3dVec Leaf::getNearSols(Func kernel) {
-    vec3dVec sols;
+realVec Leaf::getNearPhis(Func kernel) {
+    realVec sols;
 
     for (const auto& obs : particles) {
-        vec3d sol;
+        double sol = 0;
         auto obsPos = obs->getPos();
 
         // due to other particles in this node (implement reciprocity later)
@@ -89,22 +99,46 @@ vec3dVec Leaf::getNearSols(Func kernel) {
     return sols;
 }
 
+//template <typename T, typename Func>
+//std::vector<T> Leaf::getNearSols(Func kernel) {
+//    std::vector<T> sols;
+//
+//    for (const auto& obs : particles) {
+//        T sol{};
+//        auto obsPos = obs->getPos();
+//
+//        // due to other particles in this node (implement reciprocity later)
+//        for (const auto& src : particles)
+//            if (src != obs)
+//                sol += src->getCharge() * kernel(obsPos - src->getPos());
+//
+//        // due to particles in neighboring nodes (implement reciprocity much later)
+//        for (const auto& nbor : nbors) {
+//            auto srcsNbor = nbor->getParticles();
+//            for (const auto& src : srcsNbor)
+//                sol += src->getCharge() * kernel(obsPos - src->getPos());
+//        }
+//        sols.push_back(sol);
+//    }
+//    return sols;
+//}
+
 // pass calculated phi and fld to particles
 void Leaf::evaluateSolAtParticles() {
     if (isRoot()) return;
 
-    /*
-    auto phis = getFarPhis() + getNearSols(
-        [](vec3d X) { return 1 / abs(X); }
+    auto phis = getFarPhis() + 
+        getNearPhis(
+        [](vec3d X) { return 1.0 / X.norm(); }
     );
-    auto flds = getFarFlds() + getNearSols(
-        [](vec3d X) { return X / pow(abs(X),3); }
-    );
+    //auto flds = getFarFlds() + getNearSols<vec3d>(
+    //    [](vec3d X) { return X / pow(abs(X),3); }
+    //);
 
     // for (auto [p, phi, fld] : std::views::zip(particles, phis, flds)) {
     for (size_t n = 0; n < particles.size(); ++n) {
         auto p = particles[n];
         p->setPhi(phis[n]);
-        p->setFld(flds[n]);
-    }*/
+        // p->setFld(flds[n]);
+    }
 }

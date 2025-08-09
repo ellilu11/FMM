@@ -14,11 +14,11 @@ public:
     void buildMpoleCoeffs();
     void buildLocalCoeffs();
 
-    vec3dVec getFarPhis();
+    realVec getFarPhis();
     vec3dVec getFarFlds();
-    template <typename Func> vec3dVec getNearSols(Func);
+    template <typename Func> realVec getNearPhis(Func);
+    // template <typename T, typename Func> std::vector<T> getNearSols(Func);
     void evaluateSolAtParticles();
-
 
 
     void printPhis(std::ofstream& f) {

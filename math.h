@@ -11,10 +11,10 @@
 using realVec = std::vector<double>;
 using cmplx = std::complex<double>;
 using cmplxVec = std::vector<cmplx>;
+using pair2i = std::pair<int, int>;
 using pair2d = std::pair<double, double>;
 
 const double PI = std::acos(-1.0);
-const double TAU = 2.0 * PI;
 constexpr cmplx iu(0, 1);
 
 std::array<bool, 3> operator> (const vec3d& x, const vec3d& y) {
@@ -61,7 +61,7 @@ vec3d toSph(const vec3d& X) {
         return std::atan2(y,x);
     };
 
-    return vec3d{ r, std::acos(z/r), toPhi(x,y) };
+    return vec3d( r, std::acos(z/r), toPhi(x,y) );
 }
 
 //size_t lm2Idx(const int l, const int m) {
@@ -75,6 +75,14 @@ constexpr int constPow(int base, int exp) {
 template <typename T>
 bool contains(std::vector<T>& vec, T val) {
     return std::find(vec.begin(), vec.end(), val) != vec.end();
+}
+
+template <typename T>
+std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
+    std::vector<T> sum;
+    for (size_t i = 0; i < zs.size(); ++i)
+        sum.push_back(zs[i] + ws[i]);
+    return sum;
 }
 
 // return \sum_i (coeffs[i] * z^i)
@@ -112,14 +120,6 @@ const cmplx expI(const double arg) {
     return std::exp(iu*arg);
 }
 
-//const double sumCoeff(const double th, const int l, int m, int n, int s) {
-//    int a0 = l+m-s, a1 = n-m+s, a2 = s, a3 = l-n-s;
-//    // std::cout << factorial(a0) << ' ' << factorial(a1) << ' ' << factorial(a2) << ' ' << factorial(a3) << '\n';
-//    return pow(-1.0, n-m+s) *
-//        pow(cos(th/2.0), a0+a3) * pow(sin(th/2.0), a1+a2) /
-//        static_cast<double>(factorial(a0) * factorial(a1) * factorial(a2) * factorial(a3));
-//}
-
 Eigen::MatrixXcd wignerD_l(const pair2d& angles, const int l) {
     using namespace std;
     auto [th, ph] = angles;
@@ -131,30 +131,18 @@ Eigen::MatrixXcd wignerD_l(const pair2d& angles, const int l) {
             ( factorial(a0) * factorial(a1) * factorial(a2) * factorial(a3) );
     };
 
-    /* double a0 = cos(th/2.0), a1 = sin(th/2.0)*sin(ph), a2 = -sin(th/2.0)*cos(ph);
-    pair<double, cmplx> xi(cos(th/2.0), sin(th/2.0) * expI(-ph));
-    auto sumCoeff = [xi, l](int m, int n, int s) {
-        double alpha0 = l+m-s, alpha1 = n-m+s, alpha2 = s, alpha3 = l-n-s;
-        return pow(xi.first, alpha0) * pow(xi.second, alpha1) *
-            pow(-conj(xi.second), alpha2) * pow(xi.first, alpha3) /
-            ( factorial(alpha0) * factorial(alpha1) * factorial(alpha2) * factorial(alpha3) );
-        //return pow(a0, alpha0) * pow(-iu*a1-a2, alpha1) *
-        //    pow(-iu*a1+a2, alpha2) * pow(a0, alpha3) /
-        //    ( factorial(alpha0) * factorial(alpha1) * factorial(alpha2) * factorial(alpha3) );
-    };*/
-
     Eigen::MatrixXcd mat = Eigen::MatrixXcd::Zero(2*l+1, 2*l+1);
     for (int n = -l; n <= l; ++n) {
-        int _n = n+l;
+        int n_ = n+l;
+        double pm_n = (n < 0) ? pm(n) : 1.0;
         cmplx exp_n = expI(static_cast<double>(-n)*ph);
-        auto pm_n = (n < 0) ? pm(n) : 1.0;
         for (int m = -l; m <= l; ++m) {
-            int _m = m+l;
-            auto pm_m = (m < 0) ? pm(m) : 1.0;
+            int m_ = m+l;
+            double pm_m = (m < 0) ? pm(m) : 1.0;
             for (int s = max(m-n, 0); s <= min(l+m, l-n); ++s)
-                mat(_n, _m) += sumCoeff(m, n, s);
+                mat(n_, m_) += sumCoeff(m, n, s);
 
-            mat(_n, _m) *= exp_n * pm_n / pm_m *
+            mat(n_, m_) *= exp_n * pm_n / pm_m *
                 sqrt(factorial(l+n)*factorial(l-n)*factorial(l+m)*factorial(l-m));
         }
     }

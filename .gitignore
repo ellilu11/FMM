@@ -374,3 +374,5 @@ FodyWeavers.xsd
 /test/stemtest.cpp
 /plotCoeffs.m
 /plotPhi.m
+/getNeighbor.cpp
+/tables.cpp

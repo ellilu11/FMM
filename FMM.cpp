@@ -8,7 +8,7 @@ using namespace std;
 
 extern constexpr int DIM = 3;
 
-int main(int argc, char *argv[])
+int main()
 {
     Config config("config/config.txt");
 
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
     cout << " Building tables..\n";
     start = chrono::high_resolution_clock::now();
 
-    Node::buildTables();
+    Node::buildTables(config);
     Node::buildRotationMats();
 
     end = chrono::high_resolution_clock::now();
@@ -84,13 +84,6 @@ int main(int argc, char *argv[])
     //cout << "th = " << th << '\n';
     //cout << wignerD_l(th, l) << "\n\n" << wignerD_l(th, l).inverse()
     //    << "\n\n" << wignerD_l(th, l) * wignerD_l(th, l).adjoint() << "\n\n";
-    // cout << expI_l(std::atan2(-1, -1), l) << "\n\n";
-    //int l = 1;
-    //for (int dir = 0; dir < 8; ++dir) {
-    //    auto mat = Node::getRotationMatrixAlongDir(dir)[l];
-    //     cout << mat << "\n\n";
-    //     cout << mat * mat.adjoint() << "\n\n";
-    //}
     // ==============================================
     //double th = 0*PI/4.0;
     //double ph = 5*PI/4.0;
@@ -106,7 +99,10 @@ int main(int argc, char *argv[])
     //}
 
     // ==============================================
-    root->ffieldTest(1,10,20);
+    root->ffieldTest(1,10,10);
+    // ==============================================   
+    // root->mpoleToLocalTest();
+    // root->nfieldTest();
 
     return 0;
 

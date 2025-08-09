@@ -10,6 +10,7 @@
 #include <memory>
 #include <vector>
 
+#include "exp.cpp"
 #include "leaf.cpp"
 #include "node.cpp"
 #include "particle.cpp"

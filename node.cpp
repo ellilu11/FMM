@@ -5,6 +5,7 @@ using enum Dir;
 const int numDir = std::pow(3, DIM) - 1;
 
 int Node::order;
+int Node::orderExp;
 int Node::maxNodeParts;
 double Node::rootLeng;
 Tables Node::tables;
@@ -17,35 +18,9 @@ void Node::setNodeParams(const Config& config) {
     rootLeng = config.L;
 }
 
-void Node::buildTables() {
-    auto binom = [](double x, int k) {
-        return fallingFactorial(x, k) / factorial(k);
-        };
-
-    for (int l = 0; l <= order; ++l) {
-        realVec coeffYlm_l, fallingFact_l, legendreSum_l, A_l;
-
-        for (int m = 0; m <= l; ++m) {
-            coeffYlm_l.push_back( coeffYlm(l, m) );
-            fallingFact_l.push_back( fallingFactorial(l, m) );
-            legendreSum_l.push_back( binom(l, m) * binom((l+m-1)/2.0, l) );
-        }
-
-        auto pm_l = pm(l);
-        for (int m = -l; m <= l; ++m)
-            A_l.push_back(pm_l /
-                std::sqrt(static_cast<double>(factorial(l-m)*factorial(l+m))) );
-
-        tables.coeffYlm.push_back(coeffYlm_l);
-        tables.fallingFact.push_back(fallingFact_l);
-        tables.legendreSum.push_back(legendreSum_l);
-        tables.A.push_back(A_l);
-
-        //std::cout << "l = " << l << '\n';
-        //for (int m = 0; m <= l; ++m)
-        //    std::cout << tables.legendreSum[l][m] << ' ';
-        //std::cout << '\n';
-    }
+void Node::buildTables(const Config& config) {
+    tables = Tables(order, Precision::LOW); // config.prec;
+    orderExp = tables.quadCoeffs_.size();
 }
 
 void Node::buildRotationMats() {
@@ -78,7 +53,8 @@ void Node::buildRotationMats() {
 }
 
 // Ylm except constant coefficients and \exp(i m \phi) phase factor
-const double Node::legendreLM(const double th, const int l, const int abs_m) {
+const double Node::legendreLM(const double th, const pair2i& lm) {
+    auto [l, abs_m] = lm;
     assert(abs_m <= l);
 
     const auto cos_th = cos(th);
@@ -87,9 +63,9 @@ const double Node::legendreLM(const double th, const int l, const int abs_m) {
 
     // term is zero for l-k odd
     for (int k = l; k >= abs_m; k -= 2)
-        legendreSum += tables.fallingFact[k][abs_m] * tables.legendreSum[l][k] * pow(cos_th, k-abs_m);
+        legendreSum += tables.fallingFact_[k][abs_m] * tables.legendreSum_[l][k] * pow(cos_th, k-abs_m);
 
-    return tables.coeffYlm[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
+    return tables.coeffYlm_[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
 }
 
 //const cmplx Node::sphHarmonic(const double th, const double ph, int l, int m) {
@@ -587,8 +563,9 @@ void Node::buildNearNeighbors() {
 void Node::buildInteractionList() {
     assert( !isRoot() );
 
-    // buildNearNeighbors(); // comment out for iList test
-    base->buildNearNeighbors(); // uncomment for iList test
+    buildNearNeighbors(); // comment out for iList test
+    // base->buildNearNeighbors(); // uncomment for iList test
+
     auto baseNbors = base->getNearNeighbors();
 
     for (const auto& baseNbor : baseNbors)
@@ -600,78 +577,144 @@ void Node::buildInteractionList() {
                     iList.push_back(branch);
 
     const int maxSize = constPow(6, DIM) - constPow(3, DIM);
+    // std::cout << iList.size() << '\n';
     assert(iList.size() <= maxSize);
 }
 
+// no rotation matrices, no exponential expansions
 void Node::buildMpoleToLocalCoeffs() {
     if ( isRoot() ) return;
 
-    /*buildInteractionList();
-    localCoeffs.resize(order+1);
+    buildInteractionList();
+    
+    for (int l = 0; l <= order; ++l)
+        localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
 
     for (const auto& iNode : iList) {
         auto mpoleCoeffs( iNode->getMpoleCoeffs() );
-        auto dz( iNode->getCenter() - center );
-        auto mdz2k( vec3d(1,0) );
+        auto dR = toSph(iNode->getCenter() - center);
+        double r = dR[0], th = dR[1], ph = dR[2];
 
-        vec3dVec innerCoeffs; // innerCoeffs[k] = mpoleCoeffs[k] / (-dz)^k
-        for (size_t k = 0; k <= order; ++k) {
-            innerCoeffs.push_back(mpoleCoeffs[k] / mdz2k);
-            mdz2k *= -dz;
-        }
+        for (int j = 0; j <= order; ++j) {
+            for (int k = -j; k <= j; ++k) {
+                int k_ = k + j;
 
-        localCoeffs[0] += innerCoeffs[0] * std::log(-dz);
-        for (size_t k = 1; k <= order; ++k)
-            localCoeffs[0] += innerCoeffs[k];
+                for (int n = 0; n <= order; ++n) {
+                    for (int m = -n; m <= n;  ++m) {
+                        int m_ = m + n;
 
-        auto dz2l = dz;
-        for (size_t l = 1; l <= order; ++l) {
-            localCoeffs[l] -= innerCoeffs[0] / (static_cast<double>(l) * dz2l);
-            for (size_t k = 1; k <= order; ++k)
-                localCoeffs[l] += innerCoeffs[k] / dz2l
-                                    * static_cast<double>(binomTable[k+l-1][k-1]);
-            dz2l *= dz;
+                        localCoeffs[j][k_] +=
+                            mpoleCoeffs[n][m_] * pow(iu, abs(k-m)-abs(k)-abs(m))
+                            * tables.A_[n][m_] * tables.A_[j][k_] / tables.A_[j+n][m-k+j+n]
+                            * legendreLM(th, pair2i(j+n, abs(m-k))) * expI(static_cast<double>(m-k)*ph)
+                            / ( pm(n) * pow(r, j+n+1) );
+                    }
+                }
+            }
         }
     }
 
-    if (!base->isRoot()) localCoeffs += base->getShiftedLocalCoeffs(center);
-    iList.clear();*/
+    if (!base->isRoot()) 
+        for (int l = 0; l <= order; ++l)
+            localCoeffs[l] += (base->getShiftedLocalCoeffs(branchIdx))[l];
+    // iList.clear();
 }
 
-const vecXcdVec Node::getShiftedLocalCoeffs(const vec3d z0) {
-    auto shiftedCoeffs( localCoeffs );
-    //for (size_t j = 0; j <= order - 1; ++j)
-    //    for (size_t k = order - j - 1; k <= order - 1; ++k)
-    //        shiftedCoeffs[k] += shiftedCoeffs[k+1] * (z0 - center);
+// no rotation matrices
+/*const vecXcdVec Node::getShiftedLocalCoeffs(const int branchIdx) {
+
+    // std::cout << "Shifting local coeffs" << '\n';
+
+    vecXcdVec shiftedCoeffs;
+    for (int l = 0; l <= order; ++l)
+        shiftedCoeffs.emplace_back(vecXcd::Zero(2*l+1));
+
+    auto dR = toSph(branches[branchIdx]->getCenter() - center);
+    double r = dR[0], th = dR[1], ph = dR[2];
+
+    for (int j = 0; j <= order; ++j) {
+        for (int k = -j; k <= j; ++k) {
+            int k_ = k + j;
+
+            for (int n = j; n <= order; ++n) {
+                for (int m = std::max(j-n+k,-n); m <= std::min(n-j+k,n);  ++m) {
+                    int m_ = m + n;
+
+                    shiftedCoeffs[j][k_] +=
+                        localCoeffs[n][m_] * pow(iu, abs(m)-abs(k)-abs(m-k))
+                        * tables.A[n-j][m-k+n-j] * tables.A[j][k_] / tables.A[n][m_]
+                        * legendreLM(th, n-j, abs(m-k)) * expI(static_cast<double>(m-k)*ph)
+                        * pow(r, n-j) / pm(n+j);
+                        
+                }
+            }
+        }
+    }
+
+    return shiftedCoeffs;
+}*/
+
+// rotation matrices
+const vecXcdVec Node::getShiftedLocalCoeffs(const int branchIdx) {
+    vecXcdVec shiftedCoeffs;
+    double r = (branches[branchIdx]->getCenter() - center).norm();
+
+    for (int j = 0; j <= order; ++j) {
+        shiftedCoeffs.emplace_back(vecXcd::Zero(2*j+1));
+
+        // apply rotation (rotation axis is opposite from mpole2mpole)
+        localCoeffs[j] = rotationMat[7-branchIdx][j] * localCoeffs[j];
+
+        vecXcd shiftedLocalCoeffs_j = vecXcd::Zero(2*j+1);
+        for (int k = -j; k <= j; ++k) {
+            int k_ = k + j;
+
+            for (int n = j; n <= order; ++n) {
+                shiftedLocalCoeffs_j[k_] +=
+                    localCoeffs[n][k+n] *
+                    tables.A_[n-j][n-j] * tables.A_[j][k_] / tables.A_[n][k+n] *
+                    pow(r, n-j) / pm(n+j);
+                //for (int m = -n; m <= n; ++m) {
+                //    if (m != 0) continue;
+                //    int m_ = m + n;
+
+                //    shiftedLocalCoeffs_j[k_] +=
+                //        localCoeffs[n][m_] * pow(iu, abs(m)-abs(k)-abs(k-m)) *
+                //        tables.A[n-j][m_-k_] * tables.A[j][k_] / tables.A[n][m_] *
+                //        legendreLM(0, n-j, abs(m-k)) *
+                //        pow(r, n-j) / pm(n+j);
+                //}
+            }
+        }
+
+        // apply inverse rotation
+        shiftedCoeffs[j] += rotationInvMat[7-branchIdx][j] * shiftedLocalCoeffs_j;
+    }
 
     return shiftedCoeffs;
 }
 
-const vec3dVec Node::getDirectPhis() {
-    vec3dVec phis;
+const double Node::getDirectPhi(const vec3d& X) {
+    double phi = 0;
+    for (const auto& p : particles) {
+        auto r = (X - p->getPos()).norm();
+        if (r > 1.0E-9)
+            phi += p->getCharge() / r;
+    }
+    return phi;
+}
 
-    //for (const auto& obs : particles) {
-    //    vec3d phi;
-    //    for (const auto& src : particles)
-    //        if (src != obs) 
-    //            phi -= src->getCharge() * std::log(obs->getPos() - src->getPos());
-    //    phis.push_back(phi);
-    //}
+const realVec Node::getDirectPhis() {
+    realVec phis;
+
+    for (const auto& obs : particles) {
+        phis.push_back(getDirectPhi(obs->getPos()));
+    }
     return phis;
 }
 
 const vec3dVec Node::getDirectFlds() {
     vec3dVec flds;
 
-    //for (const auto& obs : particles) {
-    //    vec3d fld;
-    //    for (const auto& src : particles) {
-    //        if (src != obs) {
-    //            auto dz = obs->getPos() - src->getPos();
-    //            fld += src->getCharge() * dz / std::norm(dz);
-    //        }
-    //    }
-    //    flds.push_back(fld);
-    //}
     return flds;
 }

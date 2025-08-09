@@ -6,6 +6,8 @@ Stem::Stem(
     Stem* const base)
     : Node(particles, branchIdx, base)
 {
+    // std::cout << "Stem has " << particles.size() << " particles\n";
+
     // Assign every particle in node to a branch based on its position relative to center
     constexpr int nbranch = 8; //  std::pow(2, DIM);
     std::vector<ParticleVec> branchParts(nbranch);
@@ -22,6 +24,39 @@ Stem::Stem(
             branch = std::make_shared<Leaf>(branchParts[k], k, this);
 
         branches.push_back(branch);
+    }
+}
+
+// rotation matrices
+void Stem::buildMpoleCoeffs() {
+    using namespace std;
+    for (int l = 0; l <= order; ++l)
+        coeffs.emplace_back(vecXcd::Zero(2*l+1));
+
+    for (const auto& branch : branches) {
+        branch->buildMpoleCoeffs();
+        auto branchCoeffs = branch->getMpoleCoeffs();
+        auto branchIdx = branch->getBranchIdx();
+        double r = (branch->getCenter() - center).norm();
+
+        for (int j = 0; j <= order; ++j) {
+            branchCoeffs[j] = rotationMat[branchIdx][j] * branchCoeffs[j];
+
+            vecXcd shiftedBranchCoeffs_j = vecXcd::Zero(2*j+1);
+            for (int k = -j; k <= j; ++k) {
+                int k_ = k + j;
+                double r2n = 1.0;
+                for (int n = 0; n <= min(j+k, j-k); ++n) {
+                    // if ( max(k+n-j, -n) <= 0 && 0 <= min(k+j-n, n) )
+                    shiftedBranchCoeffs_j[k_] += branchCoeffs[j-n][k_-n] *
+                        tables.A_[n][n] * tables.A_[j-n][k_-n] / tables.A_[j][k_] *
+                        r2n; // legendreLM(0.0, n, 0) = 1 for all n;
+                    r2n *= r;
+                }
+            }
+
+            coeffs[j] += rotationInvMat[branchIdx][j] * shiftedBranchCoeffs_j;
+        }
     }
 }
 
@@ -57,49 +92,6 @@ Stem::Stem(
         }
     }
 }*/
-
-// rotation matrices
-void Stem::buildMpoleCoeffs() {
-    using namespace std;
-    for (int l = 0; l <= order; ++l)
-        coeffs.emplace_back(vecXcd::Zero(2*l+1));
-
-    // precompute as LUT
-    //realVec legendreL0Coeffs;
-    //for (int l = 0; l <= order; ++l)
-    //    legendreL0Coeffs.push_back(legendreLM(0.0, l, 0));
-
-    for (const auto& branch : branches) {
-        branch->buildMpoleCoeffs();
-        auto branchCoeffs = branch->getMpoleCoeffs();
-        auto branchIdx = branch->getBranchIdx();
-        double r = (branch->getCenter() - center).norm();
-        //vec3d dR = toSph(branch->getCenter() - center);
-        //double r = dR[0], th = dR[1], ph = dR[2];
-
-        // apply rotation
-        for (int l = 0; l <= order; ++l)
-            branchCoeffs[l] = rotationMat[branchIdx][l] * branchCoeffs[l];
-
-        for (int j = 0; j <= order; ++j) {
-            vecXcd translatedBranchCoeffs_j = vecXcd::Zero(2*j+1);
-
-            for (int k = -j; k <= j; ++k) {
-                int k_ = k + j;
-                for (int n = 0; n <= min(j+k, j-k); ++n) {
-                    // if ( max(k+n-j, -n) <= 0 && 0 <= min(k+j-n, n) )
-                    translatedBranchCoeffs_j[k+j] += branchCoeffs[j-n][k+j-n] *
-                        tables.A[n][n] * tables.A[j-n][k+j-n] / tables.A[j][k+j] *
-                        pow(r, n);
-                    // legendreLM(0.0, n, 0) = 1 for all n;
-                }
-            }
-
-            // apply inverse rotation
-            coeffs[j] += rotationInvMat[branchIdx][j] * translatedBranchCoeffs_j;
-        }
-    }
-}
 
 void Stem::buildLocalCoeffs() {
     buildMpoleToLocalCoeffs();

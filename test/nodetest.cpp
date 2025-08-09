@@ -15,16 +15,8 @@ void Node::setRandNodeStats() {
         iNode->setNodeStat(2);
 }
 
-const double Node::getDirectPhi(const vec3d& X) {
-    double phi = 0;
-    for (const auto& p : particles)
-        phi += p->getCharge() / (X - p->getPos()).norm();
-    return phi;
-}
-
 const cmplx Node::getPhiFromMpole(const vec3d& X) {
     auto dR = toSph(X - center);
-    auto nodeR = toSph(vec3d(-1, -1, -1));
 
     double r = dR[0], th = dR[1], ph = dR[2];
     cmplx phi(0, 0);
@@ -32,7 +24,7 @@ const cmplx Node::getPhiFromMpole(const vec3d& X) {
     for (int l = 0; l <= order; ++l) {
         realVec legendreLMCoeffs;
         for (int m = 0; m <= l; ++m)
-            legendreLMCoeffs.push_back(legendreLM(th, l, m));
+            legendreLMCoeffs.push_back(legendreLM(th, pair2i(l,m)));
 
         for (int m = -l; m <= l; ++m) {
             int m_ = m + l;
@@ -89,11 +81,107 @@ void Node::ffieldTest(const int Nr, const int Nth, const int Nph) {
         }
         outFile << '\n';
         printMpoleCoeffs(coeffsFile);
-        resetNode();
+        if (p < order) resetNode();
     }
 
     for (const auto& obs : obss) 
         outAnlFile << getDirectPhi(obs) << " ";
     outAnlFile << '\n';
 
+}
+
+void Node::mpoleToLocalTest() {
+    auto node = getRandNode(0);
+    auto leafNode = dynamic_pointer_cast<Leaf>(node);
+
+    ofstream outFile, outAnlFile;
+    outFile.open("out/local.txt");
+    outAnlFile.open("out/localAnl.txt");
+
+    outFile << setprecision(15) << scientific;
+    outAnlFile << setprecision(15) << scientific;
+
+    const int order = Node::getExpansionOrder();
+    for (int p = 1; p <= order; ++p) {
+        Node::setExpansionOrder(p);
+
+        cout << " Computing upward pass...   (" << " Expansion order = " << p << " )\n";
+        buildMpoleCoeffs();
+
+        cout << " Computing downward pass... (" << " Expansion order = " << p << " )\n";
+        buildLocalCoeffs();
+
+        leafNode->evaluateSolAtParticles();
+        for (const auto& src : leafNode->getParticles())
+            src->printPhi(outFile);
+        outFile << '\n';
+
+        if (p < order) resetNode();
+    }
+
+    //auto iList = node->getInteractionList();
+    //cout << iList.size() << '\n';
+    //
+    //auto iListBase = node->getBase()->getInteractionList();
+    //cout << iListBase.size() << '\n';
+    //iList.insert(iList.end(), iListBase.begin(), iListBase.end());
+
+    auto phis = leafNode->getDirectPhis();
+    for (const auto& phi : phis)
+        outAnlFile << phi << ' ';
+    outAnlFile << '\n';
+
+}
+
+void Node::nfieldTest() {
+    using namespace std;
+
+    ofstream outFile, outAnlFile;
+    outFile.open("out/nf.txt");
+    outAnlFile.open("out/nfAnl.txt");
+
+    outFile << setprecision(9) << scientific;
+    outAnlFile << setprecision(9) << scientific;
+
+    const int order = Node::getExpansionOrder();
+    for (int p = 1; p <= order; ++p) {
+        Node::setExpansionOrder(p);
+
+        cout << " Computing upward pass...   (" << " P = " << p << " )\n";
+        auto start = chrono::high_resolution_clock::now();
+
+        buildMpoleCoeffs();
+
+        auto end = chrono::high_resolution_clock::now();
+        chrono::duration<double, milli> duration_ms = end - start;
+        cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+
+        cout << " Computing downward pass... (" << " P = " << p << " )\n";
+        start = chrono::high_resolution_clock::now();
+
+        buildLocalCoeffs();
+
+        end = chrono::high_resolution_clock::now();
+        duration_ms = end - start;
+        cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+
+        for (const auto& src : particles)
+            src->printPhi(outFile);
+        outFile << '\n';
+
+        if (p < order) resetNode();
+
+    }
+
+    cout << " Computing pairwise..." << endl;
+    auto start = chrono::high_resolution_clock::now();
+
+    auto phis = getDirectPhis();
+    for (const auto& phi : phis)
+        outAnlFile << phi << ' ';
+    outAnlFile << '\n';
+
+    auto end = chrono::high_resolution_clock::now();
+    chrono::duration<double, milli> duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 }

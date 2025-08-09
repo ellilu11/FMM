@@ -48,3 +48,4 @@ void Stem::resetNode() {
     for (const auto& branch : branches)
         branch->resetNode();
 }
+

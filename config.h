@@ -61,7 +61,7 @@ const std::string makeFname(const Config& config) {
             }
         }();
     std::string cdistStr = 
-        [&] () -> std::string { 
+        [&]() -> std::string { 
             switch (config.cdist) {
                 case ChargeDist::PLUS:  return "plus";
                 case ChargeDist::MINUS: return "minus"; 
