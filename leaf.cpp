@@ -9,6 +9,14 @@ Leaf::Leaf(
     // std::cout << "Leaf has " << particles.size() << " particles\n";
 }
 
+void Leaf::buildLists() {
+    if (!isRoot()) {
+        buildNearNeighbors();
+        buildInteractionList();
+        buildDirectedIList();
+    }
+}
+
 void Leaf::buildMpoleCoeffs() {
     for (int l = 0; l <= order; ++l)
         coeffs.emplace_back(vecXcd::Zero(2*l+1));
@@ -26,16 +34,33 @@ void Leaf::buildMpoleCoeffs() {
             for (int m = -l; m <= l; ++m) {
                 coeffs[l][m+l] +=
                     src->getCharge() * r2l *
-                    legendreLMCoeffs[std::abs(-m)] * expI(static_cast<double>(-m)*ph); 
+                    legendreLMCoeffs[std::abs(-m)] * expI(static_cast<double>(-m)*ph)
+                    // * (m < 0 ? pm(m) : 1.0);
+                    ; 
             }
             r2l *= r;
         }
     }
 }
 
+void Leaf::propagateExpCoeffs() {
+    if (isRoot()) return;
+
+    for (int dir = 0; dir < 6; ++dir){
+        auto expCoeffs = getMpoleToExpCoeffs(dir);
+        auto iList = dirList[dir];
+        for (const auto& iNode : iList)
+            iNode->buildShiftedExpCoeffs(expCoeffs, center, dir);
+    }
+}
+
 void Leaf::buildLocalCoeffs() {
-    buildMpoleToLocalCoeffs();
-    // evaluateSolAtParticles();
+    if (!isRoot()) {
+        buildLocalCoeffsFromLeafIlist();
+        buildLocalCoeffsFromDirList();
+    }
+
+    evaluateSolAtParticles();
 }
 
 realVec Leaf::getFarPhis() {
@@ -61,8 +86,8 @@ realVec Leaf::getFarPhis() {
     return phis;
 }
 
-vec3dVec Leaf::getFarFlds() {
-    vec3dVec flds, dcoeffs;
+std::vector<vec3d> Leaf::getFarFlds() {
+    std::vector<vec3d> flds, dcoeffs;
 
     //for (size_t l = 1; l <= order; ++l)
     //    dcoeffs.push_back(static_cast<double>(l) * localCoeffs[l]);
@@ -127,10 +152,9 @@ realVec Leaf::getNearPhis(Func kernel) {
 void Leaf::evaluateSolAtParticles() {
     if (isRoot()) return;
 
-    auto phis = getFarPhis() + 
-        getNearPhis(
-        [](vec3d X) { return 1.0 / X.norm(); }
-    );
+    auto phis = getFarPhis() 
+        // + getNearPhis( [](vec3d X) { return 1.0 / X.norm(); } )
+        ;
     //auto flds = getFarFlds() + getNearSols<vec3d>(
     //    [](vec3d X) { return X / pow(abs(X),3); }
     //);

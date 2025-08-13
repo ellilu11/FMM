@@ -9,8 +9,7 @@ Stem::Stem(
     // std::cout << "Stem has " << particles.size() << " particles\n";
 
     // Assign every particle in node to a branch based on its position relative to center
-    constexpr int nbranch = 8; //  std::pow(2, DIM);
-    std::vector<ParticleVec> branchParts(nbranch);
+    std::array<ParticleVec,8> branchParts;
     for (const auto& p : particles)
         branchParts[bools2Idx(p->getPos() > center)].push_back(p);
  
@@ -27,9 +26,19 @@ Stem::Stem(
     }
 }
 
+void Stem::buildLists() {
+    if (!isRoot()) {
+        buildNearNeighbors();
+        buildInteractionList();
+        buildDirectedIList();
+    }
+
+    for (const auto& branch : branches)
+        branch->buildLists();
+}
+
 // rotation matrices
 void Stem::buildMpoleCoeffs() {
-    using namespace std;
     for (int l = 0; l <= order; ++l)
         coeffs.emplace_back(vecXcd::Zero(2*l+1));
 
@@ -40,7 +49,7 @@ void Stem::buildMpoleCoeffs() {
         double r = (branch->getCenter() - center).norm();
 
         for (int j = 0; j <= order; ++j) {
-            branchCoeffs[j] = rotationMat[branchIdx][j] * branchCoeffs[j];
+            branchCoeffs[j] = wignerD[branchIdx][j] * branchCoeffs[j];
 
             vecXcd shiftedBranchCoeffs_j = vecXcd::Zero(2*j+1);
             for (int k = -j; k <= j; ++k) {
@@ -55,7 +64,7 @@ void Stem::buildMpoleCoeffs() {
                 }
             }
 
-            coeffs[j] += rotationInvMat[branchIdx][j] * shiftedBranchCoeffs_j;
+            coeffs[j] += wignerDInv[branchIdx][j] * shiftedBranchCoeffs_j;
         }
     }
 }
@@ -93,8 +102,26 @@ void Stem::buildMpoleCoeffs() {
     }
 }*/
 
+void Stem::propagateExpCoeffs() {
+    if (!isRoot()) {
+
+        for (int dir = 0; dir < 6; ++dir) {
+            auto expCoeffs = getMpoleToExpCoeffs(dir);
+            auto iList = dirList[dir];
+            for (const auto& iNode : iList)
+                iNode->buildShiftedExpCoeffs(expCoeffs, center, dir);
+        }
+    }
+
+    for (const auto& branch : branches)
+        branch->propagateExpCoeffs();
+}
+
 void Stem::buildLocalCoeffs() {
-    buildMpoleToLocalCoeffs();
+    if (!isRoot()) {
+        buildLocalCoeffsFromLeafIlist();
+        buildLocalCoeffsFromDirList();
+    }
 
     for (const auto& branch : branches)
         branch->buildLocalCoeffs();

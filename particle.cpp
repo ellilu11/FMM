@@ -58,7 +58,8 @@ ParticleVec makeParticles(const Config& config)
                     vec3d dX( rand0(gen), rand1(gen), rand2(gen) );
                     return vec3d(config.L/4.0*idx2pm(n) + 0.25*dX);
                 }
-            } } ();
+            } 
+            }();
         
         auto x = X[0], y = X[1], z = X[2];
         auto idx = bools2Idx(X > zeroVec );
@@ -75,7 +76,8 @@ ParticleVec makeParticles(const Config& config)
                     uniform_int_distribution randi(0, 1);
                     return randi(gen);
                 }
-            } } () * 2 - 1;
+            } 
+            }() * 2 - 1;
         particles.emplace_back(make_shared<Particle>(X, pm*e, M));
     }
     return particles;

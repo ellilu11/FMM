@@ -2,58 +2,75 @@
 
 using enum Dir;
 
-const int numDir = std::pow(3, DIM) - 1;
-
 int Node::order;
 int Node::orderExp;
 int Node::maxNodeParts;
 double Node::rootLeng;
 Tables Node::tables;
-std::vector<matXcdVec> Node::rotationMat;
-std::vector<matXcdVec> Node::rotationInvMat;
+std::array<std::vector<matXcd>,14> Node::wignerD;
+std::array<std::vector<matXcd>,14> Node::wignerDInv;
+std::array<mat3d,6> Node::rotMatR;
 
 void Node::setNodeParams(const Config& config) {
     order = ceil(-std::log(config.EPS) / std::log(2));
     maxNodeParts = config.maxNodeParts;
     rootLeng = config.L;
+    orderExp = [&]() -> std::size_t {
+        switch (config.prec) {
+            case Precision::LOW:    return 8;
+            case Precision::MEDIUM: return 17;
+            case Precision::HIGH:   return 26;
+        } 
+        }();
 }
 
 void Node::buildTables(const Config& config) {
-    tables = Tables(order, Precision::LOW); // config.prec;
-    orderExp = tables.quadCoeffs_.size();
+    tables = Tables(order, config.prec);
+    assert(orderExp == tables.quadCoeffs_.size());
 }
 
 void Node::buildRotationMats() {
-    // do cardinal directions
+    for (int dir = 0; dir < 14; ++dir) {
+        auto X = 
+            dir < 8 ? 
+            idx2pm(dir) : // vertex directions (for M2M and L2L)
+            [dir] { 
+            switch (dir-8) {
+                case 0: return vec3d(0, 0, 1);
+                case 1: return vec3d(0, 0, -1);
+                case 2: return vec3d(0, 1, 0);
+                case 3: return vec3d(0, -1, 0);
+                case 4: return vec3d(1, 0, 0);
+                case 5: return vec3d(-1, 0, 0);
+            } 
+            }(); // cardinal directions (for M2X2L)
 
-    for (int dir = 18; dir < numDir; ++dir) {
-        rotationMat.push_back(rotationMatrixAlongDir(dir, 0));
-        rotationInvMat.push_back(rotationMatrixAlongDir(dir, 1));
+        auto R = toSph(X);
+        pair2d angles(R[1], R[2]);
+
+        wignerD[dir] = wignerDAlongDir(angles,0);
+        wignerDInv[dir] = wignerDAlongDir(angles,1);
+        if (dir >=8)
+            rotMatR[dir-8] = rotationR(angles);
+
+        // std::cout << dir << '\n' << rotationInvMat[dir][2] << "\n\n";
     }
 }
 
- matXcdVec Node::rotationMatrixAlongDir(int dir, const bool isInv) {
-    vec3d R;
-    if (dir >= 18) R = toSph(idx2pm(dir-=18));
-    else if (dir < 8) {
-        // do cardinal direction
-    } else
-        throw std::runtime_error("Invalid rotation direction");
-
-    pair2d angles(R[1], R[2]);
-        
-    matXcdVec mats;
-    for (int l = 0; l <= order; ++l)
-        mats.push_back(isInv ?
-            wignerD_l(angles, l) :
-            wignerD_l(angles, l).adjoint()
-        );
+std::vector<matXcd> Node::wignerDAlongDir(const pair2d angles, bool isInv) {
+     std::vector<matXcd> mats;
+     for (int l = 0; l <= order; ++l)
+         mats.push_back(
+             isInv ?
+             wignerD_l(angles, l) :
+             wignerD_l(angles, l).adjoint()
+         );
 
     return mats;
 }
 
 // Ylm except constant coefficients and \exp(i m \phi) phase factor
-const double Node::legendreLM(const double th, const pair2i& lm) {
+const double Node::legendreLM(const double th, const pair2i lm) {
     auto [l, abs_m] = lm;
     assert(abs_m <= l);
 
@@ -68,21 +85,23 @@ const double Node::legendreLM(const double th, const pair2i& lm) {
     return tables.coeffYlm_[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
 }
 
-//const cmplx Node::sphHarmonic(const double th, const double ph, int l, int m) {
-//    return legendreLM(th,l,std::abs(m)) * std::exp(iu*static_cast<double>(m)*ph);
-//}
-
 Node::Node(
-    const ParticleVec& particles, 
-    const int branchIdx, 
+    const ParticleVec& particles,
+    const int branchIdx,
     Node* const base)
     : particles(particles), branchIdx(branchIdx), base(base),
     nodeLeng(base == nullptr ? rootLeng : base->getLeng() / 2.0),
     center(base == nullptr ? zeroVec :
-        base->getCenter() + nodeLeng / 2.0 * idx2pm(branchIdx) ),
+        base->getCenter() + nodeLeng / 2.0 * idx2pm(branchIdx)),
     nodeStat(0), useRot(0)
 {
-};
+    for (int dir = 0; dir < 6; ++dir) {
+        std::vector<vecXcd> expCoeffs_dir;
+        for (int k = 0; k < orderExp; ++k)
+            expCoeffs_dir.emplace_back( vecXcd::Zero(tables.quadLengs_[k]) );
+        expCoeffs[dir] = expCoeffs_dir;
+    }
+}
 
 std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
     if (isRoot()) return nullptr;
@@ -551,25 +570,25 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
 }
 
 void Node::buildNearNeighbors() {
+    assert(!isRoot());
     for (int i = 0; i < numDir; ++i) {
         Dir dir = static_cast<Dir>(i);
         auto nbor = getNeighborGeqSize(dir);
-        if (nbor != nullptr)
+        if (nbor != nullptr) {
             nbors.push_back(nbor);
+            // dirNbors[i] = nbor;
+        }
     }
     assert(nbors.size() <= numDir);
 }
 
 void Node::buildInteractionList() {
-    assert( !isRoot() );
-
-    buildNearNeighbors(); // comment out for iList test
-    // base->buildNearNeighbors(); // uncomment for iList test
+    assert(!isRoot());
 
     auto baseNbors = base->getNearNeighbors();
 
     for (const auto& baseNbor : baseNbors)
-        if (baseNbor->isNodeType<Leaf>() && !contains<std::shared_ptr<Node>>(nbors,baseNbor))
+        if (baseNbor->isNodeType<Leaf>() && !contains<std::shared_ptr<Node>>(nbors, baseNbor))
             iList.push_back(baseNbor);
         else 
             for (const auto& branch : baseNbor->branches) 
@@ -577,20 +596,90 @@ void Node::buildInteractionList() {
                     iList.push_back(branch);
 
     const int maxSize = constPow(6, DIM) - constPow(3, DIM);
-    // std::cout << iList.size() << '\n';
     assert(iList.size() <= maxSize);
 }
 
-// no rotation matrices, no exponential expansions
-void Node::buildMpoleToLocalCoeffs() {
-    if ( isRoot() ) return;
+void Node::buildDirectedIList() {
+    assert(!isRoot());
+    auto contains = [](NodeVec& vec, std::shared_ptr<Node> val) {
+        return std::find(vec.begin(), vec.end(), val) != vec.end();
+    };
 
-    buildInteractionList();
+    //auto arrContains = []<int N>(std::array<NodeVec,N>& vecArr, std::shared_ptr<Node> val) {
+    //    return std::find(vec.begin(), vec.end(), val) != vec.end();
+    //    };
+
+    auto baseNbors = base->getNearNeighbors();
+
+    for (const auto& baseNbor : baseNbors) {
+        auto center0 = baseNbor->getCenter();
+
+        if (baseNbor->isNodeType<Leaf>() && !contains(nbors, baseNbor))
+            leafIlist.push_back(baseNbor); // list 4
+        else {
+            for (const auto& branch : baseNbor->branches) {
+                auto center1 = branch->getCenter();
+
+                if (center0[2] > center[2]) { 
+                    if (!contains(nbors, branch)
+                        && (center1[2] - center[2]) > nodeLeng)
+                        dirList[0].push_back(branch); // uplist
+                } else if (center0[2] < center[2]) { 
+                    if (!contains(nbors, branch)
+                        && (center1[2] - center[2]) < -nodeLeng)
+                        dirList[1].push_back(branch); // downlist
+                }
+
+                if (center0[1] > center[1]) { 
+                    if (!contains(nbors, branch)
+                        && !contains(dirList[0], branch)
+                        && !contains(dirList[1], branch)
+                        && (center1[1] - center[1]) > nodeLeng)
+                        dirList[2].push_back(branch); // northlist
+                } else if (center0[1] < center[1]) { 
+                    if (!contains(nbors, branch)
+                        && !contains(dirList[0], branch)
+                        && !contains(dirList[1], branch)
+                        && (center1[1] - center[1]) < -nodeLeng)
+                        dirList[3].push_back(branch); // southlist
+                }
+
+                if (center0[0] > center[0]) { 
+                    if (!contains(nbors, branch)
+                        && !contains(dirList[0], branch)
+                        && !contains(dirList[1], branch)
+                        && !contains(dirList[2], branch)
+                        && !contains(dirList[3], branch)
+                        && (center1[0] - center[0]) > nodeLeng)
+                        dirList[4].push_back(branch); // eastlist
+                } else if (center0[0] < center[0]) { 
+                    if (!contains(nbors, branch)
+                        && !contains(dirList[0], branch)
+                        && !contains(dirList[1], branch)
+                        && !contains(dirList[2], branch)
+                        && !contains(dirList[3], branch)
+                        && (center1[0] - center[0]) < -nodeLeng)
+                        dirList[5].push_back(branch); // westlist
+                } else
+                    throw std::runtime_error("Invalid interaction node");
+            }
+        }
+    }
     
-    for (int l = 0; l <= order; ++l)
-        localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
+    std::size_t dirListSize = std::accumulate(
+        dirList.begin(), dirList.end(), std::size_t{0},
+        [](std::size_t sum, const auto& vec) {
+            // std::cout << vec.size() << ' ';
+            return sum + vec.size();
+        }
+    );
+    // std::cout << dirListSize << ' ' << leafIlist.size() << ' ' << iList.size() << '\n';
+    assert(dirListSize + leafIlist.size() == iList.size());
+}
 
-    for (const auto& iNode : iList) {
+// no rotation matrices
+void Node::buildLocalCoeffsFromLeafIlist() {
+    for (const auto& iNode : leafIlist) {
         auto mpoleCoeffs( iNode->getMpoleCoeffs() );
         auto dR = toSph(iNode->getCenter() - center);
         double r = dR[0], th = dR[1], ph = dR[2];
@@ -613,19 +702,12 @@ void Node::buildMpoleToLocalCoeffs() {
             }
         }
     }
-
-    if (!base->isRoot()) 
-        for (int l = 0; l <= order; ++l)
-            localCoeffs[l] += (base->getShiftedLocalCoeffs(branchIdx))[l];
-    // iList.clear();
 }
 
 // no rotation matrices
-/*const vecXcdVec Node::getShiftedLocalCoeffs(const int branchIdx) {
+/*const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) {
 
-    // std::cout << "Shifting local coeffs" << '\n';
-
-    vecXcdVec shiftedCoeffs;
+    std::vector<vecXcd> shiftedCoeffs;
     for (int l = 0; l <= order; ++l)
         shiftedCoeffs.emplace_back(vecXcd::Zero(2*l+1));
 
@@ -642,8 +724,8 @@ void Node::buildMpoleToLocalCoeffs() {
 
                     shiftedCoeffs[j][k_] +=
                         localCoeffs[n][m_] * pow(iu, abs(m)-abs(k)-abs(m-k))
-                        * tables.A[n-j][m-k+n-j] * tables.A[j][k_] / tables.A[n][m_]
-                        * legendreLM(th, n-j, abs(m-k)) * expI(static_cast<double>(m-k)*ph)
+                        * tables.A_[n-j][m-k+n-j] * tables.A_[j][k_] / tables.A_[n][m_]
+                        * legendreLM(th, pair2i(n-j, abs(m-k))) * expI(static_cast<double>(m-k)*ph)
                         * pow(r, n-j) / pm(n+j);
                         
                 }
@@ -655,24 +737,24 @@ void Node::buildMpoleToLocalCoeffs() {
 }*/
 
 // rotation matrices
-const vecXcdVec Node::getShiftedLocalCoeffs(const int branchIdx) {
-    vecXcdVec shiftedCoeffs;
+const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) {
+    std::vector<vecXcd> shiftedLocalCoeffs;
     double r = (branches[branchIdx]->getCenter() - center).norm();
 
     for (int j = 0; j <= order; ++j) {
-        shiftedCoeffs.emplace_back(vecXcd::Zero(2*j+1));
+        shiftedLocalCoeffs.emplace_back(vecXcd::Zero(2*j+1));
 
-        // apply rotation (rotation axis is opposite from mpole2mpole)
-        localCoeffs[j] = rotationMat[7-branchIdx][j] * localCoeffs[j];
+        // apply rotation (rotation axis is opposite from M2M)
+        localCoeffs[j] = wignerD[7-branchIdx][j] * localCoeffs[j];
 
         vecXcd shiftedLocalCoeffs_j = vecXcd::Zero(2*j+1);
         for (int k = -j; k <= j; ++k) {
-            int k_ = k + j;
+            int k_j = k + j;
 
             for (int n = j; n <= order; ++n) {
-                shiftedLocalCoeffs_j[k_] +=
+                shiftedLocalCoeffs_j[k_j] +=
                     localCoeffs[n][k+n] *
-                    tables.A_[n-j][n-j] * tables.A_[j][k_] / tables.A_[n][k+n] *
+                    tables.A_[n-j][n-j] * tables.A_[j][k_j] / tables.A_[n][k+n] *
                     pow(r, n-j) / pm(n+j);
                 //for (int m = -n; m <= n; ++m) {
                 //    if (m != 0) continue;
@@ -688,18 +770,17 @@ const vecXcdVec Node::getShiftedLocalCoeffs(const int branchIdx) {
         }
 
         // apply inverse rotation
-        shiftedCoeffs[j] += rotationInvMat[7-branchIdx][j] * shiftedLocalCoeffs_j;
+        shiftedLocalCoeffs[j] += wignerDInv[7-branchIdx][j] * shiftedLocalCoeffs_j;
     }
-
-    return shiftedCoeffs;
+    return shiftedLocalCoeffs;
 }
 
 const double Node::getDirectPhi(const vec3d& X) {
     double phi = 0;
-    for (const auto& p : particles) {
-        auto r = (X - p->getPos()).norm();
+    for (const auto& src : particles) {
+        auto r = (X - src->getPos()).norm();
         if (r > 1.0E-9)
-            phi += p->getCharge() / r;
+            phi += src->getCharge() / r;
     }
     return phi;
 }
@@ -713,8 +794,8 @@ const realVec Node::getDirectPhis() {
     return phis;
 }
 
-const vec3dVec Node::getDirectFlds() {
-    vec3dVec flds;
+const std::vector<vec3d> Node::getDirectFlds() {
+    std::vector<vec3d> flds;
 
     return flds;
 }

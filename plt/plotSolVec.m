@@ -5,6 +5,8 @@ phiFile = strcat(dir,"out\ff.txt");
 phiAnlFile = strcat(dir,"out\ffAnl.txt");
 % phiFile = strcat(dir,"out\nf.txt");
 % phiAnlFile = strcat(dir,"out\nfAnl.txt");
+% phiFile = strcat(dir,"out\local.txt");
+% phiAnlFile = strcat(dir,"out\localAnl.txt");
 
 phi = readmatrix(phiFile)';
 phiAnl = readmatrix(phiAnlFile)';
@@ -19,7 +21,7 @@ nvec = 1:size(phi,1);
 numP = size(phi,2);
 
 %%
-pmax = 14;
+pmax = 10;
 pvec = pmax-numP+1:pmax;
 
 close all;
@@ -42,4 +44,3 @@ legend(strcat(" p = ", arrayfun(@num2str,pvec,...
 figure(3);
 meanRelErr = mean(relErr,1);
 semilogy(pvec,meanRelErr(1:numP), '-o');
-

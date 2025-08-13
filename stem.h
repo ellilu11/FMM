@@ -9,7 +9,9 @@ public:
         const int,
         Stem* const);
 
+    void buildLists();
     void buildMpoleCoeffs();
+    void propagateExpCoeffs();
     void buildLocalCoeffs();
 
     void printPhis(std::ofstream& f) {

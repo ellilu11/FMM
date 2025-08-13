@@ -3,31 +3,26 @@
 #include <cassert>
 #include <chrono>
 #include <iostream>
+#include <numeric>
 #include "config.h"
+#include "enum.h"
 #include "particle.h"
 #include "tables.h"
 #include "vec3d.h"
 
 extern const int DIM;
-
-enum class Dir {
-    W, E, S, N, D, U,
-    SW, SE, NW, NE, DW, DE, UW, UE, DS, DN, US, UN,
-    DSW, DSE, DNW, DNE, USW, USE, UNW, UNE
-};
+constexpr int numDir = 26; // std::pow(3, DIM) - 1;
 
 class Node;
 
 using NodeVec = std::vector<std::shared_ptr<Node>>;
+using NodeArr = std::array<std::shared_ptr<Node>, numDir>;
 
 class Node {
 public:
-    Node(const ParticleVec&, const int, Node* const);
-
     static const int getExpansionOrder() { return order; }
     static void setExpansionOrder(const int p) { order = p; }
-
-    static matXcdVec getRotationMatrixAlongDir(int dir) { return rotationMat[dir]; }
+    static const int getExponentialOrder() { return orderExp; }
 
     ParticleVec getParticles() const { return particles; }
     const int getBranchIdx() const { return branchIdx; }
@@ -36,46 +31,61 @@ public:
     Node* getBase() const { return base; }
     const NodeVec getBranches() const { return branches; }
     NodeVec const getNearNeighbors() { return nbors; }
+    // NodeArr const getDirectedNearNeighbors() { return dirNbors; }
     NodeVec const getInteractionList() { return iList; }
-    vecXcdVec getMpoleCoeffs() const { return coeffs; }
-    vecXcdVec getLocalCoeffs() const { return localCoeffs; }
-
+    std::array<NodeVec, 6> const getDirList() { return dirList; }
+    std::vector<vecXcd> getMpoleCoeffs() const { return coeffs; }
+    std::vector<vecXcd> getLocalCoeffs() const { return localCoeffs; }
     const bool isRoot() const { return base == nullptr; }
-
     template <typename T>
     const bool isNodeType() const { return typeid(*this) == typeid(T); }
 
     static void setNodeParams(const Config&);
     static void buildTables(const Config&);
     static void buildRotationMats();
-    static matXcdVec rotationMatrixAlongDir(int, const bool);
+    static std::vector<matXcd> wignerDAlongDir(const pair2d, const bool);
+    static const double legendreLM(const double, const pair2i);
 
-    static const double legendreLM(const double, const pair2i&);
-
+    Node(const ParticleVec&, const int, Node* const);
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
     void buildNearNeighbors();
     void buildInteractionList();
-    void buildMpoleToLocalCoeffs();
-    const vecXcdVec getShiftedLocalCoeffs(const int);
+    void buildDirectedIList();
 
-    const vecXcdVec getMpoleToExpCoeffsFromNode();
+    void buildLocalCoeffsFromDirList();
+    void buildLocalCoeffsFromLeafIlist();
+    const std::vector<vecXcd> getShiftedLocalCoeffs(const int);
+
+    const std::vector<vecXcd> getMpoleToExpCoeffs(const int);
+    void buildShiftedExpCoeffs(const std::vector<vecXcd>&, const vec3d&, const int);
 
     const double getDirectPhi(const vec3d&);
     const realVec getDirectPhis();
-    const vec3dVec getDirectFlds();
+    const std::vector<vec3d> getDirectFlds();
 
+    virtual void buildLists() = 0;
     virtual void buildMpoleCoeffs() = 0;
+    virtual void propagateExpCoeffs() = 0;
     virtual void buildLocalCoeffs() = 0;
     virtual void resetNode() = 0;
     virtual void printPhis(std::ofstream&) = 0;
     virtual void printNode(std::ofstream&) = 0;
 
-    // === Test methods ===
+    // ========== Test methods ==========
+    static void setExponentialOrder(const int prec) {
+        orderExp = [&]() -> std::size_t {
+            switch (prec) {
+                case 0: return 8;
+                case 1: return 17;
+                case 2: return 26;
+            }
+            }();
+    }
     int getLvl() { return std::round(std::log(rootLeng/nodeLeng)/std::log(2)); }
     void setNodeStat(int stat) { nodeStat = stat; }
 
-    void setUseRot(const bool flag) { useRot = flag; }
-    const bool getUseRot() { return useRot; }
+    //void setUseRot(const bool flag) { useRot = flag; }
+    //const bool getUseRot() { return useRot; }
 
     // definition under test/nodetest.cpp
     void setRandNodeStats();
@@ -89,14 +99,20 @@ public:
     virtual const cmplx getPhiFromBranchMpole(const vec3d&, const int) = 0;
     virtual void printMpoleCoeffs(std::ofstream&) = 0;
 
+    // definition under test/exptest.cpp
+    const cmplx getPhiFromExp(const vec3d&, const std::vector<vecXcd>&, const int);
+    const cmplx getPhiFromLocal(const vec3d&);
+    void mpoleToExpToLocalTest();
+
 protected:
     static int order;
     static int orderExp;
     static int maxNodeParts;
     static double rootLeng;
     static Tables tables;
-    static std::vector<matXcdVec> rotationMat;
-    static std::vector<matXcdVec> rotationInvMat;
+    static std::array<std::vector<matXcd>,14> wignerD;
+    static std::array<std::vector<matXcd>,14> wignerDInv;
+    static std::array<mat3d, 6> rotMatR;
 
     ParticleVec particles;
     const int branchIdx;
@@ -105,11 +121,17 @@ protected:
     const vec3d center;
 
     NodeVec branches;
-    NodeVec nbors;
-    NodeVec iList;
 
-    vecXcdVec coeffs;
-    vecXcdVec localCoeffs;
+    NodeVec nbors; // List 1
+    NodeVec iList; // List 2 union List 4
+
+    // NodeArr dirNbors;
+    std::array<NodeVec,6> dirList; // List 2, indexed by direction
+    NodeVec leafIlist; // List 4
+
+    std::vector<vecXcd> coeffs;
+    std::array<std::vector<vecXcd>,6> expCoeffs;
+    std::vector<vecXcd> localCoeffs;
 
     // === Test members ===
     int nodeStat;

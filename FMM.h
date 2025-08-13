@@ -15,6 +15,7 @@
 #include "node.cpp"
 #include "particle.cpp"
 #include "stem.cpp"
+#include "test/exptest.cpp"
 #include "test/leaftest.cpp"
 #include "test/nodetest.cpp"
 #include "test/stemtest.cpp"

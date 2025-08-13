@@ -4,15 +4,24 @@ using namespace std;
 
 void Node::setRandNodeStats() {
     auto node = getRandNode(0);
-    node->setNodeStat(3);
+    node->setNodeStat(1);
 
     node->buildNearNeighbors();
     for (const auto& nbor: node->getNearNeighbors())
-        nbor->setNodeStat(1);
+        nbor->setNodeStat(2);
+
+    node->base->buildNearNeighbors();
 
     node->buildInteractionList();
-    for (const auto& iNode : node->getInteractionList())
-        iNode->setNodeStat(2);
+    //for (const auto& iNode : node->getInteractionList())
+    //    iNode->setNodeStat(3);
+
+    node->buildDirectedIList();
+    for (int dir = 0; dir < 6; ++dir) {
+        auto iList = (node->getDirList())[dir];
+        for (const auto& iNode : iList) 
+            iNode->setNodeStat(3+dir);
+    }
 }
 
 const cmplx Node::getPhiFromMpole(const vec3d& X) {
@@ -47,7 +56,7 @@ void Node::ffieldTest(const int Nr, const int Nth, const int Nph) {
     // coeffsFile << setprecision(9) << scientific;
     // coeffsRotFile << setprecision(9) << scientific;
 
-    vec3dVec obss;
+    std::vector<vec3d> obss;
     for (int ir = 0; ir < Nr; ++ir){
         double r = 5.0*(ir+1.0)*rootLeng;
         for (int ith = 0; ith < Nth; ++ith) {
@@ -91,18 +100,27 @@ void Node::ffieldTest(const int Nr, const int Nth, const int Nph) {
 }
 
 void Node::mpoleToLocalTest() {
-    auto node = getRandNode(0);
-    auto leafNode = dynamic_pointer_cast<Leaf>(node);
+    int depth = 0;
+    auto node = getRandNode(depth);
+    while (!node->getParticles().size())
+        node = getRandNode(depth);
+
+    auto iList = node->getInteractionList();
+
+    cout << " This node has " << node->getParticles().size() << " particles";
+    cout << " and an interaction list size of " << iList.size() << '\n';
+
+    // auto leafNode = dynamic_pointer_cast<Leaf>(node);
 
     ofstream outFile, outAnlFile;
     outFile.open("out/local.txt");
     outAnlFile.open("out/localAnl.txt");
 
-    outFile << setprecision(15) << scientific;
-    outAnlFile << setprecision(15) << scientific;
+    //outFile << setprecision(15) << scientific;
+    //outAnlFile << setprecision(15) << scientific;
 
     const int order = Node::getExpansionOrder();
-    for (int p = 1; p <= order; ++p) {
+    for (int p = order; p <= order; ++p) {
         Node::setExpansionOrder(p);
 
         cout << " Computing upward pass...   (" << " Expansion order = " << p << " )\n";
@@ -111,24 +129,44 @@ void Node::mpoleToLocalTest() {
         cout << " Computing downward pass... (" << " Expansion order = " << p << " )\n";
         buildLocalCoeffs();
 
-        leafNode->evaluateSolAtParticles();
-        for (const auto& src : leafNode->getParticles())
-            src->printPhi(outFile);
+        for (const auto& obs : node->getParticles()) {
+            auto dR = toSph(obs->getPos() - center);
+
+            double r = dR[0], th = dR[1], ph = dR[2];
+            cmplx phi(0, 0);
+
+            for (int l = 0; l <= order; ++l) {
+                cout << (node->getLocalCoeffs())[l].transpose();
+                
+                realVec legendreLMCoeffs;
+                for (int m = 0; m <= l; ++m)
+                    legendreLMCoeffs.push_back(legendreLM(th, pair2i(l, m)));
+
+                for (int m = -l; m <= l; ++m)
+                    phi += (node->getLocalCoeffs())[l][m+l] * pow(r, l) *
+                    legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
+            }
+            outFile << phi.real() << ' ';
+        }
         outFile << '\n';
 
         if (p < order) resetNode();
     }
 
-    //auto iList = node->getInteractionList();
+
     //cout << iList.size() << '\n';
     //
     //auto iListBase = node->getBase()->getInteractionList();
     //cout << iListBase.size() << '\n';
     //iList.insert(iList.end(), iListBase.begin(), iListBase.end());
 
-    auto phis = leafNode->getDirectPhis();
-    for (const auto& phi : phis)
+    for (const auto& obs : node->getParticles()) {
+        double phi = 0;
+        for (const auto& iNode : iList)
+            phi += iNode->getDirectPhi(obs->getPos());
+
         outAnlFile << phi << ' ';
+    }
     outAnlFile << '\n';
 
 }
@@ -144,10 +182,10 @@ void Node::nfieldTest() {
     outAnlFile << setprecision(9) << scientific;
 
     const int order = Node::getExpansionOrder();
-    for (int p = 1; p <= order; ++p) {
+    for (int p = order; p <= order; ++p) {
         Node::setExpansionOrder(p);
 
-        cout << " Computing upward pass...   (" << " P = " << p << " )\n";
+        cout << " Computing upward pass...   (" << " Expansion order = " << p << " )\n";
         auto start = chrono::high_resolution_clock::now();
 
         buildMpoleCoeffs();
@@ -156,7 +194,16 @@ void Node::nfieldTest() {
         chrono::duration<double, milli> duration_ms = end - start;
         cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-        cout << " Computing downward pass... (" << " P = " << p << " )\n";
+        cout << " Propagating exponential coeffs... (" << " Expansion order = " << p << " )\n";
+        start = chrono::high_resolution_clock::now();
+
+        propagateExpCoeffs();
+
+        end = chrono::high_resolution_clock::now();
+        duration_ms = end - start;
+        cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+
+        cout << " Computing downward pass... (" << " Expansion order = " << p << " )\n";
         start = chrono::high_resolution_clock::now();
 
         buildLocalCoeffs();

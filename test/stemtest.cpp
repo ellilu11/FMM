@@ -2,14 +2,14 @@
 
 using namespace std;
 
-shared_ptr<Node> Stem::getRandNode(int minLvl) {
+shared_ptr<Node> Stem::getRandNode(int maxLvl) {
     random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution branchIdx(0, 7);
 
     shared_ptr<Node> node = make_shared<Stem>(*this);
 
-    // while (minLvl ? node->getLvl() > 1 : node->isNodeType<Stem>() )
+    // while (node->getLvl() <= maxLvl)
     while (node->isNodeType<Stem>())
         node = (node->getBranches())[branchIdx(gen)];
 
@@ -42,9 +42,11 @@ void Stem::printMpoleCoeffs(std::ofstream& f) {
 
 void Stem::resetNode() {
     coeffs.clear();
+    expCoeffs = {};
     localCoeffs.clear();
-    nbors.clear();
-    iList.clear();
+    //nbors.clear();
+    //iList.clear();
+    //dirList = {};
     for (const auto& branch : branches)
         branch->resetNode();
 }

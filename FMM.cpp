@@ -39,35 +39,38 @@ int main()
     Node::setNodeParams(config);
     const int order = Node::getExpansionOrder();
 
-    cout << " Mode:            " << (config.mode == Mode::READ ? "READ" : "GEN") << '\n';
-    cout << " Source file:     " << fname << '\n';
-    cout << " # sources:       " << Nsrcs << '\n';
-    cout << " Root length:     " << config.L << '\n';
-    cout << " Error tol.:      " << config.EPS << '\n';
-    cout << " Expansion order: " << order << '\n';
-    cout << " Max node parts:  " << config.maxNodeParts << '\n' << '\n';
+    cout << " Mode:              " << (config.mode == Mode::READ ? "READ" : "GEN") << '\n';
+    cout << " Source file:       " << fname << '\n';
+    cout << " # sources:         " << Nsrcs << '\n';
+    cout << " Root length:       " << config.L << '\n';
+    cout << " Error tol.:        " << config.EPS << '\n';
+    cout << " Expansion order:   " << order << '\n';
+    cout << " Exponential order: " << Node::getExponentialOrder() << '\n';
+    cout << " Max node parts:    " << config.maxNodeParts << '\n' << '\n';
 
-    // ==================== Set up domain ==================== //
-    cout << " Setting up domain...\n";
+    // ==================== Build tables ==================== //
+    cout << " Building tables..\n";
     auto start = chrono::high_resolution_clock::now();
 
-    shared_ptr<Node> root;
-    root = make_shared<Stem>(srcs, 0, nullptr);
-    //if (Nsrcs > config.maxNodeParts)
-    //    root = make_shared<Stem>(srcs, 0, nullptr);
-    //else
-    //    root = make_shared<Leaf>(srcs, 0, nullptr);
-    
+    Node::buildTables(config);
+    Node::buildRotationMats();
+
     auto end = chrono::high_resolution_clock::now();
     chrono::duration<double, milli> duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    // ==================== Build tables ==================== //
-    cout << " Building tables..\n";
+    // ==================== Set up domain ==================== //
+    cout << " Setting up domain...\n";
     start = chrono::high_resolution_clock::now();
 
-    Node::buildTables(config);
-    Node::buildRotationMats();
+    shared_ptr<Node> root;
+    // root = make_shared<Stem>(srcs, 0, nullptr);
+    if (Nsrcs > config.maxNodeParts)
+        root = make_shared<Stem>(srcs, 0, nullptr);
+    else
+        root = make_shared<Leaf>(srcs, 0, nullptr);
+
+    root->buildLists();
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
@@ -78,12 +81,6 @@ int main()
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
-    // ==============================================
-    //const int l = 1;
-    //const double th = acos(-1.0/sqrt(3.0));
-    //cout << "th = " << th << '\n';
-    //cout << wignerD_l(th, l) << "\n\n" << wignerD_l(th, l).inverse()
-    //    << "\n\n" << wignerD_l(th, l) * wignerD_l(th, l).adjoint() << "\n\n";
     // ==============================================
     //double th = 0*PI/4.0;
     //double ph = 5*PI/4.0;
@@ -99,7 +96,23 @@ int main()
     //}
 
     // ==============================================
+    //const int l = 1;
+    //const double th = acos(-1.0/sqrt(3.0));
+    //cout << "th = " << th << '\n';
+    //cout << wignerD_l(th, l) << "\n\n" << wignerD_l(th, l).inverse()
+    //    << "\n\n" << wignerD_l(th, l) * wignerD_l(th, l).adjoint() << "\n\n";
+
+    // ==============================================
+    //vec3d X(0, 0, 1);
+    //auto R = toSph(X);
+    //auto mat = rotationR(pair2d(R[1], R[2]));
+    //cout << mat * mat.transpose()  << '\n';
+    //cout << mat * X << '\n';
+
+    // ==============================================
     root->ffieldTest(1,10,10);
+    // ==============================================   
+    // root->mpoleToExpToLocalTest();
     // ==============================================   
     // root->mpoleToLocalTest();
     // root->nfieldTest();
@@ -120,6 +133,7 @@ int main()
     cout << " Computing downward pass...\n";
     start = chrono::high_resolution_clock::now();
 
+    root->propagateExpCoeffs();
     root->buildLocalCoeffs();
 
     end = chrono::high_resolution_clock::now();

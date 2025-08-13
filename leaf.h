@@ -11,11 +11,13 @@ public:
         const int,
         Stem* const);
 
+    void buildLists();
     void buildMpoleCoeffs();
+    void propagateExpCoeffs();
     void buildLocalCoeffs();
 
     realVec getFarPhis();
-    vec3dVec getFarFlds();
+    std::vector<vec3d> getFarFlds();
     template <typename Func> realVec getNearPhis(Func);
     // template <typename T, typename Func> std::vector<T> getNearSols(Func);
     void evaluateSolAtParticles();

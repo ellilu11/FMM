@@ -1,12 +1,7 @@
 #pragma once
 
+#include "enum.h"
 #include "math.h"
-
-enum class Precision {
-    LOW,
-    MEDIUM,
-    HIGH
-};
 
 struct Tables {
     Tables() = default;
@@ -22,20 +17,21 @@ struct Tables {
     std::vector<realVec> fallingFact_;
     std::vector<realVec> legendreSum_;
     std::vector<realVec> A_;
+    std::vector<realVec> Aexp_;
 
     std::vector<pair2d> quadCoeffs_;
     std::vector<int> quadLengs_;
+    std::vector<realVec> alphas_;
 
 };
 
 void Tables::buildYlmTables(const int order) {
-
     auto binom = [](double x, int k) {
         return fallingFactorial(x, k) / factorial(k);
         };
 
     for (int l = 0; l <= 2*order; ++l) {
-        realVec coeffYlm_l, fallingFact_l, legendreSum_l, A_l;
+        realVec coeffYlm_l, fallingFact_l, legendreSum_l, A_l, Aexp_l;
 
         for (int m = 0; m <= l; ++m) {
             coeffYlm_l.push_back(coeffYlm(l, m));
@@ -44,14 +40,18 @@ void Tables::buildYlmTables(const int order) {
         }
 
         auto pm_l = pm(l);
-        for (int m = -l; m <= l; ++m)
+        for (int m = -l; m <= l; ++m) {
             A_l.push_back(pm_l /
                 std::sqrt(static_cast<double>(factorial(l-m)*factorial(l+m))));
+            Aexp_l.push_back(1.0 /
+                std::sqrt(static_cast<double>(factorial(l-m)*factorial(l+m))));
+        }
 
         coeffYlm_.push_back(coeffYlm_l);
         fallingFact_.push_back(fallingFact_l);
         legendreSum_.push_back(legendreSum_l);
         A_.push_back(A_l);
+        Aexp_.push_back(Aexp_l);
 
         //std::cout << "l = " << l << '\n';
         //for (int m = 0; m <= l; ++m)
@@ -133,4 +133,12 @@ void Tables::buildQuadTables(const Precision prec) {
             break;
     }
     assert(quadCoeffs_.size() == quadLengs_.size());
+
+    for (int k = 0; k < quadCoeffs_.size(); ++k) {
+        double M_k = quadLengs_[k];
+        realVec alphas_k;
+        for (int j = 0; j < M_k; ++j)
+            alphas_k.push_back(2.0 * PI * (j+1) / static_cast<double>(M_k));
+        alphas_.push_back(alphas_k);
+    }
 }

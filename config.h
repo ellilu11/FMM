@@ -2,26 +2,7 @@
 
 #include <iostream>
 #include <type_traits>
-
-enum class Mode {
-    READ,
-    GEN
-};
-
-enum class Dist {
-    UNIFORM,
-    GAUSSIAN,
-    GRID
-};
-
-enum class ChargeDist {
-    PLUS,
-    MINUS,
-    DIP,
-    QUAD,
-    OCT,
-    RAND
-};
+#include "enum.h"
 
 template <typename T>
 concept Enum = std::is_enum_v<T>;
@@ -37,13 +18,14 @@ struct Config {
     Config() = default;
     Config(const std::string& fileName) {
         std::ifstream is(fileName);
-        is >> mode >> dist >> cdist
-           >> nsrcs >> L >> EPS >> maxNodeParts >> evalDirect;
+        is >> mode >> dist >> cdist >> prec
+           >> nsrcs >> L >> EPS >> maxNodeParts  >> evalDirect;
     }
 
     Mode mode;
     Dist dist;
     ChargeDist cdist;
+    Precision prec;
     int nsrcs;
     double L;
     double EPS;

@@ -111,7 +111,7 @@ const double factorial(double n) {
 
 const double coeffYlm(int l, int abs_m) {
     assert(abs_m <= l);
-    return // std::sqrt(2*l+1) * 
+    return 
         std::sqrt(factorial(l-abs_m) / static_cast<double>(factorial(l+abs_m))) * // Ylm coeffs
         pm(abs_m) * std::pow(2.0, l) ; // legendreLM coeffs
 }
@@ -120,7 +120,16 @@ const cmplx expI(const double arg) {
     return std::exp(iu*arg);
 }
 
-Eigen::MatrixXcd wignerD_l(const pair2d& angles, const int l) {
+mat3d rotationR(const pair2d angles) {
+    auto [th, ph] = angles;
+    return mat3d {
+        {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
+        { -sin(ph),          cos(ph),          0       },
+        {  sin(th)*cos(ph),  sin(th)*sin(ph),  cos(th) }
+    };
+}
+
+matXcd wignerD_l(const pair2d angles, const int l) {
     using namespace std;
     auto [th, ph] = angles;
 
@@ -131,7 +140,7 @@ Eigen::MatrixXcd wignerD_l(const pair2d& angles, const int l) {
             ( factorial(a0) * factorial(a1) * factorial(a2) * factorial(a3) );
     };
 
-    Eigen::MatrixXcd mat = Eigen::MatrixXcd::Zero(2*l+1, 2*l+1);
+    matXcd mat = matXcd::Zero(2*l+1, 2*l+1);
     for (int n = -l; n <= l; ++n) {
         int n_ = n+l;
         double pm_n = (n < 0) ? pm(n) : 1.0;
@@ -142,19 +151,10 @@ Eigen::MatrixXcd wignerD_l(const pair2d& angles, const int l) {
             for (int s = max(m-n, 0); s <= min(l+m, l-n); ++s)
                 mat(n_, m_) += sumCoeff(m, n, s);
 
-            mat(n_, m_) *= exp_n * pm_n / pm_m *
-                sqrt(factorial(l+n)*factorial(l-n)*factorial(l+m)*factorial(l-m));
+            mat(n_, m_) *= exp_n * pm_n / pm_m
+                * sqrt(factorial(l+n)*factorial(l-n)*factorial(l+m)*factorial(l-m));
         }
     }
 
     return mat;
 }
-
-/*Eigen::MatrixXcd expI_l(const double ph, const int l) {
-    Eigen::MatrixXcd mat = Eigen::MatrixXcd::Zero(2*l+1, 2*l+1);
-
-    for (int m = -l; m <= l; ++m)
-        mat(m+l,m+l) = expI(static_cast<double>(-m)*ph);
-
-    return mat;
-}*/
