@@ -31,7 +31,7 @@ void Stem::printMpoleCoeffs(std::ofstream& f) {
     for (int l = 0; l < coeffs.size(); ++l) {
         for (int m = -l; m <= l; ++m)
         // for (int m = l; m >= -l; --m)
-            f << l << ' ' << m << ' ' << coeffs[l][m+l] << ' ';
+            f << coeffs[l][m+l] << ' ';
         f << '\n';
     }
     f << '\n';
@@ -41,12 +41,20 @@ void Stem::printMpoleCoeffs(std::ofstream& f) {
 }
 
 void Stem::resetNode() {
-    coeffs.clear();
+    //coeffs.clear();
     expCoeffs = {};
-    localCoeffs.clear();
+    //localCoeffs.clear();
     //nbors.clear();
     //iList.clear();
     //dirList = {};
+
+    for (int dir = 0; dir < 6; ++dir) {
+        std::vector<vecXcd> expCoeffs_dir;
+        for (int k = 0; k < orderExp; ++k)
+            expCoeffs_dir.emplace_back(vecXcd::Zero(tables.quadLengs_[k]));
+        expCoeffs[dir] = expCoeffs_dir;
+    }
+
     for (const auto& branch : branches)
         branch->resetNode();
 }

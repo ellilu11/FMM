@@ -137,8 +137,15 @@ void Tables::buildQuadTables(const Precision prec) {
     for (int k = 0; k < quadCoeffs_.size(); ++k) {
         double M_k = quadLengs_[k];
         realVec alphas_k;
-        for (int j = 0; j < M_k; ++j)
-            alphas_k.push_back(2.0 * PI * (j+1) / static_cast<double>(M_k));
+        for (int j = 0; j < M_k; ++j) {
+            double alpha_kj = 2.0 * PI * (j+1) / static_cast<double>(M_k);
+            alphas_k.push_back(alpha_kj);
+        }
         alphas_.push_back(alphas_k);
+
+        //std::cout << '(' << M_k << ") ";
+        //for (int j = 0; j < M_k; ++j)
+        //    std::cout << alphas_[k][j] << ' ';
+        //std::cout << '\n';
     }
 }

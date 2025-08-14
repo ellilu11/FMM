@@ -110,9 +110,9 @@ int main()
     //cout << mat * X << '\n';
 
     // ==============================================
-    root->ffieldTest(1,10,10);
+    // root->ffieldTest(1,10,10);
     // ==============================================   
-    // root->mpoleToExpToLocalTest();
+    root->mpoleToExpToLocalTest();
     // ==============================================   
     // root->mpoleToLocalTest();
     // root->nfieldTest();

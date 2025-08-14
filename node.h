@@ -72,17 +72,17 @@ public:
     virtual void printNode(std::ofstream&) = 0;
 
     // ========== Test methods ==========
-    static void setExponentialOrder(const int prec) {
+    int getLvl() { return std::round(std::log(rootLeng/nodeLeng)/std::log(2)); }
+    void setNodeStat(int stat) { nodeStat = stat; }
+    static void setExponentialOrder(const Precision prec) {
         orderExp = [&]() -> std::size_t {
             switch (prec) {
-                case 0: return 8;
-                case 1: return 17;
-                case 2: return 26;
+                case Precision::LOW:    return 8;
+                case Precision::MEDIUM: return 17;
+                case Precision::HIGH:   return 26;
             }
             }();
     }
-    int getLvl() { return std::round(std::log(rootLeng/nodeLeng)/std::log(2)); }
-    void setNodeStat(int stat) { nodeStat = stat; }
 
     //void setUseRot(const bool flag) { useRot = flag; }
     //const bool getUseRot() { return useRot; }

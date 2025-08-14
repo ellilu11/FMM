@@ -151,7 +151,8 @@ matXcd wignerD_l(const pair2d angles, const int l) {
             for (int s = max(m-n, 0); s <= min(l+m, l-n); ++s)
                 mat(n_, m_) += sumCoeff(m, n, s);
 
-            mat(n_, m_) *= exp_n * pm_n / pm_m
+            mat(n_, m_) *= exp_n 
+                * pm_n / pm_m
                 * sqrt(factorial(l+n)*factorial(l-n)*factorial(l+m)*factorial(l-m));
         }
     }

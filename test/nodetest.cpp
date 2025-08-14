@@ -38,7 +38,10 @@ const cmplx Node::getPhiFromMpole(const vec3d& X) {
         for (int m = -l; m <= l; ++m) {
             int m_ = m + l;
             phi += coeffs[l][m_] / pow(r, l+1) *
-                legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
+                legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph)
+                // * (m < 0 ? pm(m) : 1.0)
+                ;
+
         }
     }
 
