@@ -3,10 +3,10 @@ dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
 
 % phiFile = strcat(dir,"out\ff.txt");
 % phiAnlFile = strcat(dir,"out\ffAnl.txt");
-% phiFile = strcat(dir,"out\nf.txt");
-% phiAnlFile = strcat(dir,"out\nfAnl.txt");
-phiFile = strcat(dir,"out\local.txt");
-phiAnlFile = strcat(dir,"out\localAnl.txt");
+% phiFile = strcat(dir,"out\local.txt");
+% phiAnlFile = strcat(dir,"out\localAnl.txt");
+phiFile = strcat(dir,"out\nf.txt");
+phiAnlFile = strcat(dir,"out\nfAnl.txt");
 
 phi = readmatrix(phiFile)';
 phiAnl = readmatrix(phiAnlFile)';
@@ -35,6 +35,7 @@ legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
 % hold off;
 
 figure(2);
+hold on;
 relErr = abs(phi-phiAnl)./abs(phiAnl);
 semilogy(nvec, relErr(:,1:numP), '-o');
 

@@ -50,7 +50,7 @@ void Leaf::propagateExpCoeffs() {
         auto expCoeffs = getMpoleToExpCoeffs(dir);
         auto iList = dirList[dir];
         for (const auto& iNode : iList)
-            iNode->buildShiftedExpCoeffs(expCoeffs, center, dir);
+            iNode->addShiftedExpCoeffs(expCoeffs, center, dir);
     }
 }
 
@@ -58,6 +58,10 @@ void Leaf::buildLocalCoeffs() {
     if (!isRoot()) {
         buildLocalCoeffsFromLeafIlist();
         buildLocalCoeffsFromDirList();
+
+        if (!base->isRoot())
+            for (int l = 0; l <= order; ++l)
+                localCoeffs[l] += (base->getShiftedLocalCoeffs(branchIdx))[l];
     }
 
     evaluateSolAtParticles();
@@ -153,7 +157,7 @@ void Leaf::evaluateSolAtParticles() {
     if (isRoot()) return;
 
     auto phis = getFarPhis() 
-        // + getNearPhis( [](vec3d X) { return 1.0 / X.norm(); } )
+        + getNearPhis( [](vec3d X) { return 1.0 / X.norm(); } )
         ;
     //auto flds = getFarFlds() + getNearSols<vec3d>(
     //    [](vec3d X) { return X / pow(abs(X),3); }

@@ -112,10 +112,9 @@ int main()
     // ==============================================
     // root->ffieldTest(1,10,10);
     // ==============================================   
-    root->mpoleToExpToLocalTest();
+    // root->mpoleToExpToLocalTest();
     // ==============================================   
-    // root->mpoleToLocalTest();
-    // root->nfieldTest();
+    root->nfieldTest();
 
     return 0;
 

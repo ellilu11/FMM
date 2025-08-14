@@ -102,6 +102,7 @@ void Node::ffieldTest(const int Nr, const int Nth, const int Nph) {
 
 }
 
+/*
 void Node::mpoleToLocalTest() {
     int depth = 0;
     auto node = getRandNode(depth);
@@ -172,7 +173,7 @@ void Node::mpoleToLocalTest() {
     }
     outAnlFile << '\n';
 
-}
+}*/
 
 void Node::nfieldTest() {
     using namespace std;

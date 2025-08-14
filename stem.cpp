@@ -104,12 +104,11 @@ void Stem::buildMpoleCoeffs() {
 
 void Stem::propagateExpCoeffs() {
     if (!isRoot()) {
-
         for (int dir = 0; dir < 6; ++dir) {
             auto expCoeffs = getMpoleToExpCoeffs(dir);
             auto iList = dirList[dir];
             for (const auto& iNode : iList)
-                iNode->buildShiftedExpCoeffs(expCoeffs, center, dir);
+                iNode->addShiftedExpCoeffs(expCoeffs, center, dir);
         }
     }
 
@@ -121,6 +120,10 @@ void Stem::buildLocalCoeffs() {
     if (!isRoot()) {
         buildLocalCoeffsFromLeafIlist();
         buildLocalCoeffsFromDirList();
+
+        if (!base->isRoot())
+            for (int l = 0; l <= order; ++l)
+                localCoeffs[l] += (base->getShiftedLocalCoeffs(branchIdx))[l];
     }
 
     for (const auto& branch : branches)

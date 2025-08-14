@@ -95,6 +95,9 @@ Node::Node(
         base->getCenter() + nodeLeng / 2.0 * idx2pm(branchIdx)),
     nodeStat(0), useRot(0)
 {
+    for (int l = 0; l <= order; ++l)
+        localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
+
     for (int dir = 0; dir < 6; ++dir) {
         std::vector<vecXcd> expCoeffs_dir;
         for (int k = 0; k < orderExp; ++k)
