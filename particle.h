@@ -10,23 +10,22 @@ using ParticleVec = std::vector<std::shared_ptr<Particle>>;
 
 class Particle {
 public :
-    Particle() = default;
+    Particle()
+        : phi(0.0), fld(zeroVec) {};
     Particle(const vec3d X, const double q, const double m)
-        : pos(X), charge(q), mass(m), phi(0.0), fld(zeroVec)
-    {
-    };
+        : pos(X), charge(q), mass(m), phi(0.0), fld(zeroVec) {};
 
     vec3d getPos() const { return pos; }
     double getCharge() const { return charge; }
     double getMass() const { return mass; }
 
     const double getPhi() const { return phi; }
-    void setPhi(double phi_) { phi = phi_; }
+    void addToPhi(double phi_) { phi += phi_; }
     void printPhi(std::ofstream& f) const {
         f << phi << ' ';
     }
 
-    void setFld(vec3d fld_) { fld = fld_; }
+    void addToFld(vec3d fld_) { fld += fld_; }
     void printFld(std::ofstream& f) const {
         f << fld << '\n';
     }

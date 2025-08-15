@@ -48,7 +48,7 @@ const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
                     * tables.Aexp_[l][m_l] 
                     * pow(l_k, l);
             }
-            innerCoeffs[m+order] *= pow(iu, abs(m));
+            innerCoeffs[m+order] *= pow(iu, abs(m)); // plus sign
         }
         expCoeffs.emplace_back(vecXcd::Zero(M_k));
         for (int j = 0; j < M_k; ++j) {
@@ -91,8 +91,8 @@ void Node::buildLocalCoeffsFromDirList() {
     assert(!isRoot());
 
     // move to constructor later
-    //for (int l = 0; l <= order; ++l)
-    //    localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
+    for (int l = 0; l <= order; ++l)
+        localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
 
     for (int dirIdx = 0; dirIdx < 6; ++dirIdx) {
         std::vector<vecXcd> rotatedLocalCoeffs;
@@ -124,8 +124,8 @@ void Node::buildLocalCoeffsFromDirList() {
                 for (int j = 0; j < M_k; ++j)
                     innerCoeffs[m+order] +=
                         expCoeffs[dirIdx][k][j]
-                        * expI(-m*tables.alphas_[k][j]);
-                innerCoeffs[m+order] *= pow(iu, abs(m));
+                        * expI(-m*tables.alphas_[k][j]); // minus sign
+                innerCoeffs[m+order] *= pow(iu, abs(m)); // plus sign
             }
 
             for (int l = 0; l <= order; ++l) {

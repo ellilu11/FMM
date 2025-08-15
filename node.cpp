@@ -11,6 +11,11 @@ std::array<std::vector<matXcd>,14> Node::wignerD;
 std::array<std::vector<matXcd>,14> Node::wignerDInv;
 std::array<mat3d,6> Node::rotMatR;
 
+std::chrono::duration<double, std::milli> Node::t_M2X{ 0 };
+std::chrono::duration<double, std::milli> Node::t_X2X{ 0 };
+std::chrono::duration<double, std::milli> Node::t_X2L{ 0 };
+std::chrono::duration<double, std::milli> Node::t_L2L{ 0 };
+
 void Node::setNodeParams(const Config& config) {
     order = ceil(-std::log(config.EPS) / std::log(2));
     maxNodeParts = config.maxNodeParts;
@@ -95,8 +100,7 @@ Node::Node(
         base->getCenter() + nodeLeng / 2.0 * idx2pm(branchIdx)),
     nodeStat(0), useRot(0)
 {
-    for (int l = 0; l <= order; ++l)
-        localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
+    // preallocate local coeffs
 
     for (int dir = 0; dir < 6; ++dir) {
         std::vector<vecXcd> expCoeffs_dir;
@@ -585,7 +589,7 @@ void Node::buildNearNeighbors() {
     assert(nbors.size() <= numDir);
 }
 
-void Node::buildInteractionList() {
+/*void Node::buildInteractionList() {
     assert(!isRoot());
 
     auto baseNbors = base->getNearNeighbors();
@@ -600,7 +604,7 @@ void Node::buildInteractionList() {
 
     const int maxSize = constPow(6, DIM) - constPow(3, DIM);
     assert(iList.size() <= maxSize);
-}
+}*/
 
 void Node::buildDirectedIList() {
     assert(!isRoot());
@@ -669,6 +673,7 @@ void Node::buildDirectedIList() {
         }
     }
     
+    /*
     std::size_t dirListSize = std::accumulate(
         dirList.begin(), dirList.end(), std::size_t{0},
         [](std::size_t sum, const auto& vec) {
@@ -676,12 +681,25 @@ void Node::buildDirectedIList() {
             return sum + vec.size();
         }
     );
-    // std::cout << dirListSize << ' ' << leafIlist.size() << ' ' << iList.size() << '\n';
-    assert(dirListSize + leafIlist.size() == iList.size());
+    assert(dirListSize + leafIlist.size() == iList.size());*/
 }
 
-// no rotation matrices
 void Node::buildLocalCoeffsFromLeafIlist() {
+    //std::cout << leafIlist.size() << '\n';
+    //return;
+    
+    // if # particles in this node is small,
+    // evaluate sol at obss directly instead of adding to local coeffs 
+    // if (particles.size() <= order*order) {
+        for (const auto& obs : particles)
+            for (const auto& iNode : leafIlist) {
+                obs->addToPhi(iNode->getDirectPhi(obs->getPos()));
+                // obs->addToFld(iNode->getDirectFld(obs->getPos()));
+            }
+        return;
+    // }
+
+    std::cout << "Computing local coeffs from list 4\n";
     for (const auto& iNode : leafIlist) {
         auto mpoleCoeffs( iNode->getMpoleCoeffs() );
         auto dR = toSph(iNode->getCenter() - center);
@@ -714,7 +732,7 @@ void Node::buildLocalCoeffsFromLeafIlist() {
     for (int l = 0; l <= order; ++l)
         shiftedCoeffs.emplace_back(vecXcd::Zero(2*l+1));
 
-    auto dR = toSph(branches[branchIdx]->getCenter() - center);
+    auto dR = toSph(center-branches[branchIdx]->getCenter());
     double r = dR[0], th = dR[1], ph = dR[2];
 
     for (int j = 0; j <= order; ++j) {
@@ -729,7 +747,7 @@ void Node::buildLocalCoeffsFromLeafIlist() {
                         localCoeffs[n][m_] * pow(iu, abs(m)-abs(k)-abs(m-k))
                         * tables.A_[n-j][m-k+n-j] * tables.A_[j][k_] / tables.A_[n][m_]
                         * legendreLM(th, pair2i(n-j, abs(m-k))) * expI(static_cast<double>(m-k)*ph)
-                        * pow(r, n-j) / pm(n+j);
+                        * pow(r, n-j) / pow(-1.0,n+j);
                         
                 }
             }
@@ -740,44 +758,37 @@ void Node::buildLocalCoeffsFromLeafIlist() {
 }*/
 
 // rotation matrices
-const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) {
-    std::vector<vecXcd> shiftedLocalCoeffs;
-    double r = (branches[branchIdx]->getCenter() - center).norm();
+const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const {
+    std::vector<vecXcd> shiftedLocalCoeffs, rotatedLocalCoeffs;
+    double r = (branches[branchIdx]->getCenter()-center).norm();
+
+    // apply rotation (rotation axis is opposite from M2M)
+    for (int j = 0; j <= order; ++j) {
+        auto wignerD_j = wignerD[7-branchIdx][j]; 
+        rotatedLocalCoeffs.push_back(wignerD_j * localCoeffs[j]);
+    }
 
     for (int j = 0; j <= order; ++j) {
-        shiftedLocalCoeffs.emplace_back(vecXcd::Zero(2*j+1));
-
-        // apply rotation (rotation axis is opposite from M2M)
-        localCoeffs[j] = wignerD[7-branchIdx][j] * localCoeffs[j];
-
         vecXcd shiftedLocalCoeffs_j = vecXcd::Zero(2*j+1);
         for (int k = -j; k <= j; ++k) {
             int k_j = k + j;
 
             for (int n = j; n <= order; ++n) {
                 shiftedLocalCoeffs_j[k_j] +=
-                    localCoeffs[n][k+n] *
-                    tables.A_[n-j][n-j] * tables.A_[j][k_j] / tables.A_[n][k+n] *
-                    pow(r, n-j) / pm(n+j);
-                //for (int m = -n; m <= n; ++m) {
-                //    if (m != 0) continue;
-                //    int m_ = m + n;
-
-                //    shiftedLocalCoeffs_j[k_] +=
-                //        localCoeffs[n][m_] * pow(iu, abs(m)-abs(k)-abs(k-m)) *
-                //        tables.A[n-j][m_-k_] * tables.A[j][k_] / tables.A[n][m_] *
-                //        legendreLM(0, n-j, abs(m-k)) *
-                //        pow(r, n-j) / pm(n+j);
-                //}
+                    rotatedLocalCoeffs[n][k+n] *
+                    tables.A_[n-j][n-j] * tables.A_[j][k_j] / tables.A_[n][k+n]
+                    * pow(r, n-j) / pm(n+j);
             }
         }
 
         // apply inverse rotation
-        shiftedLocalCoeffs[j] += wignerDInv[7-branchIdx][j] * shiftedLocalCoeffs_j;
+        shiftedLocalCoeffs.push_back(wignerDInv[7-branchIdx][j] * shiftedLocalCoeffs_j );
+
     }
     return shiftedLocalCoeffs;
 }
 
+// return phi at X due to all particles in this node
 const double Node::getDirectPhi(const vec3d& X) {
     double phi = 0;
     for (const auto& src : particles) {
@@ -788,6 +799,7 @@ const double Node::getDirectPhi(const vec3d& X) {
     return phi;
 }
 
+// return phi at all particles in this node due to all other particles in this node
 const realVec Node::getDirectPhis() {
     realVec phis;
 

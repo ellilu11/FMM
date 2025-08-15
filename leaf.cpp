@@ -12,7 +12,7 @@ Leaf::Leaf(
 void Leaf::buildLists() {
     if (!isRoot()) {
         buildNearNeighbors();
-        buildInteractionList();
+        // buildInteractionList();
         buildDirectedIList();
     }
 }
@@ -47,21 +47,35 @@ void Leaf::propagateExpCoeffs() {
     if (isRoot()) return;
 
     for (int dir = 0; dir < 6; ++dir){
+        auto start = std::chrono::high_resolution_clock::now();
         auto expCoeffs = getMpoleToExpCoeffs(dir);
+        auto end = std::chrono::high_resolution_clock::now();
+        t_M2X += end - start;
+
         auto iList = dirList[dir];
+
+        start = std::chrono::high_resolution_clock::now();
         for (const auto& iNode : iList)
             iNode->addShiftedExpCoeffs(expCoeffs, center, dir);
+        end = std::chrono::high_resolution_clock::now();
+        t_X2X += end - start;
     }
 }
 
 void Leaf::buildLocalCoeffs() {
     if (!isRoot()) {
+        auto start = std::chrono::high_resolution_clock::now();
         buildLocalCoeffsFromLeafIlist();
         buildLocalCoeffsFromDirList();
+        auto end = std::chrono::high_resolution_clock::now();
+        t_X2L += end - start;
 
+        start = std::chrono::high_resolution_clock::now();
         if (!base->isRoot())
             for (int l = 0; l <= order; ++l)
                 localCoeffs[l] += (base->getShiftedLocalCoeffs(branchIdx))[l];
+        end = std::chrono::high_resolution_clock::now();
+        t_L2L += end - start;
     }
 
     evaluateSolAtParticles();
@@ -156,7 +170,8 @@ realVec Leaf::getNearPhis(Func kernel) {
 void Leaf::evaluateSolAtParticles() {
     if (isRoot()) return;
 
-    auto phis = getFarPhis() 
+    auto phis = 
+        getFarPhis()
         + getNearPhis( [](vec3d X) { return 1.0 / X.norm(); } )
         ;
     //auto flds = getFarFlds() + getNearSols<vec3d>(
@@ -166,7 +181,7 @@ void Leaf::evaluateSolAtParticles() {
     // for (auto [p, phi, fld] : std::views::zip(particles, phis, flds)) {
     for (size_t n = 0; n < particles.size(); ++n) {
         auto p = particles[n];
-        p->setPhi(phis[n]);
-        // p->setFld(flds[n]);
+        p->addToPhi(phis[n]);
+        // p->addToFld(flds[n]);
     }
 }

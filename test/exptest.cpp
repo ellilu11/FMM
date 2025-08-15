@@ -54,70 +54,78 @@ void Node::mpoleToExpToLocalTest() {
     outFile << setprecision(15) << scientific;
     outAnlFile << setprecision(15) << scientific;
 
-    cout << " Computing upward pass...\n";
-    buildMpoleCoeffs();
-
-    // Select a node at random
-    const int maxLvl = 1;
-    auto node = getRandNode(maxLvl);
-    while (!node->getParticles().size())
-        node = getRandNode(maxLvl);
-    node->printMpoleCoeffs(coeffsFile);
-    cout << " # Particles in this node: " << node->getParticles().size() << '\n';
-
-    // Node is source node, interaction list are target nodes
-    /*for (int dirIdx = 5; dirIdx < 6; ++dirIdx){
-        auto expCoeffs = node->getMpoleToExpCoeffs(dirIdx);
-        auto iList = (node->getDirList())[dirIdx];
-        cout << " # INodes: " << iList.size() << '\n';
-
-        for (const auto& iNode : iList) {
-            // from exp coeffs
-            //for (const auto& obs : iNode->getParticles()) {
-            //    // outFile << node->getPhiFromMpole(obs->getPos()).real() << ' ';
-            //    outFile << node->getPhiFromExp(obs->getPos(), expCoeffs, dirIdx).real() << ' ';
-            //    obsFile << obs->getPos() << '\n';
-            iNode->addShiftedExpCoeffs(expCoeffs, node->getCenter(), dirIdx);
-            iNode->buildLocalCoeffsFromDirList();
-            for (const auto& obs : iNode->getParticles()) {
-                outFile << iNode->getPhiFromLocal(obs->getPos()).real() << ' ';
-
-                // analytic
-                double phiAnl = 0;
-                for (const auto& src : node->getParticles())
-                    phiAnl += src->getCharge() / (obs->getPos() - src->getPos()).norm();
-                outAnlFile << phiAnl << ' ';
-            }
-        }
-    }*/
-
-    // Node is target node, interaction list are source nodes
     auto revDir = [](int dirIdx) {
         return dirIdx - 2*(dirIdx%2) + 1;
         };
 
-    for (int dirIdx = 0; dirIdx < 6; ++dirIdx) {
-        auto iList = (node->getDirList())[revDir(dirIdx)];
-        cout << " # INodes: " << iList.size() << '\n';
+    cout << " Computing upward pass...\n";
+    buildMpoleCoeffs();
 
-        for (const auto& iNode : iList) {
-            auto expCoeffs = iNode->getMpoleToExpCoeffs(dirIdx);
-            node->addShiftedExpCoeffs(expCoeffs, iNode->getCenter(), dirIdx);
-        }
-    }
-    node->buildLocalCoeffsFromDirList();
+    // Select a node at random for each trial
+    int ntrials = 50;
+    for (int trial = 0; trial < ntrials; ++trial) {
 
-    for (const auto& obs : node->getParticles()) {
-        outFile << node->getPhiFromLocal(obs->getPos()).real() << ' ';
+        const int maxLvl = 1;
+        auto node = getRandNode(maxLvl);
+        while (!node->getParticles().size())
+            node = getRandNode(maxLvl);
+        node->printMpoleCoeffs(coeffsFile);
+        cout << trial << ", # Particles in this node: " << node->getParticles().size() << '\n';
 
-        // analytic
-        double phiAnl = 0;
+        // Node is source node, interaction list are target nodes
+        /*for (int dirIdx = 5; dirIdx < 6; ++dirIdx){
+            auto expCoeffs = node->getMpoleToExpCoeffs(dirIdx);
+            auto iList = (node->getDirList())[dirIdx];
+            cout << " # INodes: " << iList.size() << '\n';
+
+            for (const auto& iNode : iList) {
+                // from exp coeffs
+                //for (const auto& obs : iNode->getParticles()) {
+                //    // outFile << node->getPhiFromMpole(obs->getPos()).real() << ' ';
+                //    outFile << node->getPhiFromExp(obs->getPos(), expCoeffs, dirIdx).real() << ' ';
+                //    obsFile << obs->getPos() << '\n';
+                iNode->addShiftedExpCoeffs(expCoeffs, node->getCenter(), dirIdx);
+                iNode->buildLocalCoeffsFromDirList();
+                for (const auto& obs : iNode->getParticles()) {
+                    outFile << iNode->getPhiFromLocal(obs->getPos()).real() << ' ';
+
+                    // analytic
+                    double phiAnl = 0;
+                    for (const auto& src : node->getParticles())
+                        phiAnl += src->getCharge() / (obs->getPos() - src->getPos()).norm();
+                    outAnlFile << phiAnl << ' ';
+                }
+            }
+        }*/
+
+        // Node is target node, interaction list are source nodes
+
+
         for (int dirIdx = 0; dirIdx < 6; ++dirIdx) {
             auto iList = (node->getDirList())[revDir(dirIdx)];
-            for (const auto& iNode : iList)
-                for (const auto& src : iNode->getParticles())
-                    phiAnl += src->getCharge() / (obs->getPos() - src->getPos()).norm();
+            // cout << " # INodes: " << iList.size() << '\n';
+
+            for (const auto& iNode : iList) {
+                auto expCoeffs = iNode->getMpoleToExpCoeffs(dirIdx);
+                node->addShiftedExpCoeffs(expCoeffs, iNode->getCenter(), dirIdx);
+            }
         }
-        outAnlFile << phiAnl << ' ';
+        node->buildLocalCoeffsFromDirList();
+
+        for (const auto& obs : node->getParticles()) {
+            outFile << node->getPhiFromLocal(obs->getPos()).real() << ' ';
+
+            // analytic
+            double phiAnl = 0;
+            for (int dirIdx = 0; dirIdx < 6; ++dirIdx) {
+                auto iList = (node->getDirList())[revDir(dirIdx)];
+                for (const auto& iNode : iList)
+                    for (const auto& src : iNode->getParticles())
+                        phiAnl += src->getCharge() / (obs->getPos() - src->getPos()).norm();
+            }
+            outAnlFile << phiAnl << ' ';
+        }
+        // reset exp and local coeffs of this node
+        node->resetNode();
     }
 }

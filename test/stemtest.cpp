@@ -41,8 +41,8 @@ void Stem::printMpoleCoeffs(std::ofstream& f) {
 }
 
 void Stem::resetNode() {
-    //coeffs.clear();
-    //localCoeffs.clear();
+    // coeffs.clear();
+    localCoeffs.clear();
     //nbors.clear();
     //iList.clear();
     //dirList = {};

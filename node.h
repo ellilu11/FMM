@@ -49,12 +49,12 @@ public:
     Node(const ParticleVec&, const int, Node* const);
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
     void buildNearNeighbors();
-    void buildInteractionList();
+    // void buildInteractionList();
     void buildDirectedIList();
 
     void buildLocalCoeffsFromDirList();
     void buildLocalCoeffsFromLeafIlist();
-    const std::vector<vecXcd> getShiftedLocalCoeffs(const int);
+    const std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
 
     const std::vector<vecXcd> getMpoleToExpCoeffs(const int);
     void addShiftedExpCoeffs(const std::vector<vecXcd>&, const vec3d&, const int);
@@ -91,7 +91,6 @@ public:
     void setRandNodeStats();
     const cmplx getPhiFromMpole(const vec3d&);
     void ffieldTest(const int, const int, const int);
-    void mpoleToLocalTest();
     void nfieldTest();
 
     // definition under test/[stemtest.cpp, leaftest.cpp]
@@ -134,6 +133,12 @@ protected:
     std::vector<vecXcd> localCoeffs;
 
     // === Test members ===
+    static std::chrono::duration<double, std::milli> t_M2X;
+    static std::chrono::duration<double, std::milli> t_X2X;
+    static std::chrono::duration<double, std::milli> t_X2L;
+    static std::chrono::duration<double, std::milli> t_L2L;
+
     int nodeStat;
     bool useRot;
+
 };

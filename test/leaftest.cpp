@@ -24,8 +24,8 @@ void Leaf::printMpoleCoeffs(std::ofstream& f) {
 }
 
 void Leaf::resetNode() {
-    //coeffs.clear();
-    //localCoeffs.clear();
+    // coeffs.clear();
+    localCoeffs.clear();
     //nbors.clear();
     //iList.clear();
     //dirList = {};
