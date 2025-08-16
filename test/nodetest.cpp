@@ -3,20 +3,15 @@
 using namespace std;
 
 void Node::setRandNodeStats() {
-    auto node = getRandNode(0);
+    auto node = getRandNode(2);
     node->setNodeStat(1);
 
-    node->buildNearNeighbors();
     for (const auto& nbor: node->getNearNeighbors())
         nbor->setNodeStat(2);
 
-    node->base->buildNearNeighbors();
-
-    // node->buildInteractionList();
     //for (const auto& iNode : node->getInteractionList())
     //    iNode->setNodeStat(3);
 
-    node->buildDirectedIList();
     for (int dir = 0; dir < 6; ++dir) {
         auto iList = (node->getDirList())[dir];
         for (const auto& iNode : iList) 
@@ -200,7 +195,7 @@ void Node::nfieldTest() {
         chrono::duration<double, milli> duration_ms = end - start;
         cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-        cout << " Propagating exponential coeffs... (" << " Expansion order = " << p << " )\n";
+        cout << " Propagating exponential coeffs...\n";
         start = chrono::high_resolution_clock::now();
 
         propagateExpCoeffs();
@@ -211,7 +206,7 @@ void Node::nfieldTest() {
         cout << "   Elapsed time (M2X): " << t_M2X.count() << " ms\n";
         cout << "   Elapsed time (X2X): " << t_X2X.count() << " ms\n";
 
-        cout << " Computing downward pass... (" << " Expansion order = " << p << " )\n";
+        cout << " Computing downward pass...\n";
         start = chrono::high_resolution_clock::now();
 
         buildLocalCoeffs();

@@ -72,10 +72,10 @@ constexpr int constPow(int base, int exp) {
     return (exp == 0) ? 1 : base * constPow(base,exp-1);
 }
 
-template <typename T>
-bool contains(std::vector<T>& vec, T val) {
-    return std::find(vec.begin(), vec.end(), val) != vec.end();
-}
+//template <typename T>
+//bool contains(std::vector<T>& vec, T val) {
+//    return std::find(vec.begin(), vec.end(), val) != vec.end();
+//}
 
 template <typename T>
 std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
@@ -92,10 +92,6 @@ const T evaluatePoly(std::vector<T> coeffs, const T z) {
         coeffs[i] += coeffs[i+1] * z;
     return coeffs[0];
 }
-
-//const uint64_t fallingFactorial(int n, int k) {
-//    return k == 0 ? 1 : n * fallingFactorial(n - 1, k - 1);
-//}
 
 const double fallingFactorial(double x, int k) {
     return k == 0 ? 1 : x * fallingFactorial(x - 1, k - 1);
@@ -120,6 +116,15 @@ const cmplx expI(const double arg) {
     return std::exp(iu*arg);
 }
 
+const cmplx powI(const uint32_t m) {
+    switch (m % 4) {
+        case 0: return 1;
+        case 1: return iu;
+        case 2: return -1.0;
+        case 3: return -iu;
+    }
+}
+
 mat3d rotationR(const pair2d angles) {
     auto [th, ph] = angles;
     return mat3d {
@@ -131,7 +136,7 @@ mat3d rotationR(const pair2d angles) {
 
 matXcd wignerD_l(const pair2d angles, const int l) {
     using namespace std;
-    auto [th, ph] = angles;
+    const auto [th, ph] = angles;
 
     auto sumCoeff = [th, l](int m, int n, int s) {
         int a0 = l+m-s, a1 = n-m+s, a2 = s, a3 = l-n-s;

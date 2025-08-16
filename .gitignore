@@ -380,3 +380,4 @@ FodyWeavers.xsd
 /test/MATLAB/mpole2mpole.m
 /test/MATLAB/rot_ph.m
 /test/MATLAB/rot_th.m
+/eigen-3.4.0

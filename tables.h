@@ -8,21 +8,28 @@ struct Tables {
     Tables(const int order, const Precision prec) {
         buildYlmTables(order);
         buildQuadTables(prec);
+        buildExpTables(order);
     }
 
     void buildYlmTables(const int);
     void buildQuadTables(const Precision);
+    void buildExpTables(const int);
 
+    // Ylm tables
     std::vector<realVec> coeffYlm_;
     std::vector<realVec> fallingFact_;
     std::vector<realVec> legendreSum_;
     std::vector<realVec> A_;
     std::vector<realVec> Aexp_;
 
+    // quad tables
     std::vector<pair2d> quadCoeffs_;
     std::vector<int> quadLengs_;
-    std::vector<realVec> alphas_;
 
+    // exp tables
+    std::vector<realVec> alphas_;
+    std::vector<std::vector<cmplxVec>> expI_alphas_;
+    std::vector<std::vector<std::array<cmplx,98>>> exps_;
 };
 
 void Tables::buildYlmTables(const int order) {
@@ -96,7 +103,7 @@ void Tables::buildQuadTables(const Precision prec) {
                 {11.57587019602884, 1.06318427913963},
                 {12.65078163968520, 1.10232109521088}
             };
-            quadLengs_= { 8,8,16,16,24,32,32,32,48,48,48,48,48,48,48,8,4 };
+            quadLengs_ = { 8,8,16,16,24,32,32,32,48,48,48,48,48,48,48,8,4 };
             break;
 
         case Precision::HIGH:
@@ -133,19 +140,39 @@ void Tables::buildQuadTables(const Precision prec) {
             break;
     }
     assert(quadCoeffs_.size() == quadLengs_.size());
+}
 
+void Tables::buildExpTables(const int order) {
     for (int k = 0; k < quadCoeffs_.size(); ++k) {
         double M_k = quadLengs_[k];
-        realVec alphas_k;
+        realVec alphas_k; //
+        std::vector<cmplxVec> expI_alphas_k;
+        std::vector<std::array<cmplx,98>> exps_k;
+
         for (int j = 0; j < M_k; ++j) {
             double alpha_kj = 2.0 * PI * (j+1) / static_cast<double>(M_k);
-            alphas_k.push_back(alpha_kj);
-        }
-        alphas_.push_back(alphas_k);
+            alphas_k.push_back(alpha_kj); //
 
-        //std::cout << '(' << M_k << ") ";
-        //for (int j = 0; j < M_k; ++j)
-        //    std::cout << alphas_[k][j] << ' ';
-        //std::cout << '\n';
+            cmplxVec expI_alphas_kj;
+            for (int m = -order; m <= order; ++m)
+                expI_alphas_kj.push_back( expI(m*alpha_kj) );
+            expI_alphas_k.push_back(expI_alphas_kj);
+
+            std::array<cmplx,98> exps_kj;
+            size_t l = 0;
+            for (int dz = 2; dz <= 3; ++dz)
+                for (int dy = -3; dy <= 3; ++dy)
+                    for (int dx = -3; dx <= 3; ++dx) {
+                        exps_kj[l++] =
+                            exp(quadCoeffs_[k].first
+                                * cmplx(-1.0*dz,
+                                    dx*cos(alpha_kj) + dy*sin(alpha_kj)));
+                    }
+            exps_k.push_back(exps_kj);
+
+        }
+        alphas_.push_back(alphas_k); //
+        expI_alphas_.push_back(expI_alphas_k);
+        exps_.push_back(exps_k);
     }
 }

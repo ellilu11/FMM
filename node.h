@@ -49,7 +49,7 @@ public:
     Node(const ParticleVec&, const int, Node* const);
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
     void buildNearNeighbors();
-    // void buildInteractionList();
+    void buildInteractionList();
     void buildDirectedIList();
 
     void buildLocalCoeffsFromDirList();
@@ -122,9 +122,7 @@ protected:
     NodeVec branches;
 
     NodeVec nbors; // List 1
-    NodeVec iList; // List 2 union List 4
-
-    // NodeArr dirNbors;
+    NodeVec iList; // List 2
     std::array<NodeVec,6> dirList; // List 2, indexed by direction
     NodeVec leafIlist; // List 4
 

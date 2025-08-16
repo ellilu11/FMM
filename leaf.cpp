@@ -12,7 +12,7 @@ Leaf::Leaf(
 void Leaf::buildLists() {
     if (!isRoot()) {
         buildNearNeighbors();
-        // buildInteractionList();
+        buildInteractionList();
         buildDirectedIList();
     }
 }
@@ -49,16 +49,14 @@ void Leaf::propagateExpCoeffs() {
     for (int dir = 0; dir < 6; ++dir){
         auto start = std::chrono::high_resolution_clock::now();
         auto expCoeffs = getMpoleToExpCoeffs(dir);
-        auto end = std::chrono::high_resolution_clock::now();
-        t_M2X += end - start;
+        t_M2X += std::chrono::high_resolution_clock::now() - start;
 
         auto iList = dirList[dir];
 
         start = std::chrono::high_resolution_clock::now();
         for (const auto& iNode : iList)
             iNode->addShiftedExpCoeffs(expCoeffs, center, dir);
-        end = std::chrono::high_resolution_clock::now();
-        t_X2X += end - start;
+        t_X2X += std::chrono::high_resolution_clock::now() - start;
     }
 }
 
@@ -67,15 +65,13 @@ void Leaf::buildLocalCoeffs() {
         auto start = std::chrono::high_resolution_clock::now();
         buildLocalCoeffsFromLeafIlist();
         buildLocalCoeffsFromDirList();
-        auto end = std::chrono::high_resolution_clock::now();
-        t_X2L += end - start;
+        t_X2L += std::chrono::high_resolution_clock::now() - start;
 
         start = std::chrono::high_resolution_clock::now();
         if (!base->isRoot())
             for (int l = 0; l <= order; ++l)
                 localCoeffs[l] += (base->getShiftedLocalCoeffs(branchIdx))[l];
-        end = std::chrono::high_resolution_clock::now();
-        t_L2L += end - start;
+        t_L2L += std::chrono::high_resolution_clock::now() - start;
     }
 
     evaluateSolAtParticles();

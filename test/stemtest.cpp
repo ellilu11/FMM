@@ -5,12 +5,12 @@ using namespace std;
 shared_ptr<Node> Stem::getRandNode(int maxLvl) {
     random_device rd;
     mt19937 gen(rd());
-    uniform_int_distribution branchIdx(0, 7);
+    uniform_int_distribution branchIdx(0, 0);
 
     shared_ptr<Node> node = make_shared<Stem>(*this);
 
-    // while (node->getLvl() <= maxLvl)
-    while (node->isNodeType<Stem>())
+    while (node->getLvl() < maxLvl)
+    // while (node->isNodeType<Stem>())
         node = (node->getBranches())[branchIdx(gen)];
 
     return node;

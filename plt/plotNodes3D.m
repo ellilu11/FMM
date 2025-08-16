@@ -42,12 +42,17 @@ fprintf('# Interaction nodes: %d\n', nnz(nodeStats >= 3));
 % scatter3(obss(:,1), obss(:,2), obss(:,3));
 % hold off;
 %%
-lim = [-5 5];
+rootLeng = 5.0E-2;
+lim = [-rootLeng/2 rootLeng/2];
 
 figure(4)
 for stat=1:8
     nodes = nodeVec(nodeStats == stat,:);
-    scatter3(nodes(:,1),nodes(:,2),nodes(:,3),stat2rgb(stat),'filled')
+    if (stat==2)
+        scatter3(nodes(:,1),nodes(:,2),nodes(:,3),stat2rgb(stat))
+    else
+        scatter3(nodes(:,1),nodes(:,2),nodes(:,3),stat2rgb(stat),'filled')
+    end
     hold on
 end
 hold off
@@ -55,15 +60,13 @@ hold off
 xlim(lim); ylim(lim); zlim(lim);
 xlabel('x'); ylabel('y'); zlabel('z'); 
 
-
-
 %%
 function rgb = stat2rgb(stat)
     switch stat
         case 1
             rgb = "black";
         case 2
-            rgb = "white";
+            rgb = "black";
         case 3 
             rgb = "red"; % uplist
         case 4 
