@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <type_traits>
 #include "node.h"
 #include "stem.h"
 
@@ -18,8 +19,8 @@ public:
 
     realVec getFarPhis();
     std::vector<vec3d> getFarFlds();
-    template <typename Func> realVec getNearPhis(Func);
-    // template <typename T, typename Func> std::vector<T> getNearSols(Func);
+    // template <typename Func> realVec getNearPhis(Func);
+    template <typename T, typename Func> std::vector<T> getNearSols(Func);
     void evaluateSolAtParticles();
 
 

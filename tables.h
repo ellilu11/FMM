@@ -59,11 +59,6 @@ void Tables::buildYlmTables(const int order) {
         legendreSum_.push_back(legendreSum_l);
         A_.push_back(A_l);
         Aexp_.push_back(Aexp_l);
-
-        //std::cout << "l = " << l << '\n';
-        //for (int m = 0; m <= l; ++m)
-        //    std::cout << tables.legendreSum[l][m] << ' ';
-        //std::cout << '\n';
     }
 }
 
@@ -145,13 +140,13 @@ void Tables::buildQuadTables(const Precision prec) {
 void Tables::buildExpTables(const int order) {
     for (int k = 0; k < quadCoeffs_.size(); ++k) {
         double M_k = quadLengs_[k];
-        realVec alphas_k; //
+        // realVec alphas_k; //
         std::vector<cmplxVec> expI_alphas_k;
         std::vector<std::array<cmplx,98>> exps_k;
 
         for (int j = 0; j < M_k; ++j) {
             double alpha_kj = 2.0 * PI * (j+1) / static_cast<double>(M_k);
-            alphas_k.push_back(alpha_kj); //
+            // alphas_k.push_back(alpha_kj); //
 
             cmplxVec expI_alphas_kj;
             for (int m = -order; m <= order; ++m)
@@ -171,7 +166,7 @@ void Tables::buildExpTables(const int order) {
             exps_k.push_back(exps_kj);
 
         }
-        alphas_.push_back(alphas_k); //
+        // alphas_.push_back(alphas_k); //
         expI_alphas_.push_back(expI_alphas_k);
         exps_.push_back(exps_k);
     }

@@ -8,6 +8,12 @@ using namespace std;
 
 extern constexpr int DIM = 3;
 
+extern std::chrono::duration<double, std::milli> t_M2X{ 0 };
+extern std::chrono::duration<double, std::milli> t_X2X{ 0 };
+extern std::chrono::duration<double, std::milli> t_X2L{ 0 };
+extern std::chrono::duration<double, std::milli> t_L2L{ 0 };
+extern std::chrono::duration<double, std::milli> t_direct{ 0 };
+
 int main()
 {
     Config config("config/config.txt");
@@ -81,69 +87,65 @@ int main()
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
-    // ==============================================
-    //double th = 0*PI/4.0;
-    //double ph = 5*PI/4.0;
-    // cout << toSph(toCart(vec3d(1.0, th, ph))) << '\n';
-
+    //const double th = PI/4.0;
+    //const double ph = PI/4.0;
+    //// cout << toSph(fromSph(vec3d(1.0, th, ph))) << '\n';
     //for (int l = 0; l <= order; ++l) {
     //    for (int m = -l; m <= l; ++m) {
-    //        auto Ylm = Node::legendreLM(th, l, abs(m)) * exp(iu*static_cast<double>(m)*ph);
-    //                    // * ( m < 0 ? pm(m) : 1);
-    //        cout << (norm(Ylm) > 1.0E-6 ? Ylm : 0.0 ) << ' ';
+    //        auto dthYlm = Node::dthLegendreLM(th, pair2i(l,abs(m))) 
+    //                        * exp(iu*static_cast<double>(m)*ph);
+    //        cout << (abs(dthYlm) > 1.0E-3 ? dthYlm : 0.0 ) << ' ';
     //    }
     //    cout << '\n';
     //}
-
-    // ==============================================
-    //const int l = 1;
-    //const double th = acos(-1.0/sqrt(3.0));
-    //cout << "th = " << th << '\n';
-    //cout << wignerD_l(th, l) << "\n\n" << wignerD_l(th, l).inverse()
-    //    << "\n\n" << wignerD_l(th, l) * wignerD_l(th, l).adjoint() << "\n\n";
-
-    // ==============================================
-    //vec3d X(0, 0, 1);
-    //auto R = toSph(X);
-    //auto mat = rotationR(pair2d(R[1], R[2]));
-    //cout << mat * mat.transpose()  << '\n';
-    //cout << mat * X << '\n';
 
     // ==============================================
     // root->ffieldTest(1,10,10);
     // ==============================================   
     // root->mpoleToExpToLocalTest();
     // ==============================================   
-    root->nfieldTest();
-
-    return 0;
-
+    //root->nfieldTest();
+    //
+    //return 0;
     // ==================== Upward pass ==================== //
     cout << " Computing upward pass...\n";
     start = chrono::high_resolution_clock::now();
 
-    // root->buildMpoleCoeffs();
+    root->buildMpoleCoeffs();
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     // ==================== Downward pass ==================== //
-    cout << " Computing downward pass...\n";
+    cout << " Propagating exponential coeffs...\n";
     start = chrono::high_resolution_clock::now();
 
     root->propagateExpCoeffs();
+
+    end = chrono::high_resolution_clock::now();
+    duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+    cout << "   Elapsed time (M2X): " << t_M2X.count() << " ms\n";
+    cout << "   Elapsed time (X2X): " << t_X2X.count() << " ms\n";
+
+    cout << " Computing downward pass...\n";
+    start = chrono::high_resolution_clock::now();
+
     root->buildLocalCoeffs();
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+    cout << "   Elapsed time (X2L): " << t_X2L.count() << " ms\n";
+    cout << "   Elapsed time (L2L): " << t_L2L.count() << " ms\n";
+    cout << "   Elapsed time (direct): " << t_direct.count() << " ms\n";
 
     printSols(srcs, "out/phi.txt", "out/fld.txt");
 
     // ==================== Compute direct ==================== //
     if (!config.evalDirect) return 0;
-    cout << " Computing direct..." << endl;
+    cout << " Computing direct phi..." << endl;
     start = chrono::high_resolution_clock::now();
 
     auto phisAnl = root->getDirectPhis();
@@ -156,7 +158,14 @@ int main()
     for (const auto& phi : phisAnl)
         phiAnlFile << phi << '\n';
 
+    cout << " Computing direct fld..." << endl;
+    start = chrono::high_resolution_clock::now();
+
     auto fldsAnl = root->getDirectFlds();
+
+    end = chrono::high_resolution_clock::now();
+    duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     ofstream fldAnlFile("out/fldAnl.txt");
     for (const auto& fld : fldsAnl)

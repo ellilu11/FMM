@@ -1,6 +1,6 @@
 #include "node.h"
 
-const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
+const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) const {
     std::vector<vecXcd> rotatedCoeffs, expCoeffs;
 
     // apply rotation
@@ -12,7 +12,6 @@ const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
     for (int k = 0; k < orderExp; ++k) {
         auto M_k = tables.quadLengs_[k];
         double l_k = tables.quadCoeffs_[k].first / nodeLeng;
-        // double w_k = tables.quadCoeffs_[k].second; //
         double coeff_k = tables.quadCoeffs_[k].second / (nodeLeng * M_k);
 
         // fast way
@@ -41,7 +40,8 @@ const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
         expCoeffs[k] *= coeff_k;
 
         // slow way
-        /*expCoeffs.emplace_back(vecXcd::Zero(M_k));
+        /*double w_k = tables.quadCoeffs_[k].second;
+        expCoeffs.emplace_back(vecXcd::Zero(M_k));
         for (int j = 0; j < M_k; ++j) {
             assert(tables.alphas_[k][j] == 2.0*PI*(j+1)/static_cast<double>(M_k));
 
@@ -69,13 +69,12 @@ const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
 void Node::addShiftedExpCoeffs(
     const std::vector<vecXcd>& srcExpCoeffs, const vec3d& center0, const int dirIdx) {
     // rotate dX so this center is in uplist of center0
-    const vec3d dX = rotMatR[dirIdx] * (center - center0);
-    // const double dx = dX[0], dy = dX[1], dz = dX[2];
+    const auto dX = rotMatR[dirIdx] * (center - center0);
     const auto idX = round(Eigen::Array3d(dX)/nodeLeng);
-    const size_t l = idX[0] + 7*idX[1] + 49*idX[2] - 74; // = (idX[0]+3) + (idX[1]+3)*7 + (idX[2]-2)*49;
+    const size_t l = idX[0] + 7*idX[1] + 49*idX[2] - 74;
     
     assert(0 <= l && l < 98);
-    //assert(1 <= idz && idz <= 4);
+    //assert(idz == 2 || idz == 3);
     //assert(sqrt(idx*idx + idy*idy) <= 4.0*sqrt(2.0));
 
     for (size_t k = 0; k < orderExp; ++k)
@@ -87,7 +86,6 @@ void Node::addShiftedExpCoeffs(
 void Node::buildLocalCoeffsFromDirList() {
     assert(!isRoot());
 
-    // move to constructor later
     for (int l = 0; l <= order; ++l)
         localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
 
@@ -104,7 +102,7 @@ void Node::buildLocalCoeffsFromDirList() {
                 for (int j = 0; j < M_k; ++j)
                     innerCoeffs[m_p] +=
                         expCoeffs[dirIdx][k][j]
-                        * conj(tables.expI_alphas_[k][j][m_p]); // minus sign
+                        * conj(tables.expI_alphas_[k][j][m_p]); // conj
                 innerCoeffs[m_p] *= powI(abs(m)); // plus sign
             }
 

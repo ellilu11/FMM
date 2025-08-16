@@ -6,8 +6,6 @@ Stem::Stem(
     Stem* const base)
     : Node(particles, branchIdx, base)
 {
-    // std::cout << "Stem has " << particles.size() << " particles\n";
-
     // Assign every particle in node to a branch based on its position relative to center
     std::array<ParticleVec,8> branchParts;
     for (const auto& p : particles)
@@ -30,7 +28,6 @@ void Stem::buildLists() {
     if (!isRoot()) {
         buildNearNeighbors();
         buildInteractionList();
-        buildDirectedIList();
     }
 
     for (const auto& branch : branches)
@@ -128,9 +125,11 @@ void Stem::buildLocalCoeffs() {
         t_X2L += std::chrono::high_resolution_clock::now() - start;
 
         start = std::chrono::high_resolution_clock::now();
-        if (!base->isRoot())
+        if (!base->isRoot()) {
+            auto shiftedLocalCoeffs = base->getShiftedLocalCoeffs(branchIdx);
             for (int l = 0; l <= order; ++l)
-                localCoeffs[l] += (base->getShiftedLocalCoeffs(branchIdx))[l];
+                localCoeffs[l] += shiftedLocalCoeffs[l];
+        }
         t_L2L += std::chrono::high_resolution_clock::now() - start;
     }
 

@@ -11,11 +11,6 @@ std::array<std::vector<matXcd>,14> Node::wignerD;
 std::array<std::vector<matXcd>,14> Node::wignerDInv;
 std::array<mat3d,6> Node::rotMatR;
 
-std::chrono::duration<double, std::milli> Node::t_M2X{ 0 };
-std::chrono::duration<double, std::milli> Node::t_X2X{ 0 };
-std::chrono::duration<double, std::milli> Node::t_X2L{ 0 };
-std::chrono::duration<double, std::milli> Node::t_L2L{ 0 };
-
 void Node::setNodeParams(const Config& config) {
     order = ceil(-std::log(config.EPS) / std::log(2));
     maxNodeParts = config.maxNodeParts;
@@ -35,6 +30,17 @@ void Node::buildTables(const Config& config) {
 }
 
 void Node::buildRotationMats() {
+    auto wignerDAlongDir = [](const pair2d angles, bool isInv) {
+        std::vector<matXcd> mats;
+        for (int l = 0; l <= order; ++l)
+            mats.push_back(
+                isInv ?
+                wignerD_l(angles, l) :
+                wignerD_l(angles, l).adjoint()
+            );
+        return mats;
+    };
+
     for (int dir = 0; dir < 14; ++dir) {
         auto X = 
             dir < 8 ? 
@@ -48,7 +54,7 @@ void Node::buildRotationMats() {
                 case 4: return vec3d(1, 0, 0);
                 case 5: return vec3d(-1, 0, 0);
             } 
-            }(); // cardinal directions (for M2X2L)
+            }(); // cardinal directions (for M2X and X2L)
 
         auto R = toSph(X);
         pair2d angles(R[1], R[2]);
@@ -57,24 +63,10 @@ void Node::buildRotationMats() {
         wignerDInv[dir] = wignerDAlongDir(angles,1);
         if (dir >=8)
             rotMatR[dir-8] = rotationR(angles);
-
-        // std::cout << dir << '\n' << rotationInvMat[dir][2] << "\n\n";
     }
 }
 
-std::vector<matXcd> Node::wignerDAlongDir(const pair2d angles, bool isInv) {
-     std::vector<matXcd> mats;
-     for (int l = 0; l <= order; ++l)
-         mats.push_back(
-             isInv ?
-             wignerD_l(angles, l) :
-             wignerD_l(angles, l).adjoint()
-         );
-
-    return mats;
-}
-
-// Ylm except constant coefficients and \exp(i m \phi) phase factor
+// theta part of Ylm
 const double Node::legendreLM(const double th, const pair2i lm) {
     auto [l, abs_m] = lm;
     assert(abs_m <= l);
@@ -85,9 +77,24 @@ const double Node::legendreLM(const double th, const pair2i lm) {
 
     // term is zero for l-k odd
     for (int k = l; k >= abs_m; k -= 2)
-        legendreSum += tables.fallingFact_[k][abs_m] * tables.legendreSum_[l][k] * pow(cos_th, k-abs_m);
+        legendreSum += 
+            tables.fallingFact_[k][abs_m] * tables.legendreSum_[l][k] 
+            * pow(cos_th, k-abs_m);
 
     return tables.coeffYlm_[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
+}
+
+const double Node::dthLegendreLM(const double th, const pair2i lm) {
+    auto [l, abs_m] = lm;
+    if (!l) return 0.0;
+    assert(abs_m <= l);
+
+    return
+        l / tan(th) * legendreLM(th, lm) -
+        (abs_m <= (l-1) ?
+            static_cast<double>(l + abs_m) / sin(th) * legendreLM(th, pair2i(l-1, abs_m))
+            * sqrt((l-abs_m)/static_cast<double>(l+abs_m)) :
+            0.0);
 }
 
 Node::Node(
@@ -100,8 +107,7 @@ Node::Node(
         base->getCenter() + nodeLeng / 2.0 * idx2pm(branchIdx)),
     nodeStat(0), useRot(0)
 {
-    // preallocate local coeffs
-
+    // preallocate exp coeffs
     for (int dir = 0; dir < 6; ++dir) {
         std::vector<vecXcd> expCoeffs_dir;
         for (int k = 0; k < orderExp; ++k)
@@ -594,9 +600,9 @@ void Node::buildInteractionList() {
 
     auto contains = [](NodeVec& vec, std::shared_ptr<Node> val) {
         return std::find(vec.begin(), vec.end(), val) != vec.end();
-        };
-    auto baseNbors = base->getNearNeighbors();
+    };
 
+    auto baseNbors = base->getNearNeighbors();
     for (const auto& baseNbor : baseNbors)
         if (baseNbor->isNodeType<Leaf>() && !contains(nbors, baseNbor))
             leafIlist.push_back(baseNbor); // list 4
@@ -605,57 +611,45 @@ void Node::buildInteractionList() {
                 if (!contains(nbors, branch))
                     iList.push_back(branch);
 
-    const int maxSize = pow(6, DIM) - pow(3, DIM);
-    assert(iList.size() <= maxSize);
-}
+    assert(iList.size() <= pow(6, DIM) - pow(3, DIM));
 
-void Node::buildDirectedIList() {
-    assert(!isRoot());
-
+    // assign each interaction node to a dirlist
     // pick minDist \in (nodeLeng, 2.0*nodeLeng) to avoid rounding errors
     const double minDist = 1.5 * nodeLeng;
 
     for (const auto& iNode : iList) {
         auto center0 = iNode->getCenter();
-        // uplist
-        if (center0[2] - center[2] > minDist)
-            dirList[0].push_back(iNode); 
-        // downlist
-        else if (center[2] - center0[2] > minDist)
-            dirList[1].push_back(iNode); 
-        // northlist
-        else if (center0[1] - center[1] > minDist)
-            dirList[2].push_back(iNode); 
-        // southlist
-        else if (center[1] - center0[1] > minDist)
-            dirList[3].push_back(iNode); 
-        // eastlist
-        else if (center0[0] - center[0] > minDist)
-            dirList[4].push_back(iNode); 
-        // westlist
-        else if (center[0] - center0[0] > minDist)
-            dirList[5].push_back(iNode); 
+        
+        if (center0[2] - center[2] > minDist) // uplist
+            dirList[0].push_back(iNode);
+        else if (center[2] - center0[2] > minDist) // downlist
+            dirList[1].push_back(iNode);
+        else if (center0[1] - center[1] > minDist) // northlist
+            dirList[2].push_back(iNode);
+        else if (center[1] - center0[1] > minDist) // southlist
+            dirList[3].push_back(iNode);
+        else if (center0[0] - center[0] > minDist) // eastlist
+            dirList[4].push_back(iNode);
+        else if (center[0] - center0[0] > minDist) // westlist
+            dirList[5].push_back(iNode);
         else
             throw std::runtime_error("Invalid interaction node");
     }
 }
 
 void Node::buildLocalCoeffsFromLeafIlist() {
-    //std::cout << leafIlist.size() << '\n';
-    //return;
-    
-    // if # particles in this node is small,
-    // evaluate sol at obss directly instead of adding to local coeffs 
-    // if (particles.size() <= order*order) {
+    // if # particles is small, evaluate sol at particles directly
+    if (particles.size() <= order*order) {
         for (const auto& obs : particles)
             for (const auto& iNode : leafIlist) {
                 obs->addToPhi(iNode->getDirectPhi(obs->getPos()));
-                // obs->addToFld(iNode->getDirectFld(obs->getPos()));
+                obs->addToFld(iNode->getDirectFld(obs->getPos()));
             }
         return;
-    // }
+    }
 
     // std::cout << "Computing local coeffs from list 4\n";
+    // how to precompute rotation matrices for list 4?
     for (const auto& iNode : leafIlist) {
         auto mpoleCoeffs( iNode->getMpoleCoeffs() );
         auto dR = toSph(iNode->getCenter() - center);
@@ -683,7 +677,7 @@ void Node::buildLocalCoeffsFromLeafIlist() {
 
 const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const {
     std::vector<vecXcd> shiftedLocalCoeffs, rotatedLocalCoeffs;
-    double r = (branches[branchIdx]->getCenter()-center).norm();
+    const double r = (branches[branchIdx]->getCenter()-center).norm();
 
     // apply rotation (rotation axis is opposite from M2M)
     for (int j = 0; j <= order; ++j)
@@ -693,12 +687,13 @@ const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const
         vecXcd shiftedLocalCoeffs_j = vecXcd::Zero(2*j+1);
         for (int k = -j; k <= j; ++k) {
             int k_j = k + j;
-
+            double r2nmj = 1.0;
             for (int n = j; n <= order; ++n) {
                 shiftedLocalCoeffs_j[k_j] +=
                     rotatedLocalCoeffs[n][k+n] *
                     tables.A_[n-j][n-j] * tables.A_[j][k_j] / tables.A_[n][k+n]
-                    * pow(r, n-j) / pm(n+j);
+                    * r2nmj / pm(n+j);
+                r2nmj *= r;
             }
         }
 
@@ -761,8 +756,24 @@ const realVec Node::getDirectPhis() {
     return phis;
 }
 
+// return fld at X due to all particles in this node
+const vec3d Node::getDirectFld(const vec3d& X) {
+    vec3d fld = vec3d::Zero();
+    for (const auto& src : particles) {
+        auto dX = X - src->getPos();
+        auto r = dX.norm();
+        if (r > 1.0E-9)
+            fld += src->getCharge() * dX / pow(r, 3);
+    }
+    return fld;
+}
+
+// return phi at all particles in this node due to all other particles in this node
 const std::vector<vec3d> Node::getDirectFlds() {
     std::vector<vec3d> flds;
 
+    for (const auto& obs : particles) {
+        flds.push_back(getDirectFld(obs->getPos()));
+    }
     return flds;
 }

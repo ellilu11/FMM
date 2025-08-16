@@ -68,9 +68,9 @@ vec3d toSph(const vec3d& X) {
 //    return l*l + l + m;
 //}
 
-constexpr int constPow(int base, int exp) {
-    return (exp == 0) ? 1 : base * constPow(base,exp-1);
-}
+//constexpr int constPow(int base, int exp) {
+//    return (exp == 0) ? 1 : base * constPow(base,exp-1);
+//}
 
 //template <typename T>
 //bool contains(std::vector<T>& vec, T val) {
@@ -107,9 +107,9 @@ const double factorial(double n) {
 
 const double coeffYlm(int l, int abs_m) {
     assert(abs_m <= l);
-    return 
+    return
         std::sqrt(factorial(l-abs_m) / static_cast<double>(factorial(l+abs_m))) * // Ylm coeffs
-        pm(abs_m) * std::pow(2.0, l) ; // legendreLM coeffs
+        pm(abs_m) * std::pow(2.0, l); // legendreLM coeffs
 }
 
 const cmplx expI(const double arg) {

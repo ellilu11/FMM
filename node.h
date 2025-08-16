@@ -11,6 +11,12 @@
 #include "vec3d.h"
 
 extern const int DIM;
+extern std::chrono::duration<double, std::milli> t_M2X;
+extern std::chrono::duration<double, std::milli> t_X2X;
+extern std::chrono::duration<double, std::milli> t_X2L;
+extern std::chrono::duration<double, std::milli> t_L2L;
+extern std::chrono::duration<double, std::milli> t_direct;
+
 constexpr int numDir = 26; // std::pow(3, DIM) - 1;
 
 class Node;
@@ -43,24 +49,25 @@ public:
     static void setNodeParams(const Config&);
     static void buildTables(const Config&);
     static void buildRotationMats();
-    static std::vector<matXcd> wignerDAlongDir(const pair2d, const bool);
+    // static std::vector<matXcd> wignerDAlongDir(const pair2d, const bool);
     static const double legendreLM(const double, const pair2i);
+    static const double dthLegendreLM(const double, const pair2i);
 
     Node(const ParticleVec&, const int, Node* const);
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
     void buildNearNeighbors();
     void buildInteractionList();
-    void buildDirectedIList();
 
     void buildLocalCoeffsFromDirList();
     void buildLocalCoeffsFromLeafIlist();
     const std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
 
-    const std::vector<vecXcd> getMpoleToExpCoeffs(const int);
+    const std::vector<vecXcd> getMpoleToExpCoeffs(const int) const;
     void addShiftedExpCoeffs(const std::vector<vecXcd>&, const vec3d&, const int);
 
     const double getDirectPhi(const vec3d&);
     const realVec getDirectPhis();
+    const vec3d getDirectFld(const vec3d&);
     const std::vector<vec3d> getDirectFlds();
 
     virtual void buildLists() = 0;
@@ -131,11 +138,6 @@ protected:
     std::vector<vecXcd> localCoeffs;
 
     // === Test members ===
-    static std::chrono::duration<double, std::milli> t_M2X;
-    static std::chrono::duration<double, std::milli> t_X2X;
-    static std::chrono::duration<double, std::milli> t_X2L;
-    static std::chrono::duration<double, std::milli> t_L2L;
-
     int nodeStat;
     bool useRot;
 
