@@ -31,6 +31,7 @@ struct Tables {
     std::vector<realVec> alphas_;
     std::vector<std::vector<cmplxVec>> expI_alphas_;
     std::vector<std::vector<std::array<cmplx,98>>> exps_;
+    std::vector<std::vector<std::array<cmplx,8>>> exps_merge_;
 };
 
 void Tables::buildYlmTables(const int order) {
@@ -146,6 +147,7 @@ void Tables::buildExpTables(const int order) {
         realVec alphas_k; //
         std::vector<cmplxVec> expI_alphas_k;
         std::vector<std::array<cmplx,98>> exps_k;
+        std::vector<std::array<cmplx,8>> exps_merge_k;
 
         for (int j = 0; j < M_k; ++j) {
             double alpha_kj = 2.0 * PI * (j+1) / static_cast<double>(M_k);
@@ -157,6 +159,7 @@ void Tables::buildExpTables(const int order) {
             expI_alphas_k.push_back(expI_alphas_kj);
 
             std::array<cmplx,98> exps_kj;
+            std::array<cmplx,8> exps_merge_kj;
             size_t l = 0;
             for (int dz = 2; dz <= 3; ++dz)
                 for (int dy = -3; dy <= 3; ++dy)
@@ -166,11 +169,21 @@ void Tables::buildExpTables(const int order) {
                                 * cmplx(-1.0*dz,
                                     dx*cos(alpha_kj) + dy*sin(alpha_kj)));
                     }
-            exps_k.push_back(exps_kj);
 
+            for (int dir = 0; dir < 8; ++dir){
+                auto dX = idx2pm(dir);
+                exps_merge_kj[dir] =
+                    exp(quadCoeffs_[k].first / 4.0
+                        * cmplx(-1.0*dX[2],
+                            dX[0]*cos(alpha_kj) + dX[1]*sin(alpha_kj)));
+            }
+
+            exps_k.push_back(exps_kj);
+            exps_merge_k.push_back(exps_merge_kj);
         }
         alphas_.push_back(alphas_k); //
         expI_alphas_.push_back(expI_alphas_k);
         exps_.push_back(exps_k);
+        exps_merge_.push_back(exps_merge_k);
     }
 }

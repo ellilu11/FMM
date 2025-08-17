@@ -576,51 +576,6 @@ void Node::buildNearNeighbors() {
     assert(nbors.size() <= numDir);
 }
 
-/*void Node::buildInteractionList() {
-    assert(!isRoot());
-    assert(nbors.size());
-
-    auto notContains = [](NodeVec& vec, std::shared_ptr<Node> val) {
-        return std::find(vec.begin(), vec.end(), val) == vec.end();
-    };
-
-    NodeVec iList;
-    auto baseNbors = base->getNearNeighbors();
-    for (const auto& baseNbor : baseNbors)
-        if (baseNbor->isNodeType<Leaf>() && notContains(nbors, baseNbor))
-            leafIlist.push_back(baseNbor); // list 4
-        else 
-            for (const auto& branch : baseNbor->branches) 
-                if (notContains(nbors, branch))
-                    iList.push_back(branch);
-
-    assert(iList.size() <= pow(6, DIM) - pow(3, DIM));
-
-    // assign each interaction node to a dirlist
-    // pick minDist \in (nodeLeng, 2.0*nodeLeng) to avoid rounding errors
-    const double minDist = 1.5 * nodeLeng;
-    auto inRange = [minDist](const double val) {
-        return minDist < val;
-        };
-
-    for (const auto& iNode : iList) {
-        auto center0 = iNode->getCenter();
-
-        if (inRange(center0[2] - center[2])) // uplist
-            dirList[0].push_back(iNode);
-        else if (inRange(center[2] - center0[2])) // downlist
-            dirList[1].push_back(iNode);
-        else if (inRange(center0[1] - center[1])) // northlist
-            dirList[2].push_back(iNode);
-        else if (inRange(center[1] - center0[1])) // southlist
-            dirList[3].push_back(iNode);
-        else if (inRange(center0[0] - center[0])) // eastlist
-            dirList[4].push_back(iNode);
-        else if (inRange(center[0] - center0[0])) // westlist
-            dirList[5].push_back(iNode);
-    }
-}*/
-
 void Node::buildInteractionList() {
     assert(!isRoot());
     assert(nbors.size());
@@ -767,38 +722,6 @@ const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const
     }
     return shiftedLocalCoeffs;
 }
-
-// no rotation matrices
-/*const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) {
-
-    std::vector<vecXcd> shiftedCoeffs;
-    for (int l = 0; l <= order; ++l)
-        shiftedCoeffs.emplace_back(vecXcd::Zero(2*l+1));
-
-    auto dR = toSph(center-branches[branchIdx]->getCenter());
-    double r = dR[0], th = dR[1], ph = dR[2];
-
-    for (int j = 0; j <= order; ++j) {
-        for (int k = -j; k <= j; ++k) {
-            int k_ = k + j;
-
-            for (int n = j; n <= order; ++n) {
-                for (int m = std::max(j-n+k,-n); m <= std::min(n-j+k,n);  ++m) {
-                    int m_ = m + n;
-
-                    shiftedCoeffs[j][k_] +=
-                        localCoeffs[n][m_] * pow(iu, abs(m)-abs(k)-abs(m-k))
-                        * tables.A_[n-j][m-k+n-j] * tables.A_[j][k_] / tables.A_[n][m_]
-                        * legendreCos(th, pair2i(n-j, abs(m-k))) * expI(static_cast<double>(m-k)*ph)
-                        * pow(r, n-j) / pow(-1.0,n+j);
-
-                }
-            }
-        }
-    }
-
-    return shiftedCoeffs;
-}*/
 
 // return phi at X due to all particles in this node
 const double Node::getDirectPhi(const vec3d& X) {

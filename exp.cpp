@@ -1,75 +1,5 @@
 #include "node.h"
 
-/*const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) const {
-    std::vector<vecXcd> rotatedCoeffs, expCoeffs;
-
-    // apply rotation
-    for (int l = 0; l <= order; ++l)
-        rotatedCoeffs.push_back( dirIdx ?
-            wignerD[dirIdx+8][l] * coeffs[l] :
-            coeffs[l] );
-
-    for (int k = 0; k < orderExp; ++k) {
-        auto M_k = tables.quadLengs_[k];
-        double l_k = tables.quadCoeffs_[k].first / nodeLeng;
-        double coeff_k = tables.quadCoeffs_[k].second / (nodeLeng * M_k);
-
-        // fast way
-        vecXcd innerCoeffs = vecXcd::Zero(2*order+1);
-        for (int m = -order; m <= order; ++m){
-            int abs_m = abs(m);
-            double l_k2l = pow(l_k,abs_m);
-            int m_p = m+order;
-            for (int l = abs_m; l <= order; ++l) {
-                int m_l = m+l;
-                innerCoeffs[m_p] += 
-                    rotatedCoeffs[l][m_l] 
-                    * tables.Aexp_[l][m_l] * l_k2l;
-                l_k2l *= l_k;
-            }
-            innerCoeffs[m_p] *= powI(abs_m); // plus sign
-        }
-
-        expCoeffs.emplace_back(vecXcd::Zero(M_k));
-        for (int j = 0; j < M_k; ++j) {
-            for (int m_p = 0; m_p <= 2*order; ++m_p)
-                expCoeffs[k][j] += 
-                    innerCoeffs[m_p] 
-                    * tables.expI_alphas_[k][j][m_p];
-        }
-        expCoeffs[k] *= coeff_k;
-
-        // slow way
-        double w_k = tables.quadCoeffs_[k].second;
-        expCoeffs.emplace_back(vecXcd::Zero(M_k));
-        for (int j = 0; j < M_k; ++j) {
-            assert(tables.alphas_[k][j] == 2.0*PI*(j+1)/static_cast<double>(M_k));
-
-            for (int m = -order; m <= order; ++m) {
-                for (int l = abs(m); l <= order; ++l) {
-                    int m_l = m+l;
-                    assert(tables.Aexp_[l][m_l] ==
-                        1.0 / std::sqrt(static_cast<double>(factorial(l-m)*factorial(l+m))));
-
-                    expCoeffs[k][j] +=
-                        rotatedCoeffs[l][m_l]
-                        * tables.Aexp_[l][m_l]
-                        * pow(l_k, l)
-                        * pow(iu, abs(m))
-                        * exp(iu*static_cast<double>(m)*tables.alphas_[k][j]);
-                }
-            }
-            expCoeffs[k][j] *= w_k / nodeLeng / static_cast<double>(M_k);
-        }
-        
-    }
-    //if (dirIdx < 2) {
-    //    std::cout << dirIdx << ' ' << '2' << ' ' << expCoeffs[2].transpose() << '\n';
-    //    std::cout << dirIdx << ' ' << '3' << ' ' << expCoeffs[3].transpose() << '\n';
-    //}
-    return expCoeffs;
-}*/
-
 std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
     std::vector<vecXcd> rotatedCoeffs, expCoeffs;
 
@@ -113,7 +43,7 @@ std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
     return expCoeffs;
 }
 
-const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
+/*const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
     std::vector<vecXcd> mergedCoeffs;
     for (int k = 0; k < orderExp; ++k)
         mergedCoeffs.emplace_back(vecXcd::Zero(tables.quadLengs_[k]));
@@ -134,6 +64,23 @@ const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
         }
     }
     return mergedCoeffs;
+}*/
+
+const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
+    std::vector<vecXcd> mergedCoeffs;
+    for (int k = 0; k < orderExp; ++k)
+        mergedCoeffs.emplace_back(vecXcd::Zero(tables.quadLengs_[k]));
+
+    for (const auto& branch : branches) {
+        auto expCoeffs = branch->getMpoleToExpCoeffs(dirIdx);
+        auto branchIdx = branch->getBranchIdx();
+
+        for (int k = 0; k < orderExp; ++k)
+            for (int j = 0; j < tables.quadLengs_[k]; ++j)
+                mergedCoeffs[k][j] +=
+                    expCoeffs[k][j] * tables.exps_merge_[k][j][branchIdx];
+    }
+    return mergedCoeffs;
 }
 
 void Node::addShiftedExpCoeffs(
@@ -141,6 +88,7 @@ void Node::addShiftedExpCoeffs(
     // rotate dX so this center is in uplist of center0
     const auto dX = rotMatR[dirIdx] * (center - center0);
     const double dx = dX[0], dy = dX[1], dz = dX[2];
+    // std::cout << dx / nodeLeng << ' ' << dy / nodeLeng << ' ' << dz / nodeLeng << '\n';
 
     for (int k = 0; k < orderExp; ++k) {
         const double l_k = tables.quadCoeffs_[k].first / nodeLeng;
