@@ -19,6 +19,7 @@ struct Tables {
     std::vector<realVec> coeffYlm_;
     std::vector<realVec> fallingFact_;
     std::vector<realVec> legendreSum_;
+    std::vector<realVec> fracCoeffYlm_;
     std::vector<realVec> A_;
     std::vector<realVec> Aexp_;
 
@@ -38,12 +39,13 @@ void Tables::buildYlmTables(const int order) {
         };
 
     for (int l = 0; l <= 2*order; ++l) {
-        realVec coeffYlm_l, fallingFact_l, legendreSum_l, A_l, Aexp_l;
+        realVec coeffYlm_l, fallingFact_l, legendreSum_l, fracCoeffYlm_l, A_l, Aexp_l;
 
         for (int m = 0; m <= l; ++m) {
             coeffYlm_l.push_back(coeffYlm(l, m));
             fallingFact_l.push_back(fallingFactorial(l, m));
             legendreSum_l.push_back(binom(l, m) * binom((l+m-1)/2.0, l));
+            fracCoeffYlm_l.push_back(sqrt((l-m)/static_cast<double>(l+m)));
         }
 
         auto pm_l = pm(l);
@@ -57,6 +59,7 @@ void Tables::buildYlmTables(const int order) {
         coeffYlm_.push_back(coeffYlm_l);
         fallingFact_.push_back(fallingFact_l);
         legendreSum_.push_back(legendreSum_l);
+        fracCoeffYlm_.push_back(fracCoeffYlm_l);
         A_.push_back(A_l);
         Aexp_.push_back(Aexp_l);
     }
@@ -140,13 +143,13 @@ void Tables::buildQuadTables(const Precision prec) {
 void Tables::buildExpTables(const int order) {
     for (int k = 0; k < quadCoeffs_.size(); ++k) {
         double M_k = quadLengs_[k];
-        // realVec alphas_k; //
+        realVec alphas_k; //
         std::vector<cmplxVec> expI_alphas_k;
         std::vector<std::array<cmplx,98>> exps_k;
 
         for (int j = 0; j < M_k; ++j) {
             double alpha_kj = 2.0 * PI * (j+1) / static_cast<double>(M_k);
-            // alphas_k.push_back(alpha_kj); //
+            alphas_k.push_back(alpha_kj); //
 
             cmplxVec expI_alphas_kj;
             for (int m = -order; m <= order; ++m)
@@ -166,7 +169,7 @@ void Tables::buildExpTables(const int order) {
             exps_k.push_back(exps_kj);
 
         }
-        // alphas_.push_back(alphas_k); //
+        alphas_.push_back(alphas_k); //
         expI_alphas_.push_back(expI_alphas_k);
         exps_.push_back(exps_k);
     }

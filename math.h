@@ -64,17 +64,8 @@ vec3d toSph(const vec3d& X) {
     return vec3d( r, std::acos(z/r), toPhi(x,y) );
 }
 
-//size_t lm2Idx(const int l, const int m) {
-//    return l*l + l + m;
-//}
-
 //constexpr int constPow(int base, int exp) {
 //    return (exp == 0) ? 1 : base * constPow(base,exp-1);
-//}
-
-//template <typename T>
-//bool contains(std::vector<T>& vec, T val) {
-//    return std::find(vec.begin(), vec.end(), val) != vec.end();
 //}
 
 template <typename T>
@@ -109,7 +100,7 @@ const double coeffYlm(int l, int abs_m) {
     assert(abs_m <= l);
     return
         std::sqrt(factorial(l-abs_m) / static_cast<double>(factorial(l+abs_m))) * // Ylm coeffs
-        pm(abs_m) * std::pow(2.0, l); // legendreLM coeffs
+        pm(abs_m) * std::pow(2.0, l); // legendreCos coeffs
 }
 
 const cmplx expI(const double arg) {
@@ -118,7 +109,7 @@ const cmplx expI(const double arg) {
 
 const cmplx powI(const uint32_t m) {
     switch (m % 4) {
-        case 0: return 1;
+        case 0: return 1.0;
         case 1: return iu;
         case 2: return -1.0;
         case 3: return -iu;

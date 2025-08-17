@@ -42,7 +42,7 @@ fprintf('# Interaction nodes: %d\n', nnz(nodeStats >= 3));
 % scatter3(obss(:,1), obss(:,2), obss(:,3));
 % hold off;
 %%
-rootLeng = 5.0E-2;
+rootLeng = 1.0;
 lim = [-rootLeng/2 rootLeng/2];
 
 figure(4)

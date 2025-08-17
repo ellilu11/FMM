@@ -17,12 +17,10 @@ public:
     void propagateExpCoeffs();
     void buildLocalCoeffs();
 
-    realVec getFarPhis();
-    std::vector<vec3d> getFarFlds();
-    // template <typename Func> realVec getNearPhis(Func);
-    template <typename T, typename Func> std::vector<T> getNearSols(Func);
+    realVec getFarPhis() const;
+    std::vector<vec3d> getFarFlds() const;
+    template <typename T, typename Func> std::vector<T> getNearSols(Func) const;
     void evaluateSolAtParticles();
-
 
     void printPhis(std::ofstream& f) {
         //for (const auto& p : particles)

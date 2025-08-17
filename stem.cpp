@@ -28,6 +28,7 @@ void Stem::buildLists() {
     if (!isRoot()) {
         buildNearNeighbors();
         buildInteractionList();
+        buildOuterInteractionList();
     }
 
     for (const auto& branch : branches)
@@ -55,7 +56,7 @@ void Stem::buildMpoleCoeffs() {
                     // if ( max(k+n-j, -n) <= 0 && 0 <= min(k+j-n, n) )
                     shiftedBranchCoeffs_j[k_] += branchCoeffs[j-n][k_-n] *
                         tables.A_[n][n] * tables.A_[j-n][k_-n] / tables.A_[j][k_] *
-                        r2n; // legendreLM(0.0, n, 0) = 1 for all n;
+                        r2n; // legendreCos(0.0, n, 0) = 1 for all n;
                     r2n *= r;
                 }
             }
@@ -90,7 +91,7 @@ void Stem::buildMpoleCoeffs() {
                         coeffs[j][k_] +=
                             branchCoeffs[j-n][k_-m_] * pow(iu, abs(k)-abs(m)-abs(k-m)) *
                             tables.A[n][m_] * tables.A[j-n][k_-m_] / tables.A[j][k_] *
-                            pow(r, n) * legendreLM(th, n, abs(-m)) * expI(static_cast<double>(-m)*ph);
+                            pow(r, n) * legendreCos(th, n, abs(-m)) * expI(static_cast<double>(-m)*ph);
                     }
                 }
             }
@@ -100,17 +101,43 @@ void Stem::buildMpoleCoeffs() {
 
 void Stem::propagateExpCoeffs() {
     if (!isRoot()) {
-        for (int dir = 0; dir < 6; ++dir) {
+        /*for (int dir = 0; dir < 6; ++dir) {
             auto start = chrono::high_resolution_clock::now();
+
             auto expCoeffs = getMpoleToExpCoeffs(dir);
+
             t_M2X += chrono::high_resolution_clock::now() - start;
 
-            auto iList = dirList[dir];
             start = chrono::high_resolution_clock::now();
-            for (const auto& iNode : iList)
+
+            for (const auto& iNode : dirList[dir])
                 iNode->addShiftedExpCoeffs(expCoeffs, center, dir);
+
             t_X2X += chrono::high_resolution_clock::now() - start;
+        }*/
+
+        for (int dir = 0; dir < 6; ++dir) {
+            auto start = chrono::high_resolution_clock::now();
+
+            // build exp coeffs of branches, merge them, and propagate to outer dirlist
+            auto mergedExpCoeffs = getMergedExpCoeffs(dir);
+
+            t_M2X += chrono::high_resolution_clock::now() - start;
+
+            start = chrono::high_resolution_clock::now();
+
+            for (const auto& iNode : outerDirList[dir])
+                iNode->addShiftedExpCoeffs(mergedExpCoeffs, center, dir);
+
+            // for lvl > 1, propagate own exp coeffs to inner dirlist
+            if (!base->isRoot())
+                for (const auto& iNode : dirList[dir])
+                    iNode->addShiftedExpCoeffs(expCoeffsOut[dir], center, dir);
+
+            t_X2X += chrono::high_resolution_clock::now() - start;
+
         }
+        expCoeffsOut = {};
     }
 
     for (const auto& branch : branches)
@@ -120,16 +147,20 @@ void Stem::propagateExpCoeffs() {
 void Stem::buildLocalCoeffs() {
     if (!isRoot()) {
         auto start = std::chrono::high_resolution_clock::now();
+
         buildLocalCoeffsFromLeafIlist();
         buildLocalCoeffsFromDirList();
+
         t_X2L += std::chrono::high_resolution_clock::now() - start;
 
         start = std::chrono::high_resolution_clock::now();
+
         if (!base->isRoot()) {
             auto shiftedLocalCoeffs = base->getShiftedLocalCoeffs(branchIdx);
             for (int l = 0; l <= order; ++l)
                 localCoeffs[l] += shiftedLocalCoeffs[l];
         }
+
         t_L2L += std::chrono::high_resolution_clock::now() - start;
     }
 

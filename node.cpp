@@ -44,7 +44,7 @@ void Node::buildRotationMats() {
     for (int dir = 0; dir < 14; ++dir) {
         auto X = 
             dir < 8 ? 
-            idx2pm(dir) : // vertex directions (for M2M and L2L)
+            idx2pm(dir) :   // diagonal directions (for M2M and L2L)
             [dir] { 
             switch (dir-8) {
                 case 0: return vec3d(0, 0, 1);
@@ -54,7 +54,7 @@ void Node::buildRotationMats() {
                 case 4: return vec3d(1, 0, 0);
                 case 5: return vec3d(-1, 0, 0);
             } 
-            }(); // cardinal directions (for M2X and X2L)
+            }();            // cardinal directions (for M2X and X2L)
 
         auto R = toSph(X);
         pair2d angles(R[1], R[2]);
@@ -67,34 +67,17 @@ void Node::buildRotationMats() {
 }
 
 // theta part of Ylm
-const double Node::legendreLM(const double th, const pair2i lm) {
-    auto [l, abs_m] = lm;
-    assert(abs_m <= l);
+const double Node::legendreCos(const double th, const int l, const int abs_m) {
+    assert(0 <= abs_m && abs_m <= l);
+    const double cos_th = cos(th), sin_th = sin(th);
 
-    const auto cos_th = cos(th);
-    const auto sin_th = sin(th);
     double legendreSum = 0.0;
-
-    // term is zero for l-k odd
-    for (int k = l; k >= abs_m; k -= 2)
-        legendreSum += 
+    for (int k = l; k >= abs_m; k -= 2) // expression is zero for l-k odd
+        legendreSum +=  
             tables.fallingFact_[k][abs_m] * tables.legendreSum_[l][k] 
             * pow(cos_th, k-abs_m);
 
     return tables.coeffYlm_[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
-}
-
-const double Node::dthLegendreLM(const double th, const pair2i lm) {
-    auto [l, abs_m] = lm;
-    if (!l) return 0.0;
-    assert(abs_m <= l);
-
-    return
-        l / tan(th) * legendreLM(th, lm) -
-        (abs_m <= (l-1) ?
-            static_cast<double>(l + abs_m) / sin(th) * legendreLM(th, pair2i(l-1, abs_m))
-            * sqrt((l-abs_m)/static_cast<double>(l+abs_m)) :
-            0.0);
 }
 
 Node::Node(
@@ -120,7 +103,6 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
     if (isRoot()) return nullptr;
 
     std::shared_ptr<Node> nbor;
-
     switch (dir) {
         case U:
             if (branchIdx < 4)
@@ -594,21 +576,22 @@ void Node::buildNearNeighbors() {
     assert(nbors.size() <= numDir);
 }
 
-void Node::buildInteractionList() {
+/*void Node::buildInteractionList() {
     assert(!isRoot());
     assert(nbors.size());
 
-    auto contains = [](NodeVec& vec, std::shared_ptr<Node> val) {
-        return std::find(vec.begin(), vec.end(), val) != vec.end();
+    auto notContains = [](NodeVec& vec, std::shared_ptr<Node> val) {
+        return std::find(vec.begin(), vec.end(), val) == vec.end();
     };
 
+    NodeVec iList;
     auto baseNbors = base->getNearNeighbors();
     for (const auto& baseNbor : baseNbors)
-        if (baseNbor->isNodeType<Leaf>() && !contains(nbors, baseNbor))
+        if (baseNbor->isNodeType<Leaf>() && notContains(nbors, baseNbor))
             leafIlist.push_back(baseNbor); // list 4
         else 
             for (const auto& branch : baseNbor->branches) 
-                if (!contains(nbors, branch))
+                if (notContains(nbors, branch))
                     iList.push_back(branch);
 
     assert(iList.size() <= pow(6, DIM) - pow(3, DIM));
@@ -616,10 +599,60 @@ void Node::buildInteractionList() {
     // assign each interaction node to a dirlist
     // pick minDist \in (nodeLeng, 2.0*nodeLeng) to avoid rounding errors
     const double minDist = 1.5 * nodeLeng;
+    auto inRange = [minDist](const double val) {
+        return minDist < val;
+        };
 
     for (const auto& iNode : iList) {
         auto center0 = iNode->getCenter();
-        
+
+        if (inRange(center0[2] - center[2])) // uplist
+            dirList[0].push_back(iNode);
+        else if (inRange(center[2] - center0[2])) // downlist
+            dirList[1].push_back(iNode);
+        else if (inRange(center0[1] - center[1])) // northlist
+            dirList[2].push_back(iNode);
+        else if (inRange(center[1] - center0[1])) // southlist
+            dirList[3].push_back(iNode);
+        else if (inRange(center0[0] - center[0])) // eastlist
+            dirList[4].push_back(iNode);
+        else if (inRange(center[0] - center0[0])) // westlist
+            dirList[5].push_back(iNode);
+    }
+}*/
+
+void Node::buildInteractionList() {
+    assert(!isRoot());
+    assert(nbors.size());
+
+    auto notContains = [](NodeVec& vec, std::shared_ptr<Node> val) {
+        return std::find(vec.begin(), vec.end(), val) == vec.end();
+        };
+
+    NodeVec iList;
+    auto baseNbors = base->getNearNeighbors();
+
+    for (const auto& baseNbor : baseNbors)
+        if (baseNbor->isNodeType<Leaf>() && notContains(nbors, baseNbor))
+            leafIlist.push_back(baseNbor); // list 4
+        else {
+            auto baseCenter = base->getCenter();
+            const double maxDist = base->getLeng();
+            for (const auto& branch : baseNbor->branches)
+                if (notContains(nbors, branch) && 
+                    (branch->getCenter()-baseCenter).lpNorm<Eigen::Infinity>() < maxDist )
+                    iList.push_back(branch);
+        }
+
+    assert(iList.size() <= pow(4, DIM) - pow(3, DIM));
+
+    // assign each interaction node to a dirlist
+    // pick minDist \in (nodeLeng, 2.0*nodeLeng) to avoid rounding errors
+    const double minDist = 1.5 * nodeLeng;
+
+    for (const auto& iNode : iList) {
+        auto center0 = iNode->getCenter();
+
         if (center0[2] - center[2] > minDist) // uplist
             dirList[0].push_back(iNode);
         else if (center[2] - center0[2] > minDist) // downlist
@@ -637,42 +670,74 @@ void Node::buildInteractionList() {
     }
 }
 
+void Node::buildOuterInteractionList() {
+    assert(!isRoot());
+
+    const double minDist = nodeLeng;
+    for (const auto& nbor : nbors) {
+        if (nbor->isNodeType<Leaf>()) continue;
+            
+        auto nodes = nbor->getBranches();
+        for (const auto& node : nodes) {
+            auto center0 = node->getCenter();
+            if (center0[2] - center[2] > minDist) // uplist
+                outerDirList[0].push_back(node);
+            else if (center[2] - center0[2] > minDist) // downlist
+                outerDirList[1].push_back(node);
+            else if (center0[1] - center[1] > minDist) // northlist
+                outerDirList[2].push_back(node);
+            else if (center[1] - center0[1] > minDist) // southlist
+                outerDirList[3].push_back(node);
+            else if (center0[0] - center[0] > minDist) // eastlist
+                outerDirList[4].push_back(node);
+            else if (center[0] - center0[0] > minDist) // westlist
+                outerDirList[5].push_back(node);
+        }
+    }
+
+    auto dirListSize =
+        std::accumulate(outerDirList.begin(), outerDirList.end(), size_t{ 0 },
+            [](size_t sum, const auto& vec) { return sum + vec.size(); });
+    assert(dirListSize <= pow(6, DIM) - pow(4, DIM));
+}
+
 void Node::buildLocalCoeffsFromLeafIlist() {
     // if # particles is small, evaluate sol at particles directly
-    if (particles.size() <= order*order) {
+    // if (particles.size() <= order*order) {
         for (const auto& obs : particles)
             for (const auto& iNode : leafIlist) {
                 obs->addToPhi(iNode->getDirectPhi(obs->getPos()));
                 obs->addToFld(iNode->getDirectFld(obs->getPos()));
             }
         return;
-    }
+    // }
 
-    // std::cout << "Computing local coeffs from list 4\n";
+    // std::cout << "Computing local coeffs from list 4 of size " << leafIlist.size() << '\n';
     // how to precompute rotation matrices for list 4?
-    for (const auto& iNode : leafIlist) {
-        auto mpoleCoeffs( iNode->getMpoleCoeffs() );
+    /*for (const auto& iNode : leafIlist) {
+        auto mpoleCoeffs = iNode->getMpoleCoeffs();
         auto dR = toSph(iNode->getCenter() - center);
         double r = dR[0], th = dR[1], ph = dR[2];
 
         for (int j = 0; j <= order; ++j) {
+            // double r2jpn = pow(r,j);
             for (int k = -j; k <= j; ++k) {
-                int k_ = k + j;
+                int k_j = k + j;
 
                 for (int n = 0; n <= order; ++n) {
                     for (int m = -n; m <= n;  ++m) {
-                        int m_ = m + n;
+                        int m_n = m + n;
 
-                        localCoeffs[j][k_] +=
-                            mpoleCoeffs[n][m_] * pow(iu, abs(k-m)-abs(k)-abs(m))
-                            * tables.A_[n][m_] * tables.A_[j][k_] / tables.A_[j+n][m-k+j+n]
-                            * legendreLM(th, pair2i(j+n, abs(m-k))) * expI(static_cast<double>(m-k)*ph)
+                        localCoeffs[j][k_j] +=
+                            mpoleCoeffs[n][m_n] * pow(iu, abs(k-m)-abs(k)-abs(m))
+                            * tables.A_[n][m_n] * tables.A_[j][k_j] / tables.A_[j+n][m-k+j+n]
+                            * legendreCos(th, j+n, abs(m-k)) * expI(static_cast<double>(m-k)*ph)
                             / ( pm(n) * pow(r, j+n+1) );
                     }
                 }
             }
         }
-    }
+    }*/
 }
 
 const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const {
@@ -724,7 +789,7 @@ const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const
                     shiftedCoeffs[j][k_] +=
                         localCoeffs[n][m_] * pow(iu, abs(m)-abs(k)-abs(m-k))
                         * tables.A_[n-j][m-k+n-j] * tables.A_[j][k_] / tables.A_[n][m_]
-                        * legendreLM(th, pair2i(n-j, abs(m-k))) * expI(static_cast<double>(m-k)*ph)
+                        * legendreCos(th, pair2i(n-j, abs(m-k))) * expI(static_cast<double>(m-k)*ph)
                         * pow(r, n-j) / pow(-1.0,n+j);
 
                 }

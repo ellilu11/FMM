@@ -15,6 +15,7 @@ phiAnlSort = sortrows(phiAnl);
 
 figure(1);
 % [phiAnl, phi]
+hold on;
 plot(nvec, phiAnlSort, nvec, phiSort);
 legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
      'UniformOutput',false))],...

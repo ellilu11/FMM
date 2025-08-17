@@ -3,7 +3,7 @@
 using namespace std;
 
 void Node::setRandNodeStats() {
-    auto node = getRandNode(2);
+    auto node = getRandNode(1);
     node->setNodeStat(1);
 
     for (const auto& nbor: node->getNearNeighbors())
@@ -13,10 +13,18 @@ void Node::setRandNodeStats() {
     //    iNode->setNodeStat(3);
 
     for (int dir = 0; dir < 6; ++dir) {
-        auto iList = (node->getDirList())[dir];
+        auto iList = node->getDirList()[dir];
+        auto iListOuter = node->getBase()->getOuterDirList()[dir];
         for (const auto& iNode : iList) 
-            iNode->setNodeStat(3+dir);
+            // iNode->setNodeStat(3+dir);
+            iNode->setNodeStat(3);
+        for (const auto& iNode : iListOuter)
+            iNode->setNodeStat(4);
     }
+
+    auto leafIlist = node->getLeafIlist();
+    for (const auto& iNode : leafIlist)
+        iNode->setNodeStat(5);
 }
 
 const cmplx Node::getPhiFromMpole(const vec3d& X) {
@@ -26,14 +34,14 @@ const cmplx Node::getPhiFromMpole(const vec3d& X) {
     cmplx phi(0, 0);
 
     for (int l = 0; l <= order; ++l) {
-        realVec legendreLMCoeffs;
+        realVec legendreCosCoeffs;
         for (int m = 0; m <= l; ++m)
-            legendreLMCoeffs.push_back(legendreLM(th, pair2i(l,m)));
+            legendreCosCoeffs.push_back(legendreCos(th, l, m));
 
         for (int m = -l; m <= l; ++m) {
             int m_ = m + l;
             phi += coeffs[l][m_] / pow(r, l+1) *
-                legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph)
+                legendreCosCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph)
                 // * (m < 0 ? pm(m) : 1.0)
                 ;
 
@@ -137,13 +145,13 @@ void Node::mpoleToLocalTest() {
             for (int l = 0; l <= order; ++l) {
                 cout << (node->getLocalCoeffs())[l].transpose();
                 
-                realVec legendreLMCoeffs;
+                realVec legendreCosCoeffs;
                 for (int m = 0; m <= l; ++m)
-                    legendreLMCoeffs.push_back(legendreLM(th, pair2i(l, m)));
+                    legendreCosCoeffs.push_back(legendreCos(th, pair2i(l, m)));
 
                 for (int m = -l; m <= l; ++m)
                     phi += (node->getLocalCoeffs())[l][m+l] * pow(r, l) *
-                    legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
+                    legendreCosCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
             }
             outFile << phi.real() << ' ';
         }
@@ -222,8 +230,6 @@ void Node::nfieldTest() {
         outFile << '\n';
 
         if (p < order) resetNode();
-
-
 
     }
 

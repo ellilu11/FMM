@@ -37,10 +37,12 @@ public:
     Node* getBase() const { return base; }
     const NodeVec getBranches() const { return branches; }
     NodeVec const getNearNeighbors() { return nbors; }
-    // NodeArr const getDirectedNearNeighbors() { return dirNbors; }
-    NodeVec const getInteractionList() { return iList; }
     std::array<NodeVec, 6> const getDirList() { return dirList; }
+    std::array<NodeVec, 6> const getOuterDirList() { return outerDirList; }
+    NodeVec const getLeafIlist() { return leafIlist; }
     std::vector<vecXcd> getMpoleCoeffs() const { return coeffs; }
+    //std::vector<vecXcd> getDirectedExpCoeffs(const int dirIdx) const { 
+    //    return expCoeffs[dirIdx]; }
     std::vector<vecXcd> getLocalCoeffs() const { return localCoeffs; }
     const bool isRoot() const { return base == nullptr; }
     template <typename T>
@@ -50,19 +52,21 @@ public:
     static void buildTables(const Config&);
     static void buildRotationMats();
     // static std::vector<matXcd> wignerDAlongDir(const pair2d, const bool);
-    static const double legendreLM(const double, const pair2i);
-    static const double dthLegendreLM(const double, const pair2i);
+    static const double legendreCos(const double, const int, const int);
 
     Node(const ParticleVec&, const int, Node* const);
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
     void buildNearNeighbors();
     void buildInteractionList();
+    void buildOuterInteractionList();
 
     void buildLocalCoeffsFromDirList();
     void buildLocalCoeffsFromLeafIlist();
     const std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
 
-    const std::vector<vecXcd> getMpoleToExpCoeffs(const int) const;
+    // const std::vector<vecXcd> getMpoleToExpCoeffs(const int) const;
+    std::vector<vecXcd> getMpoleToExpCoeffs(const int);
+    const std::vector<vecXcd> getMergedExpCoeffs(const int) const;
     void addShiftedExpCoeffs(const std::vector<vecXcd>&, const vec3d&, const int);
 
     const double getDirectPhi(const vec3d&);
@@ -90,9 +94,6 @@ public:
             }
             }();
     }
-
-    //void setUseRot(const bool flag) { useRot = flag; }
-    //const bool getUseRot() { return useRot; }
 
     // definition under test/nodetest.cpp
     void setRandNodeStats();
@@ -127,13 +128,13 @@ protected:
     const vec3d center;
 
     NodeVec branches;
-
-    NodeVec nbors; // List 1
-    NodeVec iList; // List 2
-    std::array<NodeVec,6> dirList; // List 2, indexed by direction
-    NodeVec leafIlist; // List 4
+    NodeVec nbors; // list 1
+    std::array<NodeVec,6> dirList; // list 2, indexed by direction
+    std::array<NodeVec, 6> outerDirList; // intersection of list 2 of all branches
+    NodeVec leafIlist; // list 4
 
     std::vector<vecXcd> coeffs;
+    std::array<std::vector<vecXcd>,6> expCoeffsOut;
     std::array<std::vector<vecXcd>,6> expCoeffs;
     std::vector<vecXcd> localCoeffs;
 

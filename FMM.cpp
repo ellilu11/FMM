@@ -87,26 +87,18 @@ int main()
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
-    //const double th = PI/4.0;
-    //const double ph = PI/4.0;
-    //// cout << toSph(fromSph(vec3d(1.0, th, ph))) << '\n';
-    //for (int l = 0; l <= order; ++l) {
-    //    for (int m = -l; m <= l; ++m) {
-    //        auto dthYlm = Node::dthLegendreLM(th, pair2i(l,abs(m))) 
-    //                        * exp(iu*static_cast<double>(m)*ph);
-    //        cout << (abs(dthYlm) > 1.0E-3 ? dthYlm : 0.0 ) << ' ';
-    //    }
-    //    cout << '\n';
-    //}
+    //const pair2d angles(PI, 0);
+    //for (int l = 0; l < 4; ++l)
+    //    cout << wignerD_l(angles, l) << "\n\n" << wignerD_l(angles, l).inverse() << "\n\n";
 
     // ==============================================
     // root->ffieldTest(1,10,10);
     // ==============================================   
     // root->mpoleToExpToLocalTest();
     // ==============================================   
-    //root->nfieldTest();
+    // root->nfieldTest();
     //
-    //return 0;
+    // return 0;
     // ==================== Upward pass ==================== //
     cout << " Computing upward pass...\n";
     start = chrono::high_resolution_clock::now();

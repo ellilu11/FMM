@@ -22,6 +22,7 @@ public :
     const double getPhi() const { return phi; }
     void addToPhi(double phi_) { phi += phi_; }
     void printPhi(std::ofstream& f) const {
+        // f << phi << ' ';
         f << phi << '\n';
     }
 

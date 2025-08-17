@@ -43,13 +43,13 @@ const cmplx Node::getPhiFromLocal(const vec3d& X) {
     cmplx phi(0, 0);
 
     for (int l = 0; l <= order; ++l) {
-        realVec legendreLMCoeffs;
+        realVec legendreCoeffs;
         for (int m = 0; m <= l; ++m)
-            legendreLMCoeffs.push_back(legendreLM(th, pair2i(l, m)));
+            legendreCoeffs.push_back(legendreCos(th, l, m));
 
         for (int m = -l; m <= l; ++m)
             phi += localCoeffs[l][m+l] * pow(r, l) *
-            legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
+            legendreCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
     }
     return phi;
 }
