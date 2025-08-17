@@ -50,8 +50,7 @@ public:
     static void buildTables(const Config&);
     static void buildRotationMats();
     // static std::vector<matXcd> wignerDAlongDir(const pair2d, const bool);
-    static const double legendreLM(const double, const pair2i);
-    static const double dthLegendreLM(const double, const pair2i);
+    static const double legendreCos(const double, const int, const int);
 
     Node(const ParticleVec&, const int, Node* const);
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);

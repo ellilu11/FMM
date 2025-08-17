@@ -67,8 +67,7 @@ void Node::buildRotationMats() {
 }
 
 // theta part of Ylm
-const double Node::legendreLM(const double th, const pair2i lm) {
-    auto [l, abs_m] = lm;
+const double Node::legendreCos(const double th, const int l, const int abs_m) {
     assert(abs_m <= l);
 
     const auto cos_th = cos(th);
@@ -82,19 +81,6 @@ const double Node::legendreLM(const double th, const pair2i lm) {
             * pow(cos_th, k-abs_m);
 
     return tables.coeffYlm_[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
-}
-
-const double Node::dthLegendreLM(const double th, const pair2i lm) {
-    auto [l, abs_m] = lm;
-    if (!l) return 0.0;
-    assert(abs_m <= l);
-
-    return
-        l / tan(th) * legendreLM(th, lm) -
-        (abs_m <= (l-1) ?
-            static_cast<double>(l + abs_m) / sin(th) * legendreLM(th, pair2i(l-1, abs_m))
-            * sqrt((l-abs_m)/static_cast<double>(l+abs_m)) :
-            0.0);
 }
 
 Node::Node(
@@ -666,7 +652,7 @@ void Node::buildLocalCoeffsFromLeafIlist() {
                         localCoeffs[j][k_] +=
                             mpoleCoeffs[n][m_] * pow(iu, abs(k-m)-abs(k)-abs(m))
                             * tables.A_[n][m_] * tables.A_[j][k_] / tables.A_[j+n][m-k+j+n]
-                            * legendreLM(th, pair2i(j+n, abs(m-k))) * expI(static_cast<double>(m-k)*ph)
+                            * legendreCos(th,j+n,abs(m-k)) * expI(static_cast<double>(m-k)*ph)
                             / ( pm(n) * pow(r, j+n+1) );
                     }
                 }
@@ -724,7 +710,7 @@ const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const
                     shiftedCoeffs[j][k_] +=
                         localCoeffs[n][m_] * pow(iu, abs(m)-abs(k)-abs(m-k))
                         * tables.A_[n-j][m-k+n-j] * tables.A_[j][k_] / tables.A_[n][m_]
-                        * legendreLM(th, pair2i(n-j, abs(m-k))) * expI(static_cast<double>(m-k)*ph)
+                        * legendreCos(th, pair2i(n-j, abs(m-k))) * expI(static_cast<double>(m-k)*ph)
                         * pow(r, n-j) / pow(-1.0,n+j);
 
                 }

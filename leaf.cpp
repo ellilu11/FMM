@@ -25,14 +25,14 @@ void Leaf::buildMpoleCoeffs() {
         double r2l = 1.0;
 
         for (int l = 0; l <= order; ++l) {
-            realVec legendreLMCoeffs;
+            realVec legendreCosCoeffs;
             for (int m = 0; m <= l; ++m)
-                legendreLMCoeffs.push_back(legendreLM(th, pair2i(l,m)));
+                legendreCosCoeffs.push_back(legendreCos(th,l,m));
 
             for (int m = -l; m <= l; ++m) {
                 coeffs[l][m+l] +=
                     src->getCharge() * r2l *
-                    legendreLMCoeffs[std::abs(-m)] * expI(static_cast<double>(-m)*ph); 
+                    legendreCosCoeffs[std::abs(-m)] * expI(static_cast<double>(-m)*ph); 
             }
             r2l *= r;
         }
@@ -86,14 +86,14 @@ realVec Leaf::getFarPhis() {
         // using Horner's scheme
         /*cmplxVec polyCoeffs;
         for (int l = 0; l <= order; ++l) {
-            realVec legendreLMCoeffs;
+            realVec legendreCosCoeffs;
             cmplx polyCoeffs_l;
             for (int m = 0; m <= l; ++m)
-                legendreLMCoeffs.push_back(legendreLM(th, pair2i(l,m)));
+                legendreCosCoeffs.push_back(legendreCos(th, pair2i(l,m)));
 
             for (int m = -l; m <= l; ++m)
                 polyCoeffs_l += localCoeffs[l][m+l] *
-                    legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
+                    legendreCosCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
             polyCoeffs.push_back(polyCoeffs_l);
         }
         phis.push_back(evaluatePoly<cmplx>(polyCoeffs,r).real());*/
@@ -101,13 +101,13 @@ realVec Leaf::getFarPhis() {
         cmplx phi(0, 0);
         double r2l = 1.0;
         for (int l = 0; l <= order; ++l) {
-            realVec legendreLMCoeffs;
+            realVec legendreCosCoeffs;
             for (int m = 0; m <= l; ++m)
-                legendreLMCoeffs.push_back(legendreLM(th, pair2i(l, m)));
+                legendreCosCoeffs.push_back(legendreCos(th,l,m));
 
             for (int m = -l; m <= l; ++m)
                 phi += localCoeffs[l][m+l] * r2l *
-                        legendreLMCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
+                        legendreCosCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
             r2l *= r;
         }
         phis.push_back(phi.real());
@@ -117,40 +117,51 @@ realVec Leaf::getFarPhis() {
 }
 
 std::vector<vec3d> Leaf::getFarFlds() {
-    std::vector<vec3d> flds;
+    auto dLegendreCos = [](const double th, const int l, const int abs_m) {
+        if (!l) return 0.0;
+        assert(0 <= abs_m && abs_m <= l);
+        return
+            l / tan(th) * legendreCos(th, l, abs_m) -
+            (abs_m <= (l-1) ?
+                (l + abs_m) / sin(th) * legendreCos(th, l-1, abs_m)
+                * tables.fracCoeffYlm_[l][abs_m] : // sqrt((l-abs_m)/static_cast<double>(l+abs_m))
+                0.0);
+        };
 
+    std::vector<vec3d> flds;
     for (const auto& obs : particles) {
-        auto dR = toSph(obs->getPos() - center);
-        double r = dR[0], th = dR[1], ph = dR[2];
+        const auto dR = toSph(obs->getPos() - center);
+        const double r = dR[0], th = dR[1], ph = dR[2];
 
         vec3cd fld_R = vec3cd::Zero();
         double r2lmm = 1.0 / r;
         for (int l = 0; l <= order; ++l) {
-            realVec legendreLMCoeffs, dthLegendreLMCoeffs;
+            realVec legendreCoeffs, dLegendreCoeffs;
             for (int m = 0; m <= l; ++m) {
-                legendreLMCoeffs.push_back(legendreLM(th, pair2i(l, m)));
-                dthLegendreLMCoeffs.push_back(dthLegendreLM(th, pair2i(l, m)));
+                legendreCoeffs.push_back(legendreCos(th, l, m));
+                dLegendreCoeffs.push_back(dLegendreCos(th, l, m));
             }
 
             for (int m = -l; m <= l; ++m) {
                 const int abs_m = abs(m);
-                fld_R -= 
+                fld_R -=
                     localCoeffs[l][m+l] * r2lmm * expI(static_cast<double>(m)*ph) *
                     vec3cd(
-                        cmplx(l, 0) * legendreLMCoeffs[abs_m],              // fld_r
-                        dthLegendreLMCoeffs[abs_m],                         // fld_th
-                        cmplx(0, m) * legendreLMCoeffs[abs_m] / sin(th) );  // fld_ph
+                        l * legendreCoeffs[abs_m],             // E_r
+                        dLegendreCoeffs[abs_m],                // E_th
+                        cmplx(0, m) * legendreCoeffs[abs_m]); // E_ph * sin(th)
             }
             r2lmm *= r;
         }
 
         // Convert to cartesian components
-        mat3d matFromSph{
-            {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph) },
-            {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph) },
-            {  cos(th),         -sin(th),          0       }
-        };
-        flds.push_back( (matFromSph * fld_R).real() );
+        vec3cd fld_X = mat3d{
+            {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph)/sin(th) },
+            {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph)/sin(th) },
+            {  cos(th),         -sin(th),          0.0             }
+        } *fld_R;
+
+        flds.push_back(fld_X.real());
     }
     return flds;
 }

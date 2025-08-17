@@ -55,7 +55,7 @@ void Stem::buildMpoleCoeffs() {
                     // if ( max(k+n-j, -n) <= 0 && 0 <= min(k+j-n, n) )
                     shiftedBranchCoeffs_j[k_] += branchCoeffs[j-n][k_-n] *
                         tables.A_[n][n] * tables.A_[j-n][k_-n] / tables.A_[j][k_] *
-                        r2n; // legendreLM(0.0, n, 0) = 1 for all n;
+                        r2n; // legendreCos(0.0, n, 0) = 1 for all n;
                     r2n *= r;
                 }
             }
@@ -90,7 +90,7 @@ void Stem::buildMpoleCoeffs() {
                         coeffs[j][k_] +=
                             branchCoeffs[j-n][k_-m_] * pow(iu, abs(k)-abs(m)-abs(k-m)) *
                             tables.A[n][m_] * tables.A[j-n][k_-m_] / tables.A[j][k_] *
-                            pow(r, n) * legendreLM(th, n, abs(-m)) * expI(static_cast<double>(-m)*ph);
+                            pow(r, n) * legendreCos(th, n, abs(-m)) * expI(static_cast<double>(-m)*ph);
                     }
                 }
             }

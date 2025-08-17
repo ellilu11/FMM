@@ -19,6 +19,7 @@ struct Tables {
     std::vector<realVec> coeffYlm_;
     std::vector<realVec> fallingFact_;
     std::vector<realVec> legendreSum_;
+    std::vector<realVec> fracCoeffYlm_;
     std::vector<realVec> A_;
     std::vector<realVec> Aexp_;
 
@@ -29,7 +30,7 @@ struct Tables {
     // exp tables
     std::vector<realVec> alphas_;
     std::vector<std::vector<cmplxVec>> expI_alphas_;
-    std::vector<std::vector<std::array<cmplx,98>>> exps_;
+    std::vector<std::vector<std::array<cmplx, 98>>> exps_;
 };
 
 void Tables::buildYlmTables(const int order) {
@@ -38,12 +39,13 @@ void Tables::buildYlmTables(const int order) {
         };
 
     for (int l = 0; l <= 2*order; ++l) {
-        realVec coeffYlm_l, fallingFact_l, legendreSum_l, A_l, Aexp_l;
+        realVec coeffYlm_l, fallingFact_l, legendreSum_l, fracCoeffYlm_l, A_l, Aexp_l;
 
         for (int m = 0; m <= l; ++m) {
             coeffYlm_l.push_back(coeffYlm(l, m));
             fallingFact_l.push_back(fallingFactorial(l, m));
             legendreSum_l.push_back(binom(l, m) * binom((l+m-1)/2.0, l));
+            fracCoeffYlm_l.push_back(sqrt((l-m)/static_cast<double>(l+m)));
         }
 
         auto pm_l = pm(l);
@@ -57,6 +59,7 @@ void Tables::buildYlmTables(const int order) {
         coeffYlm_.push_back(coeffYlm_l);
         fallingFact_.push_back(fallingFact_l);
         legendreSum_.push_back(legendreSum_l);
+        fracCoeffYlm_.push_back(fracCoeffYlm_l);
         A_.push_back(A_l);
         Aexp_.push_back(Aexp_l);
     }
@@ -142,7 +145,7 @@ void Tables::buildExpTables(const int order) {
         double M_k = quadLengs_[k];
         // realVec alphas_k; //
         std::vector<cmplxVec> expI_alphas_k;
-        std::vector<std::array<cmplx,98>> exps_k;
+        std::vector<std::array<cmplx, 98>> exps_k;
 
         for (int j = 0; j < M_k; ++j) {
             double alpha_kj = 2.0 * PI * (j+1) / static_cast<double>(M_k);
@@ -150,10 +153,10 @@ void Tables::buildExpTables(const int order) {
 
             cmplxVec expI_alphas_kj;
             for (int m = -order; m <= order; ++m)
-                expI_alphas_kj.push_back( expI(m*alpha_kj) );
+                expI_alphas_kj.push_back(expI(m*alpha_kj));
             expI_alphas_k.push_back(expI_alphas_kj);
 
-            std::array<cmplx,98> exps_kj;
+            std::array<cmplx, 98> exps_kj;
             size_t l = 0;
             for (int dz = 2; dz <= 3; ++dz)
                 for (int dy = -3; dy <= 3; ++dy)
