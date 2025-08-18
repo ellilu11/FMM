@@ -14,8 +14,10 @@ extern const int DIM;
 extern std::chrono::duration<double, std::milli> t_M2X;
 extern std::chrono::duration<double, std::milli> t_X2X;
 extern std::chrono::duration<double, std::milli> t_X2L;
+extern std::chrono::duration<double, std::milli> t_X2L_l4;
 extern std::chrono::duration<double, std::milli> t_L2L;
-extern std::chrono::duration<double, std::milli> t_direct;
+extern std::chrono::duration<double, std::milli> t_L2P;
+extern std::chrono::duration<double, std::milli> t_dir;
 
 constexpr int numDir = 26; // std::pow(3, DIM) - 1;
 
@@ -28,6 +30,7 @@ public:
     static const int getExpansionOrder() { return order; }
     static void setExpansionOrder(const int p) { order = p; }
     static const int getExponentialOrder() { return orderExp; }
+    static const int getNumNodes() { return numNodes; }
 
     ParticleVec getParticles() const { return particles; }
     const int getBranchIdx() const { return branchIdx; }
@@ -118,6 +121,7 @@ protected:
     static std::array<std::vector<matXcd>,14> wignerD;
     static std::array<std::vector<matXcd>,14> wignerDInv;
     static std::array<mat3d, 6> rotMatR;
+    static int numNodes;
 
     ParticleVec particles;
     const int branchIdx;

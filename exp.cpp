@@ -74,6 +74,7 @@ const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
         mergedCoeffs.emplace_back(vecXcd::Zero(tables.quadLengs_[k]));
 
     for (const auto& branch : branches) {
+        // Construct exp coeffs of each branch here
         auto expCoeffs = branch->getMpoleToExpCoeffs(dirIdx);
         auto branchIdx = branch->getBranchIdx();
 

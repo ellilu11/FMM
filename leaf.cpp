@@ -59,6 +59,11 @@ void Leaf::buildLocalCoeffs() {
         auto start = std::chrono::high_resolution_clock::now();
 
         buildLocalCoeffsFromLeafIlist();
+
+        t_X2L_l4 += std::chrono::high_resolution_clock::now() - start;
+
+        start = std::chrono::high_resolution_clock::now();
+
         buildLocalCoeffsFromDirList();
 
         t_X2L += std::chrono::high_resolution_clock::now() - start;
@@ -72,14 +77,9 @@ void Leaf::buildLocalCoeffs() {
         }
 
         t_L2L += std::chrono::high_resolution_clock::now() - start;
-
     }
 
-    auto start = std::chrono::high_resolution_clock::now();
-
     evaluateSolAtParticles();
-
-    t_direct += std::chrono::high_resolution_clock::now() - start;
 }
 
 realVec Leaf::getFarPhis() const {
@@ -202,11 +202,22 @@ std::vector<T> Leaf::getNearSols(Func kernel) const {
 void Leaf::evaluateSolAtParticles() {
     if (isRoot()) return; // fix later
 
-    auto phis = getFarPhis() + getNearSols<double>( 
-        [](vec3d X) { return 1.0 / X.norm(); } );
+    auto start = std::chrono::high_resolution_clock::now();
 
-    auto flds = getFarFlds() + getNearSols<vec3d>(
+    auto phis = getFarPhis();
+    auto flds = getFarFlds();
+
+    t_L2P += std::chrono::high_resolution_clock::now() - start;
+
+    start = std::chrono::high_resolution_clock::now();
+    
+    phis = phis + getNearSols<double>(
+        [](vec3d X) { return 1.0 / X.norm(); });
+
+    flds = flds + getNearSols<vec3d>(
         [](vec3d X) { return X / pow(X.norm(), 3); } );
+
+    t_dir += std::chrono::high_resolution_clock::now() - start;
 
     // for (auto [p, phi, fld] : std::views::zip(particles, phis, flds)) {
     for (size_t n = 0; n < particles.size(); ++n) {

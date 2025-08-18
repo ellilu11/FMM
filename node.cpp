@@ -10,6 +10,7 @@ Tables Node::tables;
 std::array<std::vector<matXcd>,14> Node::wignerD;
 std::array<std::vector<matXcd>,14> Node::wignerDInv;
 std::array<mat3d,6> Node::rotMatR;
+int Node::numNodes;
 
 void Node::setNodeParams(const Config& config) {
     order = ceil(-std::log(config.EPS) / std::log(2));
@@ -90,6 +91,8 @@ Node::Node(
         base->getCenter() + nodeLeng / 2.0 * idx2pm(branchIdx)),
     nodeStat(0), useRot(0)
 {
+    numNodes++;
+
     // preallocate exp coeffs
     for (int dir = 0; dir < 6; ++dir) {
         std::vector<vecXcd> expCoeffs_dir;
@@ -583,7 +586,7 @@ void Node::buildInteractionList() {
 
     auto notContains = [](NodeVec& vec, std::shared_ptr<Node> ele) {
         return std::find(vec.begin(), vec.end(), ele) == vec.end();
-        };
+    };
 
     NodeVec iList;
     auto baseNbors = base->getNearNeighbors();
@@ -659,18 +662,18 @@ void Node::buildOuterInteractionList() {
 
 void Node::buildLocalCoeffsFromLeafIlist() {
     // if # particles is small, evaluate sol at particles directly
-    // if (particles.size() <= order*order) {
+    if (particles.size() <= order*order) {
         for (const auto& obs : particles)
             for (const auto& iNode : leafIlist) {
                 obs->addToPhi(iNode->getDirectPhi(obs->getPos()));
                 obs->addToFld(iNode->getDirectFld(obs->getPos()));
             }
         return;
-    // }
+    }
 
     // std::cout << "Computing local coeffs from list 4 of size " << leafIlist.size() << '\n';
     // how to precompute rotation matrices for list 4?
-    /*for (const auto& iNode : leafIlist) {
+    for (const auto& iNode : leafIlist) {
         auto mpoleCoeffs = iNode->getMpoleCoeffs();
         auto dR = toSph(iNode->getCenter() - center);
         double r = dR[0], th = dR[1], ph = dR[2];
@@ -693,7 +696,7 @@ void Node::buildLocalCoeffsFromLeafIlist() {
                 }
             }
         }
-    }*/
+    }
 }
 
 const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const {
@@ -740,7 +743,12 @@ const realVec Node::getDirectPhis() {
     realVec phis;
 
     for (const auto& obs : particles) {
-        phis.push_back(getDirectPhi(obs->getPos()));
+        double phi = 0;
+        for (const auto& src : particles) {
+            if (obs != src)
+                phi += src->getCharge() / (obs->getPos() - src->getPos()).norm();
+        }
+        phis.push_back(phi);
     }
     return phis;
 }
@@ -762,7 +770,15 @@ const std::vector<vec3d> Node::getDirectFlds() {
     std::vector<vec3d> flds;
 
     for (const auto& obs : particles) {
-        flds.push_back(getDirectFld(obs->getPos()));
+        vec3d fld = vec3d::Zero();
+        for (const auto& src : particles) {
+            auto dX = obs->getPos() - src->getPos();
+            auto r = dX.norm();
+            if (obs != src)
+                fld += src->getCharge() * dX / pow(r, 3);
+        }
+
+        flds.push_back(fld);
     }
     return flds;
 }

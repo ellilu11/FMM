@@ -11,8 +11,10 @@ extern constexpr int DIM = 3;
 extern std::chrono::duration<double, std::milli> t_M2X{ 0 };
 extern std::chrono::duration<double, std::milli> t_X2X{ 0 };
 extern std::chrono::duration<double, std::milli> t_X2L{ 0 };
+extern std::chrono::duration<double, std::milli> t_X2L_l4{ 0 };
 extern std::chrono::duration<double, std::milli> t_L2L{ 0 };
-extern std::chrono::duration<double, std::milli> t_direct{ 0 };
+extern std::chrono::duration<double, std::milli> t_L2P{ 0 };
+extern std::chrono::duration<double, std::milli> t_dir{ 0 };
 
 int main()
 {
@@ -81,6 +83,7 @@ int main()
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
+    cout << "   # Nodes: " << Node::getNumNodes() << '\n';
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     std::ofstream nodeFile("out/nodes.txt");
@@ -129,8 +132,10 @@ int main()
 
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
     cout << "   Elapsed time (X2L): " << t_X2L.count() << " ms\n";
+    cout << "   Elapsed time (X2L,l4): " << t_X2L_l4.count() << " ms\n";
     cout << "   Elapsed time (L2L): " << t_L2L.count() << " ms\n";
-    cout << "   Elapsed time (Direct): " << t_direct.count() << " ms\n";
+    cout << "   Elapsed time (L2P): " << t_L2P.count() << " ms\n";
+    cout << "   Elapsed time (Direct): " << t_dir.count() << " ms\n";
 
     printSols(srcs, "out/phi.txt", "out/fld.txt");
 
