@@ -57,9 +57,11 @@ std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
             const double l_k = tables.quadCoeffs_[k].first / nodeLeng;
             for (int j = 0; j < tables.quadLengs_[k]; ++j) {
                 const double a_kj = tables.alphas_[k][j];
-                mergedCoeffs[k][j] += 
+                mergedCoeffs[k][j] +=
                     expCoeffs[k][j]
-                    * exp(-l_k * dz + iu*l_k * (dx*cos(a_kj) + dy*sin(a_kj)));
+                    * exp(l_k / 2.0
+                        * cmplx(-1.0*dz,
+                            dx*cos(a_kj) + dy*sin(a_kj)));
             }
         }
     }
@@ -78,12 +80,12 @@ const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
         for (int k = 0; k < orderExp; ++k)
             for (int j = 0; j < tables.quadLengs_[k]; ++j)
                 mergedCoeffs[k][j] +=
-                    expCoeffs[k][j] * tables.exps_merge_[k][j][branchIdx];
+                    expCoeffs[k][j] * tables.expsMerge_[k][j][branchIdx];
     }
     return mergedCoeffs;
 }
 
-void Node::addShiftedExpCoeffs(
+/*void Node::addShiftedExpCoeffs(
     const std::vector<vecXcd>& srcExpCoeffs, const vec3d& center0, const int dirIdx) {
     // rotate dX so this center is in uplist of center0
     const auto dX = rotMatR[dirIdx] * (center - center0);
@@ -99,24 +101,37 @@ void Node::addShiftedExpCoeffs(
                 * exp(-l_k * dz + iu*l_k * (dx*cos(a_kj) + dy*sin(a_kj)));
         }
     }
-}
-
-/*void Node::addShiftedExpCoeffs(
-    const std::vector<vecXcd>& srcExpCoeffs, const vec3d& center0, const int dirIdx) {
-    // rotate dX so this center is in uplist of center0
-    const auto dX = rotMatR[dirIdx] * (center - center0);
-    const auto idX = round(Eigen::Array3d(dX)/nodeLeng);
-    const size_t l = idX[0] + 7*idX[1] + 49*idX[2] - 74;
-    
-    assert(0 <= l && l < 98);
-    //assert(idz == 2 || idz == 3);
-    //assert(sqrt(idx*idx + idy*idy) <= 4.0*sqrt(2.0));
-
-    for (size_t k = 0; k < orderExp; ++k)
-        for (size_t j = 0; j < tables.quadLengs_[k]; ++j)
-            expCoeffs[dirIdx][k][j] +=
-                srcExpCoeffs[k][j] * tables.exps_[k][j][l];
 }*/
+
+void Node::addShiftedExpCoeffs(
+    const std::vector<vecXcd>& srcExpCoeffs, const vec3d& center0, const int dirIdx) {
+    // rotate dX so this center is in uplist of center0 (center of source node)
+    const auto idX = rotMatR[dirIdx] * (center - center0) / nodeLeng;
+    const size_t idz = round(2.0*idX[2]); 
+    assert(idz == 4 || idz == 5);
+    size_t l;
+
+    // shift to inner ilist
+    if (idz == 4) { 
+        l = round(idX[0]+2.0) + 5*round(idX[1]+2.0);
+        assert(0 <= l && l < 25);
+
+        for (size_t k = 0; k < orderExp; ++k)
+            for (size_t j = 0; j < tables.quadLengs_[k]; ++j)
+                expCoeffs[dirIdx][k][j] +=
+                    srcExpCoeffs[k][j] * tables.expsInner_[k][j][l];
+
+    // shift to outer ilist
+    } else {
+        l = round(idX[0]+2.5) + 6*round(idX[1]+2.5);
+        assert(0 <= l && l < 36);
+
+        for (size_t k = 0; k < orderExp; ++k)
+            for (size_t j = 0; j < tables.quadLengs_[k]; ++j)
+                expCoeffs[dirIdx][k][j] +=
+                    srcExpCoeffs[k][j] * tables.expsOuter_[k][j][l];
+    }
+}
 
 void Node::buildLocalCoeffsFromDirList() {
     assert(!isRoot());
@@ -153,22 +168,6 @@ void Node::buildLocalCoeffsFromDirList() {
                 }
                 ml_k2l *= -l_k;
             }
-
-            // slow way
-            //for (int l = 0; l <= order; ++l) {
-            //    rotatedLocalCoeffs.emplace_back(vecXcd::Zero(2*l+1));
-            //    for (int m = -l; m <= l; ++m) {
-            //        int m_l = m+l;
-            //        for (int j = 0; j < M_k; ++j)
-            //            rotatedLocalCoeffs[l][m_l] +=
-            //                tables.Aexp_[l][m_l]
-            //                * pow(-l_k, l)
-            //                * expCoeffs[dirIdx][k][j]
-            //                * expI(-m*tables.alphas_[k][j])
-            //                * pow(iu, abs(m))
-            //                ;
-            //    }
-            //}
         }
 
         // apply inverse rotation

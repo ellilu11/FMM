@@ -22,7 +22,6 @@ constexpr int numDir = 26; // std::pow(3, DIM) - 1;
 class Node;
 
 using NodeVec = std::vector<std::shared_ptr<Node>>;
-using NodeArr = std::array<std::shared_ptr<Node>, numDir>;
 
 class Node {
 public:
@@ -41,8 +40,8 @@ public:
     std::array<NodeVec, 6> const getOuterDirList() { return outerDirList; }
     NodeVec const getLeafIlist() { return leafIlist; }
     std::vector<vecXcd> getMpoleCoeffs() const { return coeffs; }
-    //std::vector<vecXcd> getDirectedExpCoeffs(const int dirIdx) const { 
-    //    return expCoeffs[dirIdx]; }
+    std::vector<vecXcd> getExpCoeffs(const int dirIdx) const { 
+        return expCoeffsOut[dirIdx]; }
     std::vector<vecXcd> getLocalCoeffs() const { return localCoeffs; }
     const bool isRoot() const { return base == nullptr; }
     template <typename T>
@@ -64,7 +63,6 @@ public:
     void buildLocalCoeffsFromLeafIlist();
     const std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
 
-    // const std::vector<vecXcd> getMpoleToExpCoeffs(const int) const;
     std::vector<vecXcd> getMpoleToExpCoeffs(const int);
     const std::vector<vecXcd> getMergedExpCoeffs(const int) const;
     void addShiftedExpCoeffs(const std::vector<vecXcd>&, const vec3d&, const int);

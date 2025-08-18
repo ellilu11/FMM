@@ -66,56 +66,8 @@ void Stem::buildMpoleCoeffs() {
     }
 }
 
-// no rotation matrices
-/*void Stem::buildMpoleCoeffs() {
-    using namespace std;
-    for (int l = 0; l <= order; ++l)
-        coeffs.emplace_back(vecXcd::Zero(2*l+1));
-
-    for (const auto& branch : branches) {
-        branch->buildMpoleCoeffs();
-        auto branchCoeffs = branch->getMpoleCoeffs();
-        auto branchIdx = branch->getBranchIdx();
-
-        auto dR = toSph(branch->getCenter() - center);
-        double r = dR[0], th = dR[1], ph = dR[2];
-
-        for (int j = 0; j <= order; ++j) {
-            for (int k = -j; k <= j; ++k) {
-                int k_ = k + j;
-
-                for (int n = 0; n <= j; ++n) {
-                    for (int m = max(k+n-j,-n); m <= min(k+j-n,n); ++m) {
-                        int m_ = m + n;
-
-                        coeffs[j][k_] +=
-                            branchCoeffs[j-n][k_-m_] * pow(iu, abs(k)-abs(m)-abs(k-m)) *
-                            tables.A[n][m_] * tables.A[j-n][k_-m_] / tables.A[j][k_] *
-                            pow(r, n) * legendreCos(th, n, abs(-m)) * expI(static_cast<double>(-m)*ph);
-                    }
-                }
-            }
-        }
-    }
-}*/
-
 void Stem::propagateExpCoeffs() {
     if (!isRoot()) {
-        /*for (int dir = 0; dir < 6; ++dir) {
-            auto start = chrono::high_resolution_clock::now();
-
-            auto expCoeffs = getMpoleToExpCoeffs(dir);
-
-            t_M2X += chrono::high_resolution_clock::now() - start;
-
-            start = chrono::high_resolution_clock::now();
-
-            for (const auto& iNode : dirList[dir])
-                iNode->addShiftedExpCoeffs(expCoeffs, center, dir);
-
-            t_X2X += chrono::high_resolution_clock::now() - start;
-        }*/
-
         for (int dir = 0; dir < 6; ++dir) {
             auto start = chrono::high_resolution_clock::now();
 

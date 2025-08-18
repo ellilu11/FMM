@@ -57,6 +57,7 @@ int main()
     // ==================== Build tables ==================== //
     cout << " Building tables..\n";
     auto start = chrono::high_resolution_clock::now();
+    auto start_ = start;
 
     Node::buildTables(config);
     Node::buildRotationMats();
@@ -82,15 +83,11 @@ int main()
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    // ==================== Tests ==================== //
-    // root->setRandNodeStats();
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
-    //const pair2d angles(PI, 0);
-    //for (int l = 0; l < 4; ++l)
-    //    cout << wignerD_l(angles, l) << "\n\n" << wignerD_l(angles, l).inverse() << "\n\n";
-
+    // ==================== Tests ==================== //
+    // root->setRandNodeStats();
     // ==============================================
     // root->ffieldTest(1,10,10);
     // ==============================================   
@@ -128,12 +125,16 @@ int main()
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
+    chrono::duration<double, milli> fmm_duration_ms = end - start_;
+
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
     cout << "   Elapsed time (X2L): " << t_X2L.count() << " ms\n";
     cout << "   Elapsed time (L2L): " << t_L2L.count() << " ms\n";
-    cout << "   Elapsed time (direct): " << t_direct.count() << " ms\n";
+    cout << "   Elapsed time (Direct): " << t_direct.count() << " ms\n";
 
     printSols(srcs, "out/phi.txt", "out/fld.txt");
+
+    cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n\n";
 
     // ==================== Compute direct ==================== //
     if (!config.evalDirect) return 0;

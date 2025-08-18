@@ -42,23 +42,6 @@ void Leaf::buildMpoleCoeffs() {
 void Leaf::propagateExpCoeffs() {
     if (isRoot()) return;
 
-    /*for (int dir = 0; dir < 6; ++dir){
-        auto start = std::chrono::high_resolution_clock::now();
-
-        auto expCoeffs = getMpoleToExpCoeffs(dir);
-
-        t_M2X += std::chrono::high_resolution_clock::now() - start;
-
-        auto iList = dirList[dir];
-
-        start = std::chrono::high_resolution_clock::now();
-
-        for (const auto& iNode : iList)
-            iNode->addShiftedExpCoeffs(expCoeffs, center, dir);
-
-        t_X2X += std::chrono::high_resolution_clock::now() - start;
-    }*/
-
     auto start = std::chrono::high_resolution_clock::now();
     for (int dir = 0; dir < 6; ++dir) {
         // for lvl > 1, propagate own exp coeffs to inner dirlist

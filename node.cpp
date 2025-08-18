@@ -573,6 +573,7 @@ void Node::buildNearNeighbors() {
         if (nbor != nullptr)
             nbors.push_back(nbor);
     }
+
     assert(nbors.size() <= numDir);
 }
 
@@ -580,8 +581,8 @@ void Node::buildInteractionList() {
     assert(!isRoot());
     assert(nbors.size());
 
-    auto notContains = [](NodeVec& vec, std::shared_ptr<Node> val) {
-        return std::find(vec.begin(), vec.end(), val) == vec.end();
+    auto notContains = [](NodeVec& vec, std::shared_ptr<Node> ele) {
+        return std::find(vec.begin(), vec.end(), ele) == vec.end();
         };
 
     NodeVec iList;
@@ -591,11 +592,11 @@ void Node::buildInteractionList() {
         if (baseNbor->isNodeType<Leaf>() && notContains(nbors, baseNbor))
             leafIlist.push_back(baseNbor); // list 4
         else {
-            auto baseCenter = base->getCenter();
-            const double maxDist = base->getLeng();
+            const auto center0 = base->getCenter();
+            const auto maxDist = base->getLeng();
             for (const auto& branch : baseNbor->branches)
                 if (notContains(nbors, branch) && 
-                    (branch->getCenter()-baseCenter).lpNorm<Eigen::Infinity>() < maxDist )
+                    (branch->getCenter()-center0).lpNorm<Eigen::Infinity>() < maxDist )
                     iList.push_back(branch);
         }
 
