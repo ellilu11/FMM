@@ -71,8 +71,6 @@ int main(int argc, char *argv[])
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
-    return 0;
-
     // ==================== Upward pass ==================== //
     cout << " Computing upward pass...\n";
     start = chrono::high_resolution_clock::now();
