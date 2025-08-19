@@ -40,6 +40,7 @@ public:
     // NodeArr const getDirectedNearNeighbors() { return dirNbors; }
     NodeVec const getInteractionList() { return iList; }
     std::array<NodeVec, 6> const getDirList() { return dirList; }
+    NodeVec const getLeafIlist() { return leafIlist; }
     std::vector<vecXcd> getMpoleCoeffs() const { return coeffs; }
     std::vector<vecXcd> getLocalCoeffs() const { return localCoeffs; }
     const bool isRoot() const { return base == nullptr; }
@@ -55,6 +56,7 @@ public:
     Node(const ParticleVec&, const int, Node* const);
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
     void buildNearNeighbors();
+    void assignToDirList(std::array<NodeVec, 6>&, const std::shared_ptr<Node>&, const double);
     void buildInteractionList();
 
     void buildLocalCoeffsFromDirList();
@@ -126,11 +128,9 @@ protected:
     const vec3d center;
 
     NodeVec branches;
-
-    NodeVec nbors; // List 1
-    NodeVec iList; // List 2
-    std::array<NodeVec,6> dirList; // List 2, indexed by direction
-    NodeVec leafIlist; // List 4
+    NodeVec nbors; // list 1
+    std::array<NodeVec,6> dirList; // list 2, indexed by direction
+    NodeVec leafIlist; // list 4
 
     std::vector<vecXcd> coeffs;
     std::array<std::vector<vecXcd>,6> expCoeffs;

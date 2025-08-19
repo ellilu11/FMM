@@ -8,6 +8,20 @@ Leaf::Leaf(
 {
 }
 
+/*
+void Leaf::getFarNeighbors() {
+    assert(!isRoot());
+
+    const double minDist = nodeLeng;
+    for (const auto& nbor : nbors) {
+        if (nbor->isNodeType<Leaf>()) continue;
+
+        auto nodes = nbor->getBranches();
+        for (const auto& node : nodes)
+            
+    }
+}*/
+
 void Leaf::buildLists() {
     if (!isRoot()) {
         buildNearNeighbors();
@@ -32,7 +46,7 @@ void Leaf::buildMpoleCoeffs() {
             for (int m = -l; m <= l; ++m) {
                 coeffs[l][m+l] +=
                     src->getCharge() * r2l *
-                    legendreCosCoeffs[std::abs(-m)] * expI(static_cast<double>(-m)*ph); 
+                    legendreCoeffs[abs(-m)] * expI(-m*ph); 
             }
             r2l *= r;
         }
@@ -107,7 +121,7 @@ realVec Leaf::getFarPhis() {
 
             for (int m = -l; m <= l; ++m)
                 phi += localCoeffs[l][m+l] * r2l *
-                        legendreCosCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
+                        legendreCoeffs[std::abs(m)] * expI(m*ph);
             r2l *= r;
         }
         phis.push_back(phi.real());

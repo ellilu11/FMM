@@ -24,6 +24,25 @@ Stem::Stem(
     }
 }
 
+void Stem::buildOuterInteractionList() {
+    assert(!isRoot());
+
+    const double minDist = nodeLeng;
+    for (const auto& nbor : nbors) {
+        if (nbor->isNodeType<Leaf>()) continue;
+
+        auto nodes = nbor->getBranches();
+        for (const auto& node : nodes)
+            assignToDirList(outerDirList, node, minDist);
+    }
+
+    auto dirListSize =
+        std::accumulate(outerDirList.begin(), outerDirList.end(), size_t{ 0 },
+            [](size_t sum, const auto& vec) { return sum + vec.size(); });
+    assert(dirListSize <= pow(6, DIM) - pow(4, DIM));
+}
+
+
 void Stem::buildLists() {
     if (!isRoot()) {
         buildNearNeighbors();

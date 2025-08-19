@@ -1,5 +1,5 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
-srcs = readmatrix(strcat(dir,"config\part3D\uniform_plus.txt"));
+srcs = readmatrix(strcat(dir,"config\part3D\uniform_dip.txt"));
 phi = readmatrix(strcat(dir,"out\phi.txt"));
 fld = readmatrix(strcat(dir,"out\fld.txt"));
 

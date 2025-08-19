@@ -12,6 +12,7 @@ public:
         const int,
         Stem* const);
 
+    void getFarNeighbors();
     void buildLists();
     void buildMpoleCoeffs();
     void propagateExpCoeffs();
@@ -38,4 +39,7 @@ public:
     const cmplx getPhiFromBranchMpole(const vec3d&, const int);
     void printMpoleCoeffs(std::ofstream&);
     void resetNode();
+
+private:
+    NodeVec farNbors; // list 3
 };

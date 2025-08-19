@@ -9,10 +9,13 @@ public:
         const int,
         Stem* const);
 
+    void buildOuterInteractionList();
     void buildLists();
     void buildMpoleCoeffs();
     void propagateExpCoeffs();
     void buildLocalCoeffs();
+
+    std::array<NodeVec, 6> const getOuterDirList() { return outerDirList; }
 
     void printPhis(std::ofstream& f) {
         for (const auto& branch : branches) 
@@ -31,4 +34,6 @@ public:
     void printMpoleCoeffs(std::ofstream&);
     void resetNode();
 
+private:
+    std::array<NodeVec, 6> outerDirList; // intersection of list 2 of all branches
 };
