@@ -374,3 +374,4 @@ FodyWeavers.xsd
 /test/stemtest.cpp
 /plotCoeffs.m
 /plotPhi.m
+/eigen-3.4.0
