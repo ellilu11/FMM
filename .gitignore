@@ -379,3 +379,6 @@ FodyWeavers.xsd
 /test/MATLAB/mpole2mpole.m
 /test/MATLAB/rot_ph.m
 /test/MATLAB/rot_th.m
+/plt/fig/uniform_quad_n10000.jpg
+/plt/plotNodes.asv
+/plt/plotSol.asv
