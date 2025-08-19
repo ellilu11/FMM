@@ -9,8 +9,11 @@ public:
         const int,
         Stem* const);
 
-    void buildMpoleCoeffs();
-    void buildLocalCoeffs();
+    void buildLists() override; 
+
+    void buildMpoleCoeffs() override;
+    
+    void buildLocalCoeffs() override;
 
     void printPhis(std::ofstream& f) {
         for (const auto& branch : branches) 

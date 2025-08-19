@@ -58,11 +58,6 @@ std::ostream& operator<<(std::ostream& out, const cmplxVec& vec) {
     return out;
 }
 
-template <typename T>
-bool contains(std::vector<T>& vec, T val) {
-    return std::find(vec.begin(), vec.end(), val) != vec.end();
-}
-
 // return \sum_i (coeffs[i] * z^i)
 // understand why passing coeffs by ref yields larger error
 template <typename T>

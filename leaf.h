@@ -11,8 +11,11 @@ public:
         const int,
         Stem* const);
 
-    void buildMpoleCoeffs();
-    void buildLocalCoeffs();
+    void buildLists() override;
+
+    void buildMpoleCoeffs() override;
+    
+    void buildLocalCoeffs() override;
 
     cmplxVec getFarPhis();
     cmplxVec getFarFlds();

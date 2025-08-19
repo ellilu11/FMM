@@ -24,6 +24,18 @@ Stem::Stem(
     }
 }
 
+void Stem::buildLists() {
+
+    if (!isRoot()) {
+        buildNeighbors();
+        buildInteractionList();
+        // pushSelfToFarNeighbors();
+    }
+
+    for (const auto& branch : branches)
+        branch->buildLists();
+}
+
 void Stem::buildMpoleCoeffs() {
     coeffs.resize(order+1);
 

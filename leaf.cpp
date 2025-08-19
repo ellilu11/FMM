@@ -8,6 +8,14 @@ Leaf::Leaf(
 {
 }
 
+void Leaf::buildLists() {
+    if (!isRoot()) {
+        buildNeighbors();
+        buildInteractionList();
+        // pushSelfToFarNeighbors();
+    }
+}
+
 void Leaf::buildMpoleCoeffs() {
     for (int k = 0; k <= order; ++k) {
         cmplx a_k;
