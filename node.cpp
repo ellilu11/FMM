@@ -22,28 +22,18 @@ void Node::buildBinomTable() {
 }
 
 Node::Node(
-    const ParticleVec& particles, 
-    const int branchIdx, 
+    const ParticleVec& particles,
+    const int branchIdx,
     Node* const base)
     : particles(particles), branchIdx(branchIdx), base(base),
     nodeLeng(base == nullptr ? rootLeng : base->getLeng() / 2.0),
     center(base == nullptr ? 0.0 :
         base->getCenter() +
-        cmplx(pow(-1, branchIdx%2+1), pow(-1, branchIdx/2+1)) * nodeLeng / 2.0)
+        cmplx(pow(-1, branchIdx%2+1), pow(-1, branchIdx/2+1)) * nodeLeng / 2.0),
+    label(0)
 {
     numNodes++;
 };
-
-void Node::buildNeighbors() {
-    const int nDir = std::pow(3, DIM) - 1;
-    for (int i = 0; i < nDir; ++i) {
-        Dir dir = static_cast<Dir>(i);
-        auto nbor = getNeighborGeqSize(dir);
-        if (nbor != nullptr)
-            nbors.push_back(nbor);
-    }
-    assert(nbors.size() <= nDir);
-}
 
 void Node::buildInteractionList() {
     assert( !isRoot() );
@@ -54,8 +44,8 @@ void Node::buildInteractionList() {
 
     for (const auto& baseNbor : base->nbors) {
         if (baseNbor->isNodeType<Leaf>() && notContains(nbors, baseNbor)) {
-            iList.push_back(baseNbor);
-            // leafIlist.push_back(baseNbor);
+            // iList.push_back(baseNbor);
+            leafIlist.push_back(baseNbor);
             continue;
         }
         for (const auto& branch : baseNbor->branches)
@@ -64,6 +54,17 @@ void Node::buildInteractionList() {
     }
 
     assert(iList.size() <= pow(6,DIM) - pow(3,DIM));
+}
+
+// If leaf is in list 4 of self, self is in list 3 of leaf
+void Node::pushSelfToNearNonNbors() {
+    if (leafIlist.empty()) return;
+
+    auto self = getSelf(); // call shared_from_this()
+    for (const auto& node : leafIlist) {
+        auto leaf = dynamic_pointer_cast<Leaf>(node);
+        leaf->pushToNearNonNbors(self);
+    }
 }
 
 void Node::buildMpoleToLocalCoeffs() {

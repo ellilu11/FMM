@@ -7,7 +7,7 @@ Stem::Stem(
     : Node(particles, branchIdx, base)
 {
     // Assign every particle in node to a branch based on its position relative to center
-    std::vector<ParticleVec> branchParts(4);
+    std::array<ParticleVec,4> branchParts;
     for (const auto& p : particles)
         branchParts[bools2Idx(p->getPos() > center)].push_back(p);
 
@@ -24,12 +24,24 @@ Stem::Stem(
     }
 }
 
+void Stem::buildNbors() {
+    assert(!isRoot());
+
+    for (int i = 0; i < numDir; ++i) {
+        Dir dir = static_cast<Dir>(i);
+        auto nbor = getNeighborGeqSize(dir);
+        if (nbor != nullptr)
+            nbors.push_back(nbor);
+    }
+    assert(nbors.size() <= numDir);
+}
+
 void Stem::buildLists() {
 
     if (!isRoot()) {
-        buildNeighbors();
+        buildNbors();
         buildInteractionList();
-        // pushSelfToFarNeighbors();
+        pushSelfToNearNonNbors();
     }
 
     for (const auto& branch : branches)

@@ -140,9 +140,61 @@ std::shared_ptr<Node> const Node::getNeighborGeqSize(const Dir dir) {
                 return nbor->branches[3-branchIdx];
             }
             break;
-
-        default:
-            throw std::runtime_error("Invalid direction");
-            break;
     }
+}
+
+NodeVec Node::getNeighborsLeqSize(
+    const std::shared_ptr<Node>& nborGeqSize, const Dir dir) const
+{
+    NodeVec nbors{};
+    NodeVec queue{ nborGeqSize };
+    if (isRoot()) return nbors;
+
+    while (!queue.empty()) {
+        auto nbor = queue[0];
+
+        if (nbor->isNodeType<Leaf>())
+            nbors.push_back(nbor);
+        else {
+            switch (dir) {
+                case N:
+                    queue.push_back(nbor->branches[0]);
+                    queue.push_back(nbor->branches[1]);
+                    break;
+
+                case E:
+                    queue.push_back(nbor->branches[0]);
+                    queue.push_back(nbor->branches[2]);
+                    break;
+
+                case W:
+                    queue.push_back(nbor->branches[1]);
+                    queue.push_back(nbor->branches[3]);
+                    break;
+
+                case S:
+                    queue.push_back(nbor->branches[2]);
+                    queue.push_back(nbor->branches[3]);
+                    break;
+
+                case NE:
+                    queue.push_back(nbor->branches[0]);
+                    break;
+
+                case NW:
+                    queue.push_back(nbor->branches[1]);
+                    break;
+
+                case SE:
+                    queue.push_back(nbor->branches[2]);
+                    break;
+
+                case SW:
+                    queue.push_back(nbor->branches[3]);
+                    break;
+            }
+        }
+        queue.erase(queue.begin());
+    }
+    return nbors;
 }

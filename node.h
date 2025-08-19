@@ -9,6 +9,8 @@
 
 extern const int DIM;
 
+constexpr int numDir = 8; // std::pow(3, DIM) - 1;
+
 enum class Dir {
     SW,
     SE,
@@ -47,9 +49,13 @@ public:
     
     const NodeVec getBranches() const { return branches; }
     
-    NodeVec getNeighbors() const { return nbors; }
+    NodeVec getNbors() const { return nbors; }
     
-    NodeVec getInteractionList() const { return iList; }
+    NodeVec getIlist() const { return iList; }
+
+    NodeVec getLeafIlist() const { return leafIlist; }
+
+    void pushSelfToNearNonNbors();
     
     cmplxVec getMpoleCoeffs() const { return coeffs; }
     
@@ -65,7 +71,7 @@ public:
 
     std::shared_ptr<Node> const getNeighborGeqSize(const Dir);
 
-    void buildNeighbors();
+    NodeVec getNeighborsLeqSize(const std::shared_ptr<Node>&, const Dir) const;
 
     void buildInteractionList();
 
@@ -77,7 +83,11 @@ public:
 
     const cmplxVec getDirectFlds();
 
-    /* pure abstract */
+    /* pure virtual */
+    virtual std::shared_ptr<Node> getSelf() = 0;
+
+    virtual void buildNbors() = 0;
+
     virtual void buildLists() = 0;
 
     virtual void buildMpoleCoeffs() = 0;
@@ -86,9 +96,14 @@ public:
 
     virtual void resetNode() = 0;
 
-    virtual void printPhis(std::ofstream&) = 0;
-
     virtual void printNode(std::ofstream&) = 0;
+
+    /* Test methods */
+    void labelNode(int label_) { label += label_; }
+
+    void labelNodes();
+
+    virtual std::shared_ptr<Node> getRandNode(int) = 0;
 
 protected:
     static int order;
@@ -105,9 +120,12 @@ protected:
 
     NodeVec branches;
     NodeVec nbors;
-    NodeVec iList;
-    NodeVec leafIlist;
+    NodeVec iList; // list 2
+    NodeVec leafIlist; // list 4
 
     cmplxVec coeffs;
     cmplxVec localCoeffs;
+
+    // testing
+    int label;
 };

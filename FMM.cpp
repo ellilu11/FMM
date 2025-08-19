@@ -65,8 +65,13 @@ int main(int argc, char *argv[])
     cout << "   # Nodes: " << Node::getNumNodes() << '\n';
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
+    // ==================== Tests ==================== //
+    root->labelNodes();
+
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
+
+    return 0;
 
     // ==================== Upward pass ==================== //
     cout << " Computing upward pass...\n";

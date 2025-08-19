@@ -8,11 +8,27 @@ Leaf::Leaf(
 {
 }
 
+void Leaf::buildNbors() {
+    assert(!isRoot());
+
+    for (int i = 0; i < numDir; ++i) {
+        Dir dir = static_cast<Dir>(i);
+        auto nbor = getNeighborGeqSize(dir);
+        if (nbor != nullptr) {
+            nbors.push_back(nbor);
+            auto nbors = getNeighborsLeqSize(nbor, dir);
+            nearNbors.reserve(nearNbors.size() + nbors.size());
+            nearNbors.insert(nearNbors.end(), nbors.begin(), nbors.end());
+        }
+    }
+    assert(nbors.size() <= numDir);
+}
+
 void Leaf::buildLists() {
     if (!isRoot()) {
-        buildNeighbors();
+        buildNbors();
         buildInteractionList();
-        // pushSelfToFarNeighbors();
+        pushSelfToNearNonNbors();
     }
 }
 
@@ -59,12 +75,64 @@ cmplxVec Leaf::getFarFlds() {
     return flds;
 }
 
+cmplxVec Leaf::getNearNonNborPhis() {
+    cmplxVec phis;
+
+    for (const auto& obs : particles) {
+        cmplx phi(0,0);
+        auto obsPos = obs->getPos();
+
+        for (const auto& node : nearNonNbors) {
+            auto dz = obsPos - node->getCenter();
+            auto srcCoeffs = node->getMpoleCoeffs();
+
+            phi -= srcCoeffs[0] * log(dz);
+
+            auto dz2k = dz;
+            for (int k = 1; k <= order; ++k) {
+                phi -= srcCoeffs[k] / dz2k;
+                dz2k *= dz;
+            }
+        }
+        phis.push_back(phi);
+    }
+
+    return phis;
+}
+
+cmplxVec Leaf::getNearNonNborFlds() {
+    cmplxVec flds;
+
+    for (const auto& obs : particles) {
+        cmplx fld(0, 0);
+        auto obsPos = obs->getPos();
+
+        for (const auto& node : nearNonNbors) {
+            auto dz = obsPos - node->getCenter();
+            auto srcCoeffs = node->getMpoleCoeffs();
+
+            auto b_0 = srcCoeffs[0] / dz;
+            fld += cmplx( b_0.real(), -b_0.imag() ) ;
+
+            auto dz2kpp = dz*dz;
+            for (int k = 1; k <= order; ++k) {
+                auto b_k = static_cast<double>(k) * srcCoeffs[k] / dz2kpp;
+                fld += cmplx(-b_k.real(), b_k.imag());
+                dz2kpp *= dz;
+            }
+        }
+        flds.push_back(fld);
+    }
+
+    return flds;
+}
+
 template <typename Func>
-cmplxVec Leaf::getNearSols(Func kernel) {
+cmplxVec Leaf::getNearNborSols(Func kernel) {
     cmplxVec sols;
 
     for (const auto& obs : particles) {
-        cmplx sol;
+        cmplx sol(0,0);
         auto obsPos = obs->getPos();
 
         // due to other particles in this node (implement reciprocity later)
@@ -73,7 +141,8 @@ cmplxVec Leaf::getNearSols(Func kernel) {
                 sol += src->getCharge() * kernel(obsPos - src->getPos());
 
         // due to particles in neighboring nodes (implement reciprocity much later)
-        for (const auto& nbor : nbors) {
+        // for (const auto& nbor : nbors) {
+        for (const auto& nbor : nearNbors) {
             auto srcsNbor = nbor->getParticles();
             for (const auto& src : srcsNbor)
                 sol += src->getCharge() * kernel(obsPos - src->getPos());
@@ -87,12 +156,19 @@ cmplxVec Leaf::getNearSols(Func kernel) {
 void Leaf::evaluateSolAtParticles() {
     if (isRoot()) return;
 
-    auto phis = getFarPhis() + getNearSols(
+    auto phis = 
+        getFarPhis() + 
+        getNearNonNborPhis() + 
+        getNearNborSols(
         [](cmplx z) { return -std::log(z); }
-    );
-    auto flds = getFarFlds() + getNearSols(
+        );
+
+    auto flds = 
+        getFarFlds() + 
+        getNearNonNborFlds() +
+        getNearNborSols(
         [](cmplx z) { return z / std::norm(z); }
-    );
+        );
 
     // for (auto [p, phi, fld] : std::views::zip(particles, phis, flds)) {
     for (size_t n = 0; n < particles.size(); ++n) {
