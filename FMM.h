@@ -12,6 +12,7 @@
 
 #include "exp.cpp"
 #include "leaf.cpp"
+#include "nbor.cpp"
 #include "node.cpp"
 #include "particle.cpp"
 #include "stem.cpp"

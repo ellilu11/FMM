@@ -2,38 +2,39 @@
 
 #include "node.h"
 
-class Stem final : public Node {
+class Stem final : public Node, public std::enable_shared_from_this<Stem> {
 public:
     Stem(
         const ParticleVec&,
         const int,
         Stem* const);
 
-    void buildOuterInteractionList();
-    void buildLists();
-    void buildMpoleCoeffs();
-    void propagateExpCoeffs();
-    void buildLocalCoeffs();
-
-    std::array<NodeVec, 6> const getOuterDirList() { return outerDirList; }
-
-    void printPhis(std::ofstream& f) {
-        for (const auto& branch : branches) 
-            branch->printPhis(f);
-    }
-
-    void printNode(std::ofstream& f) {
-        f << center << " " << nodeLeng << " " << nodeStat << '\n';
+    void printNode(std::ofstream& f) override {
+        f << center << " " << nodeLeng << " " << label << '\n';
         for (const auto& branch : branches)
             branch->printNode(f);
     }
 
+    std::shared_ptr<Node> getSelf() override {
+        return shared_from_this();
+    }
+
+    void buildNeighbors() override;
+
+    void buildLists() override;
+
+    void buildMpoleCoeffs() override;
+
+    void propagateExpCoeffs() override;
+
+    void buildLocalCoeffs() override;
+
     // test methods
     std::shared_ptr<Node> getRandNode(int);
-    const cmplx getPhiFromBranchMpole(const vec3d&, const int);
-    void printMpoleCoeffs(std::ofstream&);
-    void resetNode();
 
-private:
-    std::array<NodeVec, 6> outerDirList; // intersection of list 2 of all branches
+    const cmplx getPhiFromBranchMpole(const vec3d&, const int);
+
+    void printMpoleCoeffs(std::ofstream&);
+
+    void resetNode();
 };

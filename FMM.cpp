@@ -11,8 +11,10 @@ extern constexpr int DIM = 3;
 extern std::chrono::duration<double, std::milli> t_M2X{ 0 };
 extern std::chrono::duration<double, std::milli> t_X2X{ 0 };
 extern std::chrono::duration<double, std::milli> t_X2L{ 0 };
+extern std::chrono::duration<double, std::milli> t_X2L_l4{ 0 };
 extern std::chrono::duration<double, std::milli> t_L2L{ 0 };
-extern std::chrono::duration<double, std::milli> t_direct{ 0 };
+extern std::chrono::duration<double, std::milli> t_L2P{ 0 };
+extern std::chrono::duration<double, std::milli> t_dir{ 0 };
 
 int main()
 {
@@ -57,6 +59,7 @@ int main()
     // ==================== Build tables ==================== //
     cout << " Building tables..\n";
     auto start = chrono::high_resolution_clock::now();
+    auto start_ = start;
 
     Node::buildTables(config);
     Node::buildRotationMats();
@@ -69,8 +72,8 @@ int main()
     cout << " Setting up domain...\n";
     start = chrono::high_resolution_clock::now();
 
+    // std::shared_ptr<Node> root = std::make_shared<Stem>(srcs, 0, nullptr);
     shared_ptr<Node> root;
-    // root = make_shared<Stem>(srcs, 0, nullptr);
     if (Nsrcs > config.maxNodeParts)
         root = make_shared<Stem>(srcs, 0, nullptr);
     else
@@ -80,33 +83,22 @@ int main()
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
+    cout << "   # Nodes: " << Node::getNumNodes() << '\n';
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     // ==================== Tests ==================== //
-    // root->setRandNodeStats();
-    std::ofstream nodeFile("out/nodes.txt");
-    root->printNode(nodeFile);
-
-    //const double th = PI/4.0;
-    //const double ph = PI/4.0;
-    //// cout << toSph(fromSph(vec3d(1.0, th, ph))) << '\n';
-    //for (int l = 0; l <= order; ++l) {
-    //    for (int m = -l; m <= l; ++m) {
-    //        auto dthYlm = Node::dthLegendreLM(th, pair2i(l,abs(m))) 
-    //                        * exp(iu*static_cast<double>(m)*ph);
-    //        cout << (abs(dthYlm) > 1.0E-3 ? dthYlm : 0.0 ) << ' ';
-    //    }
-    //    cout << '\n';
-    //}
-
+    root->labelNodes();
     // ==============================================
     // root->ffieldTest(1,10,10);
     // ==============================================   
     // root->mpoleToExpToLocalTest();
     // ==============================================   
-    //root->nfieldTest();
-    //
-    //return 0;
+    // root->nfieldTest();
+
+    std::ofstream nodeFile("out/nodes.txt");
+    root->printNode(nodeFile);
+
+    return 0;
     // ==================== Upward pass ==================== //
     cout << " Computing upward pass...\n";
     start = chrono::high_resolution_clock::now();
@@ -136,12 +128,18 @@ int main()
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
+    chrono::duration<double, milli> fmm_duration_ms = end - start_;
+
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
     cout << "   Elapsed time (X2L): " << t_X2L.count() << " ms\n";
+    cout << "   Elapsed time (X2L,l4): " << t_X2L_l4.count() << " ms\n";
     cout << "   Elapsed time (L2L): " << t_L2L.count() << " ms\n";
-    cout << "   Elapsed time (direct): " << t_direct.count() << " ms\n";
+    cout << "   Elapsed time (L2P): " << t_L2P.count() << " ms\n";
+    cout << "   Elapsed time (Direct): " << t_dir.count() << " ms\n";
 
     printSols(srcs, "out/phi.txt", "out/fld.txt");
+
+    cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n\n";
 
     // ==================== Compute direct ==================== //
     if (!config.evalDirect) return 0;

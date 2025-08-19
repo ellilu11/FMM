@@ -13,8 +13,11 @@ isNode = (nodeStats == 1);
 assert( nnz(isNode) == 1 );
 nodeLeng = nodeLengs(isNode);
 
-fprintf('# Neighbor nodes: %d\n', nnz(nodeStats == 2));
-fprintf('# Interaction nodes: %d\n', nnz(nodeStats >= 3));
+% fprintf('# Neighbor nodes: %d\n', nnz(nodeStats == 2));
+% fprintf('# Interaction nodes: %d\n', nnz(nodeStats >= 3));
+fprintf('# List 3 nodes: %d\n', nnz(nodeStats == 3));
+fprintf('# List 1 nodes: %d\n', nnz(nodeStats == 4));
+fprintf('# Overlapping nodes: %d\n', nnz(nodeStats > 4));
 
 %%
 % faces = [1 2; 1 3; 2 3];
@@ -42,7 +45,7 @@ fprintf('# Interaction nodes: %d\n', nnz(nodeStats >= 3));
 % scatter3(obss(:,1), obss(:,2), obss(:,3));
 % hold off;
 %%
-rootLeng = 5.0E-2;
+rootLeng = 1.0;
 lim = [-rootLeng/2 rootLeng/2];
 
 figure(4)
