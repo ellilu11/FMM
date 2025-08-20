@@ -86,7 +86,6 @@ void Stem::propagateExpCoeffs() {
             // build exp coeffs of branches, merge them, and propagate to outer dirlist
             auto mergedExpCoeffs = getMergedExpCoeffs(dir);
 
-            
             t_M2X += chrono::high_resolution_clock::now() - start;
 
             start = chrono::high_resolution_clock::now();
@@ -113,13 +112,13 @@ void Stem::buildLocalCoeffs() {
     if (!isRoot()) {
         auto start = std::chrono::high_resolution_clock::now();
 
-        buildLocalCoeffsFromLeafIlist();
+        addToLocalCoeffsFromLeafIlist();
 
         t_X2L_l4 += std::chrono::high_resolution_clock::now() - start;
 
         start = std::chrono::high_resolution_clock::now();
 
-        buildLocalCoeffsFromDirList();
+        addToLocalCoeffsFromDirList();
 
         t_X2L += std::chrono::high_resolution_clock::now() - start;
 

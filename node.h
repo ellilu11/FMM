@@ -85,6 +85,8 @@ public:
     void assignToDirList(std::array<NodeVec, 6>&, const std::shared_ptr<Node>&, const double);
     
     void buildInteractionList();
+
+    void buildOuterInteractionList();
     
     void pushSelfToNearNonNbors();
    
@@ -94,8 +96,10 @@ public:
 
     void addToLocalCoeffsFromLeafIlist();
 
-    const std::vector<vecXcd> getMpoleToExpCoeffs(const int) const;
-    
+    std::vector<vecXcd> getMpoleToExpCoeffs(const int);
+
+    const std::vector<vecXcd> getMergedExpCoeffs(const int) const;
+
     void addShiftedExpCoeffs(const std::vector<vecXcd>&, const vec3d&, const int);
 
     const double getDirectPhi(const vec3d&);
@@ -180,7 +184,8 @@ protected:
 
     NodeVec branches;
     NodeVec nbors; // list 1
-    std::array<NodeVec,6> dirList; // list 2, indexed by direction
+    std::array<NodeVec, 6> dirList; // list 2, indexed by direction
+    std::array<NodeVec, 6> outerDirList; // intersection of list 2 of all branches
     NodeVec leafIlist; // list 4
 
     std::vector<vecXcd> coeffs;

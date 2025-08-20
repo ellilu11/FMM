@@ -9,8 +9,6 @@ Tables Node::tables;
 std::array<std::vector<matXcd>,14> Node::wignerD;
 std::array<std::vector<matXcd>,14> Node::wignerDInv;
 std::array<mat3d,6> Node::rotMatR;
-int Node::numNodes;
-
 
 void Node::setNodeParams(const Config& config) {
     order = ceil(-std::log(config.EPS) / std::log(2));
@@ -143,30 +141,36 @@ void Node::buildInteractionList() {
 
     auto notContains = [](NodeVec& vec, std::shared_ptr<Node> ele) {
         return std::find(vec.begin(), vec.end(), ele) == vec.end();
-    };
+        };
 
     NodeVec iList;
-    auto baseNbors = base->getNearNeighbors();
 
-    for (const auto& baseNbor : baseNbors)
-        if (baseNbor->isNodeType<Leaf>() && notContains(nbors, baseNbor))
+    for (const auto& baseNbor : base->nbors) {
+        if (baseNbor->isNodeType<Leaf>() && notContains(nbors, baseNbor)) {
             leafIlist.push_back(baseNbor); // list 4
-        else {
-            const auto center0 = base->getCenter();
-            const auto maxDist = base->getLeng();
-            for (const auto& branch : baseNbor->branches)
-                if (notContains(nbors, branch) && 
-                    (branch->getCenter()-center0).lpNorm<Eigen::Infinity>() < maxDist )
-                    iList.push_back(branch);
+            continue;
         }
+        const auto center0 = base->getCenter();
+        const auto maxDist = base->getLeng();
+        for (const auto& branch : baseNbor->branches)
+            if (notContains(nbors, branch) &&
+                (branch->getCenter()-center0).lpNorm<Eigen::Infinity>() < maxDist)
+                iList.push_back(branch);
+    }
 
     assert(iList.size() <= pow(4, DIM) - pow(3, DIM));
 
-    // pick minDist \in (nodeLeng, 2.0*nodeLeng) to avoid rounding errors
+    /* pick minDist \in (nodeLeng, 2.0*nodeLeng) to avoid rounding errors */
     const double minDist = 1.5 * nodeLeng;
 
     for (const auto& node : iList)
         assignToDirList(dirList, node, minDist);
+
+    //auto dirListSize =
+    //    std::accumulate(dirList.begin(), dirList.end(), size_t{ 0 },
+    //        [](size_t sum, const auto& vec) { return sum + vec.size(); });
+    //assert(dirListSize == iList.size());
+}
 
 void Node::buildOuterInteractionList() {
     assert(!isRoot());
@@ -176,21 +180,8 @@ void Node::buildOuterInteractionList() {
         if (nbor->isNodeType<Leaf>()) continue;
             
         auto nodes = nbor->getBranches();
-        for (const auto& node : nodes) {
-            auto center0 = node->getCenter();
-            if (center0[2] - center[2] > minDist) // uplist
-                outerDirList[0].push_back(node);
-            else if (center[2] - center0[2] > minDist) // downlist
-                outerDirList[1].push_back(node);
-            else if (center0[1] - center[1] > minDist) // northlist
-                outerDirList[2].push_back(node);
-            else if (center[1] - center0[1] > minDist) // southlist
-                outerDirList[3].push_back(node);
-            else if (center0[0] - center[0] > minDist) // eastlist
-                outerDirList[4].push_back(node);
-            else if (center[0] - center0[0] > minDist) // westlist
-                outerDirList[5].push_back(node);
-        }
+        for (const auto& node : nodes)
+            assignToDirList(outerDirList, node, minDist);
     }
 
     auto dirListSize =
@@ -198,17 +189,6 @@ void Node::buildOuterInteractionList() {
             [](size_t sum, const auto& vec) { return sum + vec.size(); });
     assert(dirListSize <= pow(6, DIM) - pow(4, DIM));
 }
-
-void Node::buildLocalCoeffsFromLeafIlist() {
-    // if # particles is small, evaluate sol at particles directly
-    if (particles.size() <= order*order) {
-        for (const auto& obs : particles)
-            for (const auto& iNode : leafIlist) {
-                obs->addToPhi(iNode->getDirectPhi(obs->getPos()));
-                obs->addToFld(iNode->getDirectFld(obs->getPos()));
-            }
-        return;
-    }
 
 /* If leaf is in list 4 of self, self is in list 3 of leaf */
 void Node::pushSelfToNearNonNbors() {
