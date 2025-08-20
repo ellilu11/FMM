@@ -151,7 +151,7 @@ int main() {
     cout << " Computing direct..." << endl;
     start = chrono::high_resolution_clock::now();
 
-    auto solsDir = root->getDirectSols();
+    auto dirSols = root->getDirectSols();
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
@@ -161,7 +161,7 @@ int main() {
     fldAnlFile << setprecision(15) << scientific;
     phiAnlFile << setprecision(15) << scientific;
 
-    for (const auto& sol : solsDir) {
+    for (const auto& sol : dirSols) {
         phiAnlFile << sol.first << '\n';
         fldAnlFile << sol.second << '\n';
     }

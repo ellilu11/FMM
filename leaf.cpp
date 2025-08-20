@@ -32,6 +32,7 @@ void Leaf::buildLists() {
     pushSelfToNearNonNbors();
 }
 
+/* buildMpoleCoeffs : Build mpole expansions from particles in this node (P2M) */
 void Leaf::buildMpoleCoeffs() {
     for (int l = 0; l <= order; ++l)
         coeffs.emplace_back(vecXcd::Zero(2*l+1));
@@ -100,7 +101,7 @@ void Leaf::buildLocalCoeffs() {
     evaluateSolAtParticles();
 }
 
-/* from local expansion */
+/* getFarSols : Return sols from local expansion due to far nodes */
 solVec Leaf::getFarSols() const {
     solVec sols;
 
@@ -150,7 +151,8 @@ solVec Leaf::getFarSols() const {
     return sols;
 }
 
-/* from particles in near non-neighbors (list 3) */
+/* getNearNonNborSols : Evaluate sols directly or from mpole expansion due to
+   near non-neighbor nodes (list 3) */
 solVec Leaf::getNearNonNborSols() const {
     solVec sols;
 
@@ -162,19 +164,19 @@ solVec Leaf::getNearNonNborSols() const {
         vec3cd fld_R = fld;
 
         for (const auto& node : nearNonNbors) {
+
             // # srcs small, do direct
             const auto srcs = node->getParticles();
-
             if (srcs.size() <= order*order) {
                 for (const auto& src : srcs) {
-                    assert(obs != src);
+                    // assert(obs != src);
 
                     const auto dX = obsPos - src->getPos();
-                    const auto dist = dX.norm();
-                    const auto charge = src->getCharge();
+                    const auto r = dX.norm();
+                    const auto srcPhi = src->getCharge() / r;
 
-                    phi += charge / dist;
-                    fld += charge * dX / pow(dist, 3);
+                    phi += srcPhi;
+                    fld += srcPhi * dX / pow(r, 2);
                 }
                 continue;
             }
@@ -226,6 +228,35 @@ solVec Leaf::getNearNonNborSols() const {
 }
 
 /* from particles in near neighbors (list 1) */
+/*solVec Leaf::getNearNborSols() const {
+    solVec sols;
+
+    for (const auto& obs : particles) {
+        double phi = 0.0;
+        vec3d fld = vec3d::Zero();
+
+        const auto obsPos = obs->getPos();
+
+        for (const auto& node : nearNbors) {
+            auto srcs = node->getParticles();
+
+            for (const auto& src : node->getParticles()) {
+                // assert(obs != src);
+
+                const auto dX = obs->getPos() - src->getPos();
+                const auto r = dX.norm();
+                const auto srcPhi = src->getCharge() / r;
+
+                phi += srcPhi;
+                fld += srcPhi * dX / pow(r, 2);
+            }
+        }
+        sols.push_back(pairSol(phi,fld));
+    }
+    return sols;
+}*/
+
+/* getNearNborSols : Evaluate sols directly from near neighbor nodes (list 1) */
 solVec Leaf::getNearNborSols() const {
     solVec sols;
 
@@ -233,72 +264,30 @@ solVec Leaf::getNearNborSols() const {
         double phi = 0.0;
         vec3d fld = vec3d::Zero();
 
-        auto obsPos = obs->getPos();
+        const auto obsPos = obs->getPos();
 
         for (const auto& node : nearNbors) {
-            auto srcs = node->getParticles();
-
-            for (const auto& src : node->getParticles()) {
-                assert(obs != src);
-
-                vec3d dX = obs->getPos() - src->getPos();
-                auto dist = dX.norm();
-                auto charge = src->getCharge();
-
-                phi += charge / dist;
-                fld += charge * dX / pow(dist, 3);
-            }
+            auto [srcNodePhi, srcNodeFld] = node->getDirectSol(obsPos);
+            phi += srcNodePhi;
+            fld += srcNodeFld;
         }
         sols.push_back(pairSol(phi,fld));
     }
     return sols;
 }
 
-/* from other particles in this node */
-solVec Leaf::getSelfSols() const {
-    solVec sols;
-
-    for (const auto& obs : particles) {
-        double phi = 0.0;
-        vec3d fld = vec3d::Zero();
-
-        auto obsPos = obs->getPos();
-
-        // due to other particles in this node (implement reciprocity later)
-        for (const auto& src : particles) {
-            if (src == obs) continue;
-
-            vec3d dX = obs->getPos() - src->getPos();
-            auto dist = dX.norm();
-            auto charge = src->getCharge();
-
-            phi += charge / dist;
-            fld += charge * dX / pow(dist, 3);
-
-        }
-        sols.push_back(pairSol(phi,fld));
-    }
-    return sols;
-}
-
-// pass calculated phi and fld to particles
+/* evaluateSolAtParticles: Evaluate and pass sols to particles */ 
 void Leaf::evaluateSolAtParticles() {
-    if (isRoot()) return; // fix later
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    auto sols = 
-        getFarSols()
-        + getNearNonNborSols()
-        ;
+    auto sols = getFarSols() + getNearNonNborSols();
 
     t_L2P += std::chrono::high_resolution_clock::now() - start;
 
     start = std::chrono::high_resolution_clock::now();
 
-    sols = sols
-        + getNearNborSols()
-        + getSelfSols();
+    sols = sols + getNearNborSols() + getDirectSols();
 
     t_dir += std::chrono::high_resolution_clock::now() - start;
 

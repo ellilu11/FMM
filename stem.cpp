@@ -41,6 +41,7 @@ void Stem::buildLists() {
         buildNbors();
         buildInteractionList();
         buildOuterInteractionList();
+        pushSelfToNearNonNbors();
     }
 
     for (const auto& branch : branches)
