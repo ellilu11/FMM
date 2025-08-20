@@ -11,14 +11,31 @@
 using realVec = std::vector<double>;
 using cmplx = std::complex<double>;
 using cmplxVec = std::vector<cmplx>;
+
 using pair2i = std::pair<int, int>;
 using pair2d = std::pair<double, double>;
+using pairSol = std::pair<double, vec3d>;
+using solVec = std::vector<pairSol>;
 
 const double PI = std::acos(-1.0);
-constexpr cmplx iu(0, 1);
+constexpr cmplx iu(0,1);
 
-std::array<bool, 3> operator> (const vec3d& x, const vec3d& y) {
-    std::array<bool, 3> bools{ x[0] > y[0], x[1] > y[1], x[2] > y[2] };
+pairSol operator+ (const pairSol& sol0, const pairSol& sol1) {
+    return pairSol(sol0.first + sol1.first,
+        sol0.second + sol1.second);
+}
+
+// TODO : Use a concept to enforce that the template type is summable
+template <typename T>
+std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
+    std::vector<T> sum;
+    for (size_t i = 0; i < zs.size(); ++i)
+        sum.push_back(zs[i] + ws[i]);
+    return sum;
+}
+
+std::array<bool,3> operator> (const vec3d& x, const vec3d& y) {
+    std::array<bool,3> bools{ x[0] > y[0], x[1] > y[1], x[2] > y[2] };
     return bools;
 }
 
@@ -57,7 +74,6 @@ vec3d toSph(const vec3d& X) {
 
     auto toPhi = [](double x, double y) {
         if (x == 0 && y == 0) return 0.0; // pick phi = 0.0
-            // throw std::runtime_error("Azimuthal angle undefined");
         return std::atan2(y,x);
     };
 
@@ -67,14 +83,6 @@ vec3d toSph(const vec3d& X) {
 //constexpr int constPow(int base, int exp) {
 //    return (exp == 0) ? 1 : base * constPow(base,exp-1);
 //}
-
-template <typename T>
-std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
-    std::vector<T> sum;
-    for (size_t i = 0; i < zs.size(); ++i)
-        sum.push_back(zs[i] + ws[i]);
-    return sum;
-}
 
 // return \sum_i (coeffs[i] * z^i)
 template <typename T>

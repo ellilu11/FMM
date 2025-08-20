@@ -14,7 +14,7 @@ extern const int DIM;
 extern std::chrono::duration<double, std::milli> t_M2X;
 extern std::chrono::duration<double, std::milli> t_X2X;
 extern std::chrono::duration<double, std::milli> t_X2L;
-extern std::chrono::duration<double, std::milli> t_X2L_l4;
+extern std::chrono::duration<double, std::milli> t_P2L;
 extern std::chrono::duration<double, std::milli> t_L2L;
 extern std::chrono::duration<double, std::milli> t_L2P;
 extern std::chrono::duration<double, std::milli> t_dir;
@@ -102,14 +102,10 @@ public:
 
     void addShiftedExpCoeffs(const std::vector<vecXcd>&, const vec3d&, const int);
 
-    const double getDirectPhi(const vec3d&);
-    
-    const realVec getDirectPhis();
-    
-    const vec3d getDirectFld(const vec3d&);
-    
-    const std::vector<vec3d> getDirectFlds();
+    const pairSol getDirectSol(const vec3d&, const double = 1.0E-12);
 
+    const solVec getDirectSols();
+   
     /* pure virtual */
     virtual std::shared_ptr<Node> getSelf() = 0;
     
@@ -129,13 +125,13 @@ public:
     int getLvl() { return std::round(std::log(rootLeng/nodeLeng)/std::log(2)); }
 
     void labelNode(int label_) { 
-        //if (label) {
-        //    std::cout << " Duplicate node! Node types: " << '\n';
-        //    label = 7;
-        //} else
-        //    label = label_;
+        if (label) {
+            std::cout << " Duplicate node! Node types: " << '\n';
+            label = 7;
+        } else
+            label = label_;
 
-        label += label_; 
+        // label += label_; 
     }
 
     //static void setExponentialOrder(const Precision prec) {
