@@ -1,5 +1,5 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
-srcs = readmatrix(strcat(dir,"config\part3D\uniform_plus.txt"));
+srcs = readmatrix(strcat(dir,"config\part3D\uniform_dip.txt"));
 phi = readmatrix(strcat(dir,"out\phi.txt"));
 fld = readmatrix(strcat(dir,"out\fld.txt"));
 
@@ -7,7 +7,6 @@ phiAnl = readmatrix(strcat(dir,"out\phiAnl.txt"));
 fldAnl = readmatrix(strcat(dir,"out\fldAnl.txt"));
 
 nvec = 1:size(phi,1);
-pvec = [4];
 close all;
 %%
 phiSort = sortrows(phi);
@@ -17,10 +16,8 @@ figure(1);
 % [phiAnl, phi]
 hold on;
 plot(nvec, phiAnlSort, nvec, phiSort);
-legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
-     'UniformOutput',false))],...
-     'Location','southeast');
 
+% hold on;
 figure(2);
 relErr = abs(phiSort-phiAnlSort)./abs(phiAnlSort);
 semilogy(nvec, relErr, '-o');
@@ -32,9 +29,6 @@ fldAnlSort = sortrows(fldAnl,ele);
 
 figure(3);
 plot(nvec, fldAnlSort(:,ele), nvec, fldSort(:,ele));
-legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
-     'UniformOutput',false))],...
-     'Location','southeast');
 
 figure(4);
 relErrFld = abs(fldSort(:,ele)-fldAnlSort(:,ele))./abs(fldAnlSort(:,ele));

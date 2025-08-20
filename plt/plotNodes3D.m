@@ -1,21 +1,26 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
-srcs = readmatrix(strcat(dir,"config\part3D\uniform_plus.txt"));
-% obss = readmatrix(strcat(dir,"config\obss.txt"));
+srcs = readmatrix(strcat(dir,"config\part3D\uniform_dip.txt"));
 nodes = readmatrix(strcat(dir,"out\nodes.txt"));
 
+nodePos = nodes(:,1:3);
 nodeLengs = nodes(:,4);
-nodeStats = nodes(:,5);
 nodeVec = [nodes(:,1:4),nodeLengs,nodeLengs];
 nodeVec(:,1:3) = nodeVec(:,1:3) - nodeVec(:,4:6)/2;
 
-clc;
-isNode = (nodeStats == 1);
-assert( nnz(isNode) == 1 );
-nodeLeng = nodeLengs(isNode);
+nodeStats = nodes(:,5);
+isSelf = (nodeStats == 1);
+assert( nnz(isSelf) == 1 );
 
-fprintf('# Neighbor nodes: %d\n', nnz(nodeStats == 2));
-fprintf('# Interaction nodes: %d\n', nnz(nodeStats >= 3));
+% fprintf('# Neighbor nodes: %d\n', nnz(nodeStats == 2));
+% fprintf('# Interaction nodes: %d\n', nnz(nodeStats >= 3));
+fprintf('# List 1 nodes: %d\n', nnz(nodeStats == 2));
+fprintf('# List 2 nodes: %d\n', nnz(nodeStats == 3));
+fprintf('# List 3 leaf nodes: %d\n', nnz(nodeStats == 4));
+fprintf('# List 3 stem nodes: %d\n', nnz(nodeStats == 5));
+fprintf('# List 4 nodes: %d\n', nnz(nodeStats == 6));
+fprintf('# Duplicate nodes: %d\n', nnz(nodeStats == 7));
 
+close all;
 %%
 % faces = [1 2; 1 3; 2 3];
 % close all;
@@ -48,36 +53,48 @@ lim = [-rootLeng/2 rootLeng/2];
 figure(4)
 for stat=1:8
     nodes = nodeVec(nodeStats == stat,:);
-    if (stat==2)
-        scatter3(nodes(:,1),nodes(:,2),nodes(:,3),stat2rgb(stat))
-    else
         scatter3(nodes(:,1),nodes(:,2),nodes(:,3),stat2rgb(stat),'filled')
-    end
     hold on
 end
 hold off
 
-xlim(lim); ylim(lim); zlim(lim);
+% xlim(lim); ylim(lim); zlim(lim);
 xlabel('x'); ylabel('y'); zlabel('z'); 
 
+%% 
+% clc;
+% isDup = (nodeStats == 7);
+% selfNodePos = nodePos(isSelf,:);
+% dupeNodePos = nodePos(isDup,:);
+% numDupes = size(dupeNodePos,1);
+% 
+% dX = zeros(numDupes,3);
+% for i=1:numDupes
+%     dX(i,:) = abs(dupeNodePos(i,:)-selfNodePos);
+% end
+% 
+% dX
+% dL = (nodeLengs(isDup) + nodeLengs(isSelf))/2
 %%
 function rgb = stat2rgb(stat)
     switch stat
+        case 0
+            rgb = "none";
         case 1
-            rgb = "black";
+            rgb = "black"; % self
         case 2
-            rgb = "black";
+            rgb = "green"; % list 1
         case 3 
-            rgb = "red"; % uplist
+            rgb = "yellow";  % list 2
         case 4 
-            rgb = "green"; % downlist
+            rgb = "cyan"; % list 3 (leaf)
         case 5 
-            rgb = "blue"; % northlist
+            rgb = "blue";  % list 3 (stem)
         case 6 
-            rgb = "cyan"; % southlist
+            rgb = "magenta"; % list 4
         case 7 
-            rgb = "magenta"; % eastlist
+            rgb = "red"; 
         case 8 
-            rgb = "yellow"; % westlist
+            rgb = "yellow"; 
     end
 end

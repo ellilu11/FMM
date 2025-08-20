@@ -76,7 +76,7 @@ void Node::mpoleToExpToLocalTest() {
     for (int trial = 0; trial < ntrials; ++trial) {
         const int maxLvl = 1;
         auto node = getRandNode(maxLvl);
-        while (!node->getParticles().size())
+        while (!node->particles.size())
             node = getRandNode(maxLvl);
         node->printMpoleCoeffs(coeffsFile);
         cout << " Trial " << trial << ", # Particles in this node: " << node->getParticles().size() << '\n';
@@ -95,7 +95,7 @@ void Node::mpoleToExpToLocalTest() {
 
                     // analytic
                     double phiAnl = 0;
-                    for (const auto& src : node->getParticles())
+                    for (const auto& src : node->particles)
                         phiAnl += src->getCharge() / (obs->getPos() - src->getPos()).norm();
                     outAnlFile << phiAnl << ' ';
                 }

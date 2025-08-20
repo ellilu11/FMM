@@ -25,15 +25,17 @@ void Leaf::printMpoleCoeffs(std::ofstream& f) {
 
 void Leaf::resetNode() {
     // coeffs.clear();
-    localCoeffs.clear();
+    // localCoeffs.clear();
     //nbors.clear();
     //iList.clear();
     //dirList = {};
 
-    for (int dir = 0; dir < 6; ++dir) {
-        std::vector<vecXcd> expCoeffs_dir;
-        for (int k = 0; k < orderExp; ++k)
-            expCoeffs_dir.emplace_back(vecXcd::Zero(tables.quadLengs_[k]));
-        expCoeffs[dir] = expCoeffs_dir;
-    }
+    //for (int dir = 0; dir < 6; ++dir) {
+    //    std::vector<vecXcd> expCoeffs_dir;
+    //    for (int k = 0; k < orderExp; ++k)
+    //        expCoeffs_dir.emplace_back(vecXcd::Zero(tables.quadLengs_[k]));
+    //    expCoeffs[dir] = expCoeffs_dir;
+    //}
+
+    label = 0;
 }

@@ -16,8 +16,7 @@ extern std::chrono::duration<double, std::milli> t_L2L{ 0 };
 extern std::chrono::duration<double, std::milli> t_L2P{ 0 };
 extern std::chrono::duration<double, std::milli> t_dir{ 0 };
 
-int main()
-{
+int main() {
     Config config("config/config.txt");
 
     // ==================== Make particles ==================== //
@@ -32,7 +31,7 @@ int main()
             Nsrcs = srcs.size();
             break;
 
-        case Mode::GEN : {
+        case Mode::WRITE : {
             srcs = makeParticles<uniform_real_distribution<double>>(config);
             Nsrcs = config.nsrcs;
 
@@ -47,7 +46,7 @@ int main()
     Node::setNodeParams(config);
     const int order = Node::getExpansionOrder();
 
-    cout << " Mode:              " << (config.mode == Mode::READ ? "READ" : "GEN") << '\n';
+    cout << " Mode:              " << (config.mode == Mode::READ ? "READ" : "WRITE") << '\n';
     cout << " Source file:       " << fname << '\n';
     cout << " # sources:         " << Nsrcs << '\n';
     cout << " Root length:       " << config.L << '\n';
@@ -70,10 +69,9 @@ int main()
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
-    start = chrono::high_resolution_clock::now();
 
+    // std::shared_ptr<Node> root = std::make_shared<Stem>(srcs, 0, nullptr);
     shared_ptr<Node> root;
-    // root = make_shared<Stem>(srcs, 0, nullptr);
     if (Nsrcs > config.maxNodeParts)
         root = make_shared<Stem>(srcs, 0, nullptr);
     else
@@ -86,19 +84,29 @@ int main()
     cout << "   # Nodes: " << Node::getNumNodes() << '\n';
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
+    // ==================== Tests ==================== //
+    root->labelNodes();
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
-    // ==================== Tests ==================== //
-    // root->setRandNodeStats();
+    //// cout << toSph(fromSph(vec3d(1.0, th, ph))) << '\n';
+    //for (int l = 0; l <= order; ++l) {
+    //    for (int m = -l; m <= l; ++m) {
+    //        auto dthYlm = Node::dthLegendreLM(th, pair2i(l,abs(m))) 
+    //                        * exp(iu*static_cast<double>(m)*ph);
+    // root->nfieldTest();
+    //
+    // return 0;
+    //}
+
     // ==============================================
     // root->ffieldTest(1,10,10);
     // ==============================================   
     // root->mpoleToExpToLocalTest();
     // ==============================================   
-    // root->nfieldTest();
+    //root->nfieldTest();
     //
-    // return 0;
+    //return 0;
     // ==================== Upward pass ==================== //
     cout << " Computing upward pass...\n";
     start = chrono::high_resolution_clock::now();
@@ -129,7 +137,9 @@ int main()
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
     chrono::duration<double, milli> fmm_duration_ms = end - start_;
+    cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n\n";
 
+    // ================== Compute direct phi ================== //
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
     cout << "   Elapsed time (X2L): " << t_X2L.count() << " ms\n";
     cout << "   Elapsed time (X2L,l4): " << t_X2L_l4.count() << " ms\n";
@@ -138,8 +148,6 @@ int main()
     cout << "   Elapsed time (Direct): " << t_dir.count() << " ms\n";
 
     printSols(srcs, "out/phi.txt", "out/fld.txt");
-
-    cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n\n";
 
     // ==================== Compute direct ==================== //
     if (!config.evalDirect) return 0;
@@ -153,8 +161,11 @@ int main()
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     ofstream phiAnlFile("out/phiAnl.txt");
+    phiAnlFile << setprecision(15) << scientific;
     for (const auto& phi : phisAnl)
         phiAnlFile << phi << '\n';
+
+    // ================== Compute direct fld ================== //
 
     cout << " Computing direct fld..." << endl;
     start = chrono::high_resolution_clock::now();
@@ -166,6 +177,7 @@ int main()
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     ofstream fldAnlFile("out/fldAnl.txt");
+    fldAnlFile << setprecision(15) << scientific;
     for (const auto& fld : fldsAnl)
         fldAnlFile << fld << '\n';
 

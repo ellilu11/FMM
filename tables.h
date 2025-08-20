@@ -157,7 +157,7 @@ void Tables::buildExpTables(const int order) {
 
             cmplxVec expI_alphas_kj;
             for (int m = -order; m <= order; ++m)
-                expI_alphas_kj.push_back( expI(m*alpha_kj) );
+                expI_alphas_kj.push_back(expI(m*alpha_kj));
             expI_alphas_k.push_back(expI_alphas_kj);
 
             std::array<cmplx,25> expsInner_kj;

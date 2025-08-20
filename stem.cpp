@@ -24,9 +24,21 @@ Stem::Stem(
     }
 }
 
+void Stem::buildNbors() {
+    assert(!isRoot());
+
+    for (int i = 0; i < numDir; ++i) {
+        Dir dir = static_cast<Dir>(i);
+        auto nbor = getNeighborGeqSize(dir);
+        if (nbor != nullptr)
+            nbors.push_back(nbor);
+    }
+    assert(nbors.size() <= numDir);
+}
+
 void Stem::buildLists() {
     if (!isRoot()) {
-        buildNearNeighbors();
+        buildNbors();
         buildInteractionList();
         buildOuterInteractionList();
     }
@@ -74,6 +86,7 @@ void Stem::propagateExpCoeffs() {
             // build exp coeffs of branches, merge them, and propagate to outer dirlist
             auto mergedExpCoeffs = getMergedExpCoeffs(dir);
 
+            
             t_M2X += chrono::high_resolution_clock::now() - start;
 
             start = chrono::high_resolution_clock::now();

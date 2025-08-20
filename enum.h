@@ -2,7 +2,7 @@
 
 enum class Mode {
     READ,
-    GEN
+    WRITE
 };
 
 enum class Dist {

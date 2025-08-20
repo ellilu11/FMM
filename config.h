@@ -19,7 +19,7 @@ struct Config {
     Config(const std::string& fileName) {
         std::ifstream is(fileName);
         is >> mode >> dist >> cdist >> prec
-           >> nsrcs >> L >> EPS >> maxNodeParts  >> evalDirect;
+            >> nsrcs >> L >> EPS >> maxNodeParts  >> evalDirect;
     }
 
     Mode mode;

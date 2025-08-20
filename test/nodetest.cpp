@@ -2,29 +2,29 @@
 
 using namespace std;
 
-void Node::setRandNodeStats() {
-    auto node = getRandNode(1);
-    node->setNodeStat(1);
+void Node::labelNodes() {
 
-    for (const auto& nbor: node->getNearNeighbors())
-        nbor->setNodeStat(2);
+    auto node = getRandNode(2);
 
-    //for (const auto& iNode : node->getInteractionList())
-    //    iNode->setNodeStat(3);
+    node->labelNode(1); // self
 
-    for (int dir = 0; dir < 6; ++dir) {
-        auto iList = node->getDirList()[dir];
-        auto iListOuter = node->getBase()->getOuterDirList()[dir];
-        for (const auto& iNode : iList) 
-            // iNode->setNodeStat(3+dir);
-            iNode->setNodeStat(3);
-        for (const auto& iNode : iListOuter)
-            iNode->setNodeStat(4);
-    }
+    auto leaf = dynamic_pointer_cast<Leaf>(node);
 
-    auto leafIlist = node->getLeafIlist();
-    for (const auto& iNode : leafIlist)
-        iNode->setNodeStat(5);
+    for (const auto& node : leaf->getNearNbors())        // list 1
+        node->labelNode(2);
+
+    for (int dir = 0; dir < 6; ++dir)
+        for (const auto& node : leaf->getDirList(dir))   // list 2
+            node->labelNode(3);
+
+    for (const auto& node : leaf->getNearNonNbors())     // list 3
+        if (node->isNodeType<Leaf>())
+            node->labelNode(4);
+        else
+            node->labelNode(5);
+
+    for (const auto& node : leaf->getLeafIlist())        // list 4
+        node->labelNode(6);
 }
 
 const cmplx Node::getPhiFromMpole(const vec3d& X) {
@@ -36,7 +36,7 @@ const cmplx Node::getPhiFromMpole(const vec3d& X) {
     for (int l = 0; l <= order; ++l) {
         realVec legendreCosCoeffs;
         for (int m = 0; m <= l; ++m)
-            legendreCosCoeffs.push_back(legendreCos(th, l, m));
+            legendreCosCoeffs.push_back(legendreCos(th,l,m));
 
         for (int m = -l; m <= l; ++m) {
             int m_ = m + l;
@@ -44,7 +44,6 @@ const cmplx Node::getPhiFromMpole(const vec3d& X) {
                 legendreCosCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph)
                 // * (m < 0 ? pm(m) : 1.0)
                 ;
-
         }
     }
 
@@ -158,7 +157,7 @@ void Node::mpoleToLocalTest() {
         outFile << '\n';
 
         if (p < order) resetNode();
-    }
+}
 
 
     //cout << iList.size() << '\n';
@@ -173,7 +172,7 @@ void Node::mpoleToLocalTest() {
             phi += iNode->getDirectPhi(obs->getPos());
 
         outAnlFile << phi << ' ';
-    }
+}
     outAnlFile << '\n';
 
 }*/
@@ -230,18 +229,5 @@ void Node::nfieldTest() {
         outFile << '\n';
 
         if (p < order) resetNode();
-
     }
-
-    cout << " Computing pairwise..." << endl;
-    auto start = chrono::high_resolution_clock::now();
-
-    auto phis = getDirectPhis();
-    for (const auto& phi : phis)
-        outAnlFile << phi << ' ';
-    outAnlFile << '\n';
-
-    auto end = chrono::high_resolution_clock::now();
-    chrono::duration<double, milli> duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 }

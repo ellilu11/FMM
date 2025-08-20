@@ -8,11 +8,28 @@ Leaf::Leaf(
 {
 }
 
-void Leaf::buildLists() {
-    if (!isRoot()) {
-        buildNearNeighbors();
-        buildInteractionList();
+void Leaf::buildNbors() {
+    assert(!isRoot());
+
+    for (int i = 0; i < numDir; ++i) {
+        Dir dir = static_cast<Dir>(i);
+        auto nbor = getNeighborGeqSize(dir);
+        if (nbor != nullptr) {
+            nbors.push_back(nbor);
+            auto nbors = getNeighborsLeqSize(nbor, dir);
+            nearNbors.reserve(nearNbors.size() + nbors.size());
+            nearNbors.insert(nearNbors.end(), nbors.begin(), nbors.end());
+        }
     }
+    assert(nbors.size() <= numDir);
+}
+
+void Leaf::buildLists() {
+    if (isRoot()) return;
+    
+    buildNbors();
+    buildInteractionList();
+    pushSelfToNearNonNbors();
 }
 
 void Leaf::buildMpoleCoeffs() {
@@ -27,12 +44,12 @@ void Leaf::buildMpoleCoeffs() {
         for (int l = 0; l <= order; ++l) {
             realVec legendreCoeffs;
             for (int m = 0; m <= l; ++m)
-                legendreCoeffs.push_back(legendreCos(th, l, m));
+                legendreCoeffs.push_back(legendreCos(th,l,m));
 
             for (int m = -l; m <= l; ++m) {
                 coeffs[l][m+l] +=
                     src->getCharge() * r2l *
-                    legendreCoeffs[std::abs(-m)] * expI(static_cast<double>(-m)*ph); 
+                    legendreCoeffs[abs(-m)] * expI(-m*ph); 
             }
             r2l *= r;
         }
@@ -55,6 +72,7 @@ void Leaf::propagateExpCoeffs() {
 }
 
 void Leaf::buildLocalCoeffs() {
+
     if (!isRoot()) {
         auto start = std::chrono::high_resolution_clock::now();
 
@@ -108,11 +126,11 @@ realVec Leaf::getFarPhis() const {
         for (int l = 0; l <= order; ++l) {
             realVec legendreCoeffs;
             for (int m = 0; m <= l; ++m)
-                legendreCoeffs.push_back(legendreCos(th, l, m));
+                legendreCoeffs.push_back(legendreCos(th,l,m));
 
             for (int m = -l; m <= l; ++m)
                 phi += localCoeffs[l][m+l] * r2l *
-                        legendreCoeffs[std::abs(m)] * expI(static_cast<double>(m)*ph);
+                        legendreCoeffs[abs(m)] * expI(m*ph);
             r2l *= r;
         }
         phis.push_back(phi.real());
@@ -122,17 +140,6 @@ realVec Leaf::getFarPhis() const {
 }
 
 std::vector<vec3d> Leaf::getFarFlds() const {
-    auto dLegendreCos = [](const double th, const int l, const int abs_m) {
-        if (!l) return 0.0;
-        assert(0 <= abs_m && abs_m <= l);
-        return
-            l / tan(th) * legendreCos(th, l, abs_m) -
-            (abs_m <= (l-1) ?
-                (l + abs_m) / sin(th) * legendreCos(th, l-1, abs_m)
-                * tables.fracCoeffYlm_[l][abs_m] : // sqrt((l-abs_m)/static_cast<double>(l+abs_m))
-                0.0);
-    };
-
     std::vector<vec3d> flds;
     for (const auto& obs : particles) {
         const auto dR = toSph(obs->getPos() - center);
@@ -149,12 +156,12 @@ std::vector<vec3d> Leaf::getFarFlds() const {
 
             for (int m = -l; m <= l; ++m) {
                 const int abs_m = abs(m);
-                fld_R -= 
-                    localCoeffs[l][m+l] * r2lmm * expI(static_cast<double>(m)*ph) *
+                fld_R -=
+                    localCoeffs[l][m+l] * r2lmm * expI(m*ph) *
                     vec3cd(
                         l * legendreCoeffs[abs_m],             // E_r
                         dLegendreCoeffs[abs_m],                // E_th
-                        cmplx(0, m) * legendreCoeffs[abs_m] ); // E_ph * sin(th)
+                        cmplx(0,m) * legendreCoeffs[abs_m]);   // E_ph * sin(th)
             }
             r2lmm *= r;
         }
@@ -166,13 +173,116 @@ std::vector<vec3d> Leaf::getFarFlds() const {
             {  cos(th),         -sin(th),          0.0             }
         } * fld_R;
 
-        flds.push_back( fld_X.real() );
+        flds.push_back(fld_X.real());
+    }
+    return flds;
+}
+
+// due to particles in near non-neighbors (list 3)
+realVec Leaf::getNearNonNborPhis() const {
+    realVec phis;
+
+    for (const auto& obs : particles) {
+        cmplx phi(0, 0);
+        auto obsPos = obs->getPos();
+
+        for (const auto& node : nearNonNbors) {
+            auto srcs = node->getParticles();
+
+            // # srcs small, do direct
+            if (srcs.size() <= order*order) {
+                for (const auto& src : srcs)
+                    phi += src->getCharge() / (obsPos - src->getPos()).norm();
+                continue;
+            }
+
+            // # srcs large, use mpole expansion of src node
+            auto dR = toSph(obsPos - node->getCenter());
+            auto srcCoeffs = node->getMpoleCoeffs();
+
+            double r = dR[0], th = dR[1], ph = dR[2];
+
+            double r2lpp = r;
+            for (int l = 0; l <= order; ++l) {
+                realVec legendreCoeffs;
+                for (int m = 0; m <= l; ++m)
+                    legendreCoeffs.push_back(legendreCos(th, l, m));
+
+                for (int m = -l; m <= l; ++m) {
+                    int m_ = m + l;
+                    phi += srcCoeffs[l][m_] / r2lpp *
+                        legendreCoeffs[abs(m)] * expI(m*ph);
+
+                }
+                r2lpp *= r;
+            }
+        }
+        phis.push_back(phi.real());
+    }
+    return phis;
+}
+
+std::vector<vec3d> Leaf::getNearNonNborFlds() const {
+    std::vector<vec3d> flds;
+
+    for (const auto& obs : particles) {
+        vec3cd fld_X = vec3cd::Zero();
+        vec3cd fld_R = fld_X;
+        auto obsPos = obs->getPos();
+
+        for (const auto& node : nearNonNbors) {
+            auto srcs = node->getParticles();
+
+            // # srcs small, do direct
+            if (srcs.size() <= order*order) {
+                for (const auto& src : srcs) {
+                    auto dX = obsPos - src->getPos();
+                    fld_X += src->getCharge() * dX / pow(dX.norm(), 3);
+                }
+                continue;
+            }
+
+            // # srcs large, use mpole expansion of src node
+            auto srcCoeffs = node->getMpoleCoeffs();
+
+            auto dR = toSph(obsPos - node->getCenter());
+            double r = dR[0], th = dR[1], ph = dR[2];
+
+            double r2lp2 = r*r;
+            for (int l = 0; l <= order; ++l) {
+                realVec legendreCoeffs, dLegendreCoeffs;
+                for (int m = 0; m <= l; ++m) {
+                    legendreCoeffs.push_back(legendreCos(th, l, m));
+                    dLegendreCoeffs.push_back(dLegendreCos(th, l, m));
+                }
+
+                for (int m = -l; m <= l; ++m) {
+                    const int abs_m = abs(m);
+                    fld_R -=
+                        srcCoeffs[l][m+l] / r2lp2 * expI(m*ph) *
+                        vec3cd(
+                            -(l+1) * legendreCoeffs[abs_m],        // E_r
+                            dLegendreCoeffs[abs_m],                // E_th
+                            cmplx(0,m) * legendreCoeffs[abs_m]);   // E_ph * sin(th)
+                }
+                r2lp2 *= r;
+            }
+
+            // Convert to cartesian components
+            fld_X = mat3d{
+                {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph)/sin(th) },
+                {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph)/sin(th) },
+                {  cos(th),         -sin(th),          0.0             }
+            } * fld_R;
+        }
+
+        flds.push_back(fld_X.real());
     }
     return flds;
 }
 
 template <typename T, typename Func>
-std::vector<T> Leaf::getNearSols(Func kernel) const {
+std::vector<T> Leaf::getNearNborSols(Func kernel) {
     std::vector<T> sols;
 
     for (const auto& obs : particles) {
@@ -182,17 +292,27 @@ std::vector<T> Leaf::getNearSols(Func kernel) const {
         else
             sol = vec3d::Zero();
 
-        // due to other particles in this node (implement reciprocity later)
+        auto obsPos = obs->getPos();
+
+        /* due to other particles in this node */
         for (const auto& src : particles)
             if (src != obs)
                 sol += src->getCharge() * kernel(obs->getPos() - src->getPos());
 
-        // due to particles in neighboring nodes (implement reciprocity much later)
-        for (const auto& nbor : nbors) {
-            auto srcsNbor = nbor->getParticles();
-            for (const auto& src : srcsNbor)
-                sol += src->getCharge() * kernel(obs->getPos() - src->getPos());
+        /* due to particles in all neighbors */
+        //for (const auto& node : nbors) {
+        //    auto srcs = node->getParticles();
+        //    for (const auto& src : srcs)
+        //        sol += src->getCharge() * kernel(obsPos - src->getPos());
+        //}
+
+        /* due to particles in near neighbors (list 1) */
+        for (const auto& node : nearNbors) {
+            auto srcs = node->getParticles();
+            for (const auto& src : srcs)
+                sol += src->getCharge() * kernel(obsPos - src->getPos());
         }
+
         sols.push_back(sol);
     }
     return sols;
@@ -204,18 +324,27 @@ void Leaf::evaluateSolAtParticles() {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    auto phis = getFarPhis();
-    auto flds = getFarFlds();
+    auto phis = 
+        getFarPhis() 
+        + getNearNonNborPhis()
+        ;
+
+    auto flds =
+        getFarFlds()
+        + getNearNonNborFlds()
+        ;
 
     t_L2P += std::chrono::high_resolution_clock::now() - start;
 
     start = std::chrono::high_resolution_clock::now();
-    
-    phis = phis + getNearSols<double>(
+
+    phis = phis 
+        + getNearNborSols<double>(
         [](vec3d X) { return 1.0 / X.norm(); });
 
-    flds = flds + getNearSols<vec3d>(
-        [](vec3d X) { return X / pow(X.norm(), 3); } );
+    flds = flds 
+        + getNearNborSols<vec3d>(
+        [](vec3d X) { return X / pow(X.norm(), 3); });
 
     t_dir += std::chrono::high_resolution_clock::now() - start;
 
