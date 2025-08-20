@@ -4,23 +4,25 @@ int Node::order;
 int Node::orderExp;
 int Node::maxNodeParts;
 double Node::rootLeng;
+int Node::numNodes;
 Tables Node::tables;
 std::array<std::vector<matXcd>,14> Node::wignerD;
 std::array<std::vector<matXcd>,14> Node::wignerDInv;
 std::array<mat3d,6> Node::rotMatR;
-int Node::numNodes = 0;
+
 
 void Node::setNodeParams(const Config& config) {
     order = ceil(-std::log(config.EPS) / std::log(2));
-    maxNodeParts = config.maxNodeParts;
-    rootLeng = config.L;
     orderExp = [&]() -> std::size_t {
         switch (config.prec) {
             case Precision::LOW:    return 8;
             case Precision::MEDIUM: return 17;
             case Precision::HIGH:   return 26;
-        } 
+        }
         }();
+    maxNodeParts = config.maxNodeParts;
+    rootLeng = config.L;
+    numNodes = 0;
 }
 
 void Node::buildTables(const Config& config) {
@@ -92,7 +94,9 @@ Node::Node(
         base->getCenter() + nodeLeng / 2.0 * idx2pm(branchIdx)),
     label(0), useRot(0)
 {
-    // preallocate exp coeffs
+    for (int l = 0; l <= order; ++l)
+        localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
+
     for (int dir = 0; dir < 6; ++dir) {
         std::vector<vecXcd> expCoeffs_dir;
         for (int k = 0; k < orderExp; ++k)
@@ -156,55 +160,17 @@ void Node::buildInteractionList() {
     //assert(dirListSize == iList.size());
 }
 
-// If leaf is in list 4 of self, self is in list 3 of leaf
-void Node::pushSelfToFarNeighbors() {
+/* If leaf is in list 4 of self, self is in list 3 of leaf */
+void Node::pushSelfToNearNonNbors() {
     if (leafIlist.empty()) return;
 
-    // std::cout << isNodeType<Leaf>() << ' ' << leafIlist.size() << '\n';
+    // if (isNodeType<Stem>()) std::cout << leafIlist.size() << "\n";
 
     auto self = getSelf(); // call shared_from_this()
     for (const auto& node : leafIlist) {
         auto leaf = dynamic_pointer_cast<Leaf>(node);
-        leaf->pushToFarNeighbors(self);
+        leaf->pushToNearNonNbors(self);
     }
-}
-
-void Node::buildLocalCoeffsFromLeafIlist() {
-    // if # observers is small, evaluate sol there directly
-    // if (particles.size() <= order*order) {
-        for (const auto& obs : particles)
-            for (const auto& iNode : leafIlist) {
-                obs->addToPhi(iNode->getDirectPhi(obs->getPos()));
-                obs->addToFld(iNode->getDirectFld(obs->getPos()));
-            }
-        return;
-    // }
-
-    // std::cout << "Computing local coeffs from list 4\n";
-    // how to precompute rotation matrices for list 4?
-    /*for (const auto& iNode : leafIlist) {
-        auto mpoleCoeffs( iNode->getMpoleCoeffs() );
-        auto dR = toSph(iNode->getCenter() - center);
-        double r = dR[0], th = dR[1], ph = dR[2];
-
-        for (int j = 0; j <= order; ++j) {
-            for (int k = -j; k <= j; ++k) {
-                int k_j = k + j;
-
-                for (int n = 0; n <= order; ++n) {
-                    for (int m = -n; m <= n;  ++m) {
-                        int m_n = m + n;
-
-                        localCoeffs[j][k_j] +=
-                            mpoleCoeffs[n][m_n] * pow(iu, abs(k-m)-abs(k)-abs(m))
-                            * tables.A_[n][m_n] * tables.A_[j][k_j] / tables.A_[j+n][m-k+j+n]
-                            * legendreCos(th, j+n, abs(m-k)) * expI((m-k)*ph)
-                            / ( pm(n) * pow(r, j+n+1) );
-                    }
-                }
-            }
-        }
-    }*/
 }
 
 const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const {
@@ -235,37 +201,40 @@ const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const
     return shiftedLocalCoeffs;
 }
 
-// no rotation matrices
-/*const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) {
+void Node::addToLocalCoeffsFromLeafIlist() {
+    /* if # observers is small, evaluate sol there directly */
+    if (particles.size() <= order*order) {
+        for (const auto& obs : particles)
+            for (const auto& iNode : leafIlist) {
+                obs->addToPhi(iNode->getDirectPhi(obs->getPos()));
+                obs->addToFld(iNode->getDirectFld(obs->getPos()));
+            }
+        return;
+    }
 
-    std::vector<vecXcd> shiftedCoeffs;
-    for (int l = 0; l <= order; ++l)
-        shiftedCoeffs.emplace_back(vecXcd::Zero(2*l+1));
+    /* otherwise, add to local expansion due to srcs in list 4 */
+    for (const auto& node : leafIlist) {
+        for (const auto& src : node->particles){
+            auto dR = toSph(src->getPos() - center);
+            double r = dR[0], th = dR[1], ph = dR[2];
 
-    auto dR = toSph(center-branches[branchIdx]->getCenter());
-    double r = dR[0], th = dR[1], ph = dR[2];
+            double r2lpp = r;
+            for (int l = 0; l <= order; ++l) {
+                realVec legendreCoeffs;
 
-    for (int j = 0; j <= order; ++j) {
-        for (int k = -j; k <= j; ++k) {
-            int k_ = k + j;
+                for (int m = 0; m <= l; ++m)
+                    legendreCoeffs.push_back(legendreCos(th, l, m));
 
-            for (int n = j; n <= order; ++n) {
-                for (int m = std::max(j-n+k,-n); m <= std::min(n-j+k,n);  ++m) {
-                    int m_ = m + n;
-
-                    shiftedCoeffs[j][k_] +=
-                        localCoeffs[n][m_] * pow(iu, abs(m)-abs(k)-abs(m-k))
-                        * tables.A_[n-j][m-k+n-j] * tables.A_[j][k_] / tables.A_[n][m_]
-                        * legendreCos(th, pair2i(n-j, abs(m-k))) * expI(static_cast<double>(m-k)*ph)
-                        * pow(r, n-j) / pow(-1.0,n+j);
-
+                for (int m = -l; m <= l; ++m){
+                    localCoeffs[l][m+l] +=
+                        src->getCharge() / r2lpp *
+                        legendreCoeffs[abs(-m)] * expI(-m*ph);
                 }
+                r2lpp *= r;
             }
         }
     }
-
-    return shiftedCoeffs;
-}*/
+}
 
 // return phi at X due to all particles in this node
 const double Node::getDirectPhi(const vec3d& X) {

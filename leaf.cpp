@@ -25,11 +25,11 @@ void Leaf::buildNbors() {
 }
 
 void Leaf::buildLists() {
-    if (!isRoot()) {
-        buildNbors();
-        buildInteractionList();
-        pushSelfToNearNonNbors();
-    }
+    if (isRoot()) return;
+    
+    buildNbors();
+    buildInteractionList();
+    pushSelfToNearNonNbors();
 }
 
 void Leaf::buildMpoleCoeffs() {
@@ -82,13 +82,13 @@ void Leaf::buildLocalCoeffs() {
     if (!isRoot()) {
         auto start = std::chrono::high_resolution_clock::now();
 
-        buildLocalCoeffsFromLeafIlist();
+        addToLocalCoeffsFromLeafIlist();
 
         t_X2L_l4 += std::chrono::high_resolution_clock::now() - start;
 
         start = std::chrono::high_resolution_clock::now();
 
-        buildLocalCoeffsFromDirList();
+        addToLocalCoeffsFromDirList();
 
         t_X2L += std::chrono::high_resolution_clock::now() - start;
 
@@ -136,7 +136,7 @@ realVec Leaf::getFarPhis() {
 
             for (int m = -l; m <= l; ++m)
                 phi += localCoeffs[l][m+l] * r2l *
-                        legendreCoeffs[std::abs(m)] * expI(m*ph);
+                        legendreCoeffs[abs(m)] * expI(m*ph);
             r2l *= r;
         }
         phis.push_back(phi.real());
@@ -195,40 +195,40 @@ std::vector<vec3d> Leaf::getFarFlds() {
     return flds;
 }
 
-// due to particles in far neighbors (list 3)
-realVec Leaf::getMidPhis() {
+// due to particles in near non-neighbors (list 3)
+realVec Leaf::getNearNonNborPhis() {
     realVec phis;
 
     for (const auto& obs : particles) {
-        cmplx phi(0, 0);
+        cmplx phi(0,0);
         auto obsPos = obs->getPos();
 
-        for (const auto& node : farNbors) {
+        for (const auto& node : nearNonNbors) {
             auto srcs = node->getParticles();
 
-            if (srcs.size() <= order*order) // # srcs small, do direct
-                for (const auto& src : srcs) {
-                    auto dX = obsPos - src->getPos();
-                    phi += src->getCharge() / dX.norm();
-                }
+            // # srcs small, do direct
+            if (srcs.size() <= order*order) { 
+                for (const auto& src : srcs) 
+                    phi += src->getCharge() / (obsPos - src->getPos()).norm();
+                continue;
+            }
 
-            else {                          // # srcs large, use mpole expansion
-                auto dR = toSph(obsPos - node->getCenter());
+            // # srcs large, use mpole expansion
+            auto dR = toSph(obsPos - node->getCenter());
+            auto srcCoeffs = node->getMpoleCoeffs();
 
-                double r = dR[0], th = dR[1], ph = dR[2];
-                cmplx phi(0, 0);
+            double r = dR[0], th = dR[1], ph = dR[2];
 
-                for (int l = 0; l <= order; ++l) {
-                    realVec legendreCoeffs;
-                    for (int m = 0; m <= l; ++m)
-                        legendreCoeffs.push_back(legendreCos(th, l, m));
+            for (int l = 0; l <= order; ++l) {
+                realVec legendreCoeffs;
+                for (int m = 0; m <= l; ++m)
+                    legendreCoeffs.push_back(legendreCos(th, l, m));
 
-                    for (int m = -l; m <= l; ++m) {
-                        int m_ = m + l;
-                        phi += coeffs[l][m_] / pow(r, l+1) *
-                            legendreCoeffs[std::abs(m)] * expI(m*ph);
+                for (int m = -l; m <= l; ++m) {
+                    int m_ = m + l;
+                    phi += srcCoeffs[l][m_] / pow(r, l+1) *
+                        legendreCoeffs[abs(m)] * expI(m*ph);
 
-                    }
                 }
             }
         }
@@ -237,38 +237,8 @@ realVec Leaf::getMidPhis() {
     return phis;
 }
 
-/*template <typename T, typename Func>
-std::vector<T> Leaf::getNearSols(Func kernel) {
-    std::vector<T> sols;
-
-    for (const auto& obs : particles) {
-        T sol;
-        if constexpr (std::is_same_v<T, double>)
-            sol = 0.0;
-        else
-            sol = vec3d::Zero();
-
-        auto obsPos = obs->getPos();
-
-        // due to other particles in this node (implement reciprocity later)
-        for (const auto& src : particles)
-            if (src != obs)
-                sol += src->getCharge() * kernel(obsPos - src->getPos());
-
-        // due to particles in neighboring nodes (implement reciprocity much later)
-        // for (const auto& nbor : nbors) {
-        for (const auto& nbor : nearNbors) {
-            auto srcsNbor = nbor->getParticles();
-            for (const auto& src : srcsNbor)
-                sol += src->getCharge() * kernel(obsPos - src->getPos());
-        }
-        sols.push_back(sol);
-    }
-    return sols;
-}*/
-
 template <typename T, typename Func>
-std::vector<T> Leaf::getNearSols(Func kernel) {
+std::vector<T> Leaf::getNearNborSols(Func kernel) {
     std::vector<T> sols;
 
     for (const auto& obs : particles) {
@@ -280,19 +250,31 @@ std::vector<T> Leaf::getNearSols(Func kernel) {
 
         auto obsPos = obs->getPos();
 
-        // due to other particles in this node
+        /* due to other particles in this node */
         for (const auto& src : particles)
             if (src != obs)
                 sol += src->getCharge() * kernel(obsPos - src->getPos());
 
-        // due to particles in near neighbors (list 1)
-        for (int i = 0; i < numDir; ++i) {
-            for (const auto& node : nearNbors[i]) {
-                auto srcs = node->getParticles();
-                for (const auto& src : srcs)
-                    sol += src->getCharge() * kernel(obsPos - src->getPos());
-            }
+        /* due to particles in neighbors (list 1 U list 3) */
+        for (const auto& node : nbors) {
+            auto srcs = node->getParticles();
+            for (const auto& src : srcs)
+                sol += src->getCharge() * kernel(obsPos - src->getPos());
         }
+
+        /* due to particles in near neighbors (list 1) */
+        //for (const auto& node : nearNbors) {
+        //    auto srcs = node->getParticles();
+        //    for (const auto& src : srcs)
+        //        sol += src->getCharge() * kernel(obsPos - src->getPos());
+        //}
+
+        //for (const auto& node : nearNonNbors) {
+        //    auto srcs = node->getParticles();
+        //    for (const auto& src : srcs)
+        //        sol += src->getCharge() * kernel(obsPos - src->getPos());
+        //}
+
         sols.push_back(sol);
     }
     return sols;
@@ -302,21 +284,30 @@ std::vector<T> Leaf::getNearSols(Func kernel) {
 void Leaf::evaluateSolAtParticles() {
     if (isRoot()) return; // fix later
 
-    // std::cout << farNbors.size() << ' ';
+    // std::cout << nearNonNbors.size() << ' ';
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    auto phis = getFarPhis();
-    auto flds = getFarFlds();
+    auto phis = 
+        getFarPhis() 
+        // + getNearNonNborPhis()
+        ;
+
+    auto flds =
+        getFarFlds()
+        // + getNearNonNborFlds()
+        ;
 
     t_L2P += std::chrono::high_resolution_clock::now() - start;
 
     start = std::chrono::high_resolution_clock::now();
 
-    phis = phis + getMidPhis() + getNearSols<double>(
+    phis = phis 
+        + getNearNborSols<double>(
         [](vec3d X) { return 1.0 / X.norm(); });
 
-    flds = flds + getNearSols<vec3d>(
+    flds = flds 
+        + getNearNborSols<vec3d>(
         [](vec3d X) { return X / pow(X.norm(), 3); });
 
     t_dir += std::chrono::high_resolution_clock::now() - start;

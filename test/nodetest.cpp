@@ -3,32 +3,28 @@
 using namespace std;
 
 void Node::labelNodes() {
+
     auto node = getRandNode(2);
 
-    node->labelNode(1);
-
-    //for (const auto& node : node->nbors)
-    //    node->labelNode(2);
-
-    //for (const auto& iNode : node->getInteractionList())
-    //    iNode->setNodeStat(3);
-
-    //for (int dir = 0; dir < 6; ++dir) {
-    //    auto iList = (node->dirList)[dir];
-    //    for (const auto& iNode : iList) 
-    //        iNode->setNodeStat(3+dir);
-    //}
+    node->labelNode(1); // self
 
     auto leaf = dynamic_pointer_cast<Leaf>(node);
 
-    for (const auto& node : leaf->getFarNbors())
-        node->labelNode(3);
+    for (const auto& node : leaf->getNearNbors())        // list 1
+        node->labelNode(2);
 
-    for (int i = 0; i < numDir; ++i)
-        for (const auto& node : leaf->getNearNbors(i)) {
-            // assert(node->label != 3); // check that node in list 1 is not also in list 3
+    for (int dir = 0; dir < 6; ++dir)
+        for (const auto& node : leaf->getDirList(dir))   // list 2
+            node->labelNode(3);
+
+    for (const auto& node : leaf->getNearNonNbors())     // list 3
+        if (node->isNodeType<Leaf>())
             node->labelNode(4);
-        }
+        else
+            node->labelNode(5);
+
+    for (const auto& node : leaf->getLeafIlist())        // list 4
+        node->labelNode(6);
 }
 
 const cmplx Node::getPhiFromMpole(const vec3d& X) {
@@ -233,23 +229,5 @@ void Node::nfieldTest() {
         outFile << '\n';
 
         if (p < order) resetNode();
-
-    node->labelNode(1); // self
-
-    auto leaf = dynamic_pointer_cast<Leaf>(node);
-
-    for (const auto& node : leaf->getNearNbors())     // list 1
-        node->labelNode(2);
-
-    for (const auto& node : leaf->getIlist())         // list 2
-        node->labelNode(3);
-
-    for (const auto& node : leaf->getNearNonNbors())  // list 3
-        if (node->isNodeType<Leaf>())
-            node->labelNode(4);
-        else
-            node->labelNode(5);
-
-    for (const auto& node : leaf->getLeafIlist())     // list 4
-        node->labelNode(6);
+    }
 }

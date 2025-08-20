@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <type_traits>
+#include "enum.h"
 
 template <typename T>
 concept Enum = std::is_enum_v<T>;
@@ -18,7 +19,7 @@ struct Config {
     Config(const std::string& fileName) {
         std::ifstream is(fileName);
         is >> mode >> dist >> cdist >> prec
-           >> nsrcs >> L >> EPS >> maxNodeParts  >> evalDirect;
+            >> nsrcs >> L >> EPS >> maxNodeParts  >> evalDirect;
     }
 
     Mode mode;

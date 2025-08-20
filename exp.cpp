@@ -83,11 +83,8 @@ void Node::addShiftedExpCoeffs(
                 srcExpCoeffs[k][j] * tables.exps_[k][j][l];
 }
 
-void Node::buildLocalCoeffsFromDirList() {
+void Node::addToLocalCoeffsFromDirList() {
     assert(!isRoot());
-
-    for (int l = 0; l <= order; ++l)
-        localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
 
     for (int dirIdx = 0; dirIdx < 6; ++dirIdx) {
         std::vector<vecXcd> rotatedLocalCoeffs;

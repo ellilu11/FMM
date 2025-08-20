@@ -19,7 +19,7 @@ public:
         return shared_from_this();
     }
 
-    void buildNeighbors() override;
+    void buildNbors() override;
 
     void buildLists() override;
 

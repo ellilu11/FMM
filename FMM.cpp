@@ -16,9 +16,8 @@ extern std::chrono::duration<double, std::milli> t_L2L{ 0 };
 extern std::chrono::duration<double, std::milli> t_L2P{ 0 };
 extern std::chrono::duration<double, std::milli> t_dir{ 0 };
 
-int main()
-{
-    Config config("config/config2D.txt");
+int main() {
+    Config config("config/config.txt");
 
     // ==================== Make particles ==================== //
     const auto fname = makeFname(config);
@@ -47,7 +46,7 @@ int main()
     Node::setNodeParams(config);
     const int order = Node::getExpansionOrder();
 
-    cout << " Mode:              " << (config.mode == Mode::READ ? "READ" : "GEN") << '\n';
+    cout << " Mode:              " << (config.mode == Mode::READ ? "READ" : "WRITE") << '\n';
     cout << " Source file:       " << fname << '\n';
     cout << " # sources:         " << Nsrcs << '\n';
     cout << " Root length:       " << config.L << '\n';
@@ -70,8 +69,6 @@ int main()
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
-    auto start = chrono::high_resolution_clock::now();
-    auto start_ = start;
 
     // std::shared_ptr<Node> root = std::make_shared<Stem>(srcs, 0, nullptr);
     shared_ptr<Node> root;
@@ -88,16 +85,23 @@ int main()
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     // ==================== Tests ==================== //
-    root->labelNodes();
+    int ntrials = 50;
+    
+    for (int trial = 0; trial < ntrials; ++trial) {
+        cout << "Trial # " << trial << '\n';
+        root->labelNodes();
+        root->resetNode();
+    }
+    
+    std::ofstream nodeFile("out/nodes.txt");
+    root->printNode(nodeFile);
+
     // ==============================================
     // root->ffieldTest(1,10,10);
     // ==============================================   
     // root->mpoleToExpToLocalTest();
     // ==============================================   
     // root->nfieldTest();
-
-    std::ofstream nodeFile("out/nodes.txt");
-    root->printNode(nodeFile);
 
     return 0;
     // ==================== Upward pass ==================== //
@@ -142,7 +146,7 @@ int main()
 
     cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n\n";
 
-    // ==================== Compute direct ==================== //
+    // ================== Compute direct phi ================== //
     if (!config.evalDirect) return 0;
     cout << " Computing direct phi..." << endl;
     start = chrono::high_resolution_clock::now();
@@ -158,8 +162,7 @@ int main()
     for (const auto& phi : phisAnl)
         phiAnlFile << phi << '\n';
 
-    cout << " Computing direct fld..." << endl;
-    start = chrono::high_resolution_clock::now();
+    // ================== Compute direct fld ================== //
 
     cout << " Computing direct fld..." << endl;
     start = chrono::high_resolution_clock::now();

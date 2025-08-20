@@ -53,22 +53,19 @@ public:
     
     const vec3d getCenter() const { return center; }
     
-    
     Node* getBase() const { return base; }
     
     const NodeVec getBranches() const { return branches; }
     
     NodeVec getNbors() const { return nbors; }
-    
-    NodeVec getIlist() const { return iList; }
+
+    NodeVec getDirList(const int dir) const { return dirList[dir]; }
 
     NodeVec getLeafIlist() const { return leafIlist; }
-
-    void pushSelfToNearNonNbors();
     
-    cmplxVec getMpoleCoeffs() const { return coeffs; }
+    std::vector<vecXcd> getMpoleCoeffs() const { return coeffs; }
     
-    cmplxVec getLocalCoeffs() const { return localCoeffs; }
+    std::vector<vecXcd> getLocalCoeffs() const { return localCoeffs; }
 
     const bool isRoot() const { return base == nullptr; }
     
@@ -86,13 +83,13 @@ public:
     
     void buildInteractionList();
     
-    void pushSelfToFarNeighbors();
+    void pushSelfToNearNonNbors();
    
-    void buildLocalCoeffsFromDirList();
-    
-    void buildLocalCoeffsFromLeafIlist();
+    void addToLocalCoeffsFromDirList();
     
     const std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
+
+    void addToLocalCoeffsFromLeafIlist();
 
     const std::vector<vecXcd> getMpoleToExpCoeffs(const int) const;
     
@@ -109,7 +106,7 @@ public:
     /* pure virtual */
     virtual std::shared_ptr<Node> getSelf() = 0;
     
-    virtual void buildNeighbors() = 0;
+    virtual void buildNbors() = 0;
 
     virtual void buildLists() = 0;
     
@@ -123,16 +120,27 @@ public:
 
     // ========== Test methods ==========
     int getLvl() { return std::round(std::log(rootLeng/nodeLeng)/std::log(2)); }
-    void labelNode(int label_) { label += label_; }
-    static void setExponentialOrder(const Precision prec) {
-        orderExp = [&]() -> std::size_t {
-            switch (prec) {
-                case Precision::LOW:    return 8;
-                case Precision::MEDIUM: return 17;
-                case Precision::HIGH:   return 26;
-            }
-            }();
+
+    void labelNode(int label_) { 
+        if (label) {
+            std::cout << " Duplicate node! Node types: " << label << ' ' << label_ << '\n';
+            label = 7;
+        } else
+            label = label_;
+
+        // label = (label ? 7 : label_);
+        // label += label_; 
     }
+
+    //static void setExponentialOrder(const Precision prec) {
+    //    orderExp = [&]() -> std::size_t {
+    //        switch (prec) {
+    //            case Precision::LOW:    return 8;
+    //            case Precision::MEDIUM: return 17;
+    //            case Precision::HIGH:   return 26;
+    //        }
+    //        }();
+    //}
 
     // definition under test/nodetest.cpp
     void labelNodes();
@@ -150,13 +158,6 @@ public:
     const cmplx getPhiFromExp(const vec3d&, const std::vector<vecXcd>&, const int);
     const cmplx getPhiFromLocal(const vec3d&);
     void mpoleToExpToLocalTest();
-
-    /* Test methods */
-    void labelNode(int label_) { label += label_; }
-
-    void labelNodes();
-
-    virtual std::shared_ptr<Node> getRandNode(int) = 0;
 
 protected:
     static int order;

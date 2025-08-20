@@ -37,35 +37,10 @@ void Stem::buildNbors() {
 }
 
 void Stem::buildLists() {
-
     if (!isRoot()) {
         buildNbors();
         buildInteractionList();
         pushSelfToNearNonNbors();
-    }
-
-    for (const auto& branch : branches)
-        branch->buildLists();
-}
-
-void Stem::buildNeighbors() {
-    assert(!isRoot());
-
-    for (int i = 0; i < numDir; ++i) {
-        Dir dir = static_cast<Dir>(i);
-        auto nbor = getNeighborGeqSize(dir);
-        if (nbor != nullptr)
-            nbors.push_back(nbor);
-    }
-    assert(nbors.size() <= numDir);
-}
-
-void Stem::buildLists() {
-
-    if (!isRoot()) {
-        buildNeighbors();
-        buildInteractionList();
-        // pushSelfToFarNeighbors();
     }
 
     for (const auto& branch : branches)
@@ -164,13 +139,13 @@ void Stem::buildLocalCoeffs() {
     if (!isRoot()) {
         auto start = std::chrono::high_resolution_clock::now();
 
-        buildLocalCoeffsFromLeafIlist();
+        addToLocalCoeffsFromLeafIlist();
 
         t_X2L_l4 += std::chrono::high_resolution_clock::now() - start;
 
         start = std::chrono::high_resolution_clock::now();
 
-        buildLocalCoeffsFromDirList();
+        addToLocalCoeffsFromDirList();
 
         t_X2L += std::chrono::high_resolution_clock::now() - start;
 

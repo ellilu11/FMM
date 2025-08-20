@@ -18,9 +18,11 @@ public:
 
     std::vector<vec3d> getFarFlds();
 
-    realVec getMidPhis();
+    realVec getNearNonNborPhis();
+
+    // realVec getNearNonNborFlds();
     
-    template <typename T, typename Func> std::vector<T> getNearSols(Func);
+    template <typename T, typename Func> std::vector<T> getNearNborSols(Func);
     
     void evaluateSolAtParticles();
 
@@ -40,11 +42,7 @@ public:
         return shared_from_this();
     }
 
-    std::shared_ptr<Node> getSelf() override {
-        return shared_from_this();
-    }
-
-    void buildNeighbors() override;
+    void buildNbors() override;
 
     void buildLists() override;
 
@@ -64,6 +62,7 @@ public:
     void resetNode();
 
 private:
-    NodeVec farNbors; // list 3
-    std::array<NodeVec,numDir> nearNbors; // list 1, indexed by direction
+    NodeVec nearNbors; // list 1
+    NodeVec nearNonNbors; // list 3
+
 };
