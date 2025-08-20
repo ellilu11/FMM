@@ -17,14 +17,19 @@ void Node::labelNodes() {
         for (const auto& node : leaf->getDirList(dir))   // list 2
             node->labelNode(3);
 
-    for (const auto& node : leaf->getNearNonNbors())     // list 3
+    auto outerDirList = leaf->getBase()->outerDirList;
+    for (int dir = 0; dir < 6; ++dir)
+        for (const auto& node : outerDirList[dir])       // list 2 (outer)
+            node->labelNode(4);
+
+    /*for (const auto& node : leaf->getNearNonNbors())   // list 3
         if (node->isNodeType<Leaf>())
             node->labelNode(4);
         else
             node->labelNode(5);
 
     for (const auto& node : leaf->getLeafIlist())        // list 4
-        node->labelNode(6);
+        node->labelNode(6);*/
 }
 
 const cmplx Node::getPhiFromMpole(const vec3d& X) {
@@ -99,7 +104,7 @@ void Node::ffieldTest(const int Nr, const int Nth, const int Nph) {
     }
 
     for (const auto& obs : obss) 
-        outAnlFile << getDirectPhi(obs) << " ";
+        outAnlFile << getDirectSol(obs).first << " ";
     outAnlFile << '\n';
 
 }

@@ -156,6 +156,9 @@ void Node::buildInteractionList() {
         for (const auto& branch : baseNbor->branches)
             if (notContains(nbors, branch))
                 iList.push_back(branch);
+            //if (notContains(nbors, branch) &&
+            //    (branch->getCenter()-center0).lpNorm<Eigen::Infinity>() < maxDist)
+            //    iList.push_back(branch);
     }
 
     assert(iList.size() <= pow(6, DIM) - pow(3, DIM));
@@ -217,10 +220,8 @@ void Node::addToLocalCoeffsFromLeafIlist() {
     /* if # observers is small, evaluate sol there directly */
     if (particles.size() <= order*order) {
         for (const auto& obs : particles)
-            for (const auto& iNode : leafIlist) {
-                obs->addToPhi(iNode->getDirectPhi(obs->getPos()));
-                obs->addToFld(iNode->getDirectFld(obs->getPos()));
-            }
+            for (const auto& iNode : leafIlist)
+                obs->addFromSol(iNode->getDirectSol(obs->getPos()));
         return;
     }
 
@@ -248,45 +249,45 @@ void Node::addToLocalCoeffsFromLeafIlist() {
     }
 }
 
-// return phi at X due to all particles in this node
-const double Node::getDirectPhi(const vec3d& X) {
-    double phi = 0;
-    for (const auto& src : particles) {
-        auto r = (X - src->getPos()).norm();
-        if (r > 1.0E-9)
-            phi += src->getCharge() / r;
-    }
-    return phi;
-}
-
-// return phi at all particles in this node due to all other particles in this node
-const realVec Node::getDirectPhis() {
-    realVec phis;
-
-    for (const auto& obs : particles) {
-        phis.push_back(getDirectPhi(obs->getPos()));
-    }
-    return phis;
-}
-
-// return fld at X due to all particles in this node
-const vec3d Node::getDirectFld(const vec3d& X) {
+// return sol at X due to all particles in this node
+const pairSol Node::getDirectSol(const vec3d& X, const double EPS) {
+    double phi = 0.0;
     vec3d fld = vec3d::Zero();
+
     for (const auto& src : particles) {
-        auto dX = X - src->getPos();
-        auto r = dX.norm();
-        if (r > 1.0E-9)
-            fld += src->getCharge() * dX / pow(r, 3);
+        const auto dX = X - src->getPos();
+        const auto r = dX.norm();
+        const auto charge = src->getCharge();
+
+        if (r < EPS) continue;
+        phi += charge / r;
+        fld += charge * dX / pow(r, 3);
     }
-    return fld;
+
+    return pairSol(phi,fld);
 }
 
-// return phi at all particles in this node due to all other particles in this node
-const std::vector<vec3d> Node::getDirectFlds() {
-    std::vector<vec3d> flds;
+// return sols at all particles in this node due to all other particles in this node
+const solVec Node::getDirectSols() {
+    solVec sols;
 
     for (const auto& obs : particles) {
-        flds.push_back(getDirectFld(obs->getPos()));
+        double phi = 0.0;
+        vec3d fld = vec3d::Zero();
+
+        for (const auto& src : particles) {
+            if (obs == src) continue;
+
+            const auto dX = obs->getPos() - src->getPos();
+            const auto r = dX.norm();
+            const auto charge = src->getCharge();
+
+            phi += charge / r;
+            fld += charge * dX / pow(r, 3);
+        }
+
+        sols.push_back(pairSol(phi,fld));
     }
-    return flds;
+
+    return sols;
 }

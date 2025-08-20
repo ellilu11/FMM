@@ -12,18 +12,15 @@ public:
         const int,
         Stem* const);
 
-    // void getNearNeighborsLessSize();
+    solVec getFarSols() const;
 
-    realVec getFarPhis() const;
-
-    std::vector<vec3d> getFarFlds() const;
-
-    realVec getNearNonNborPhis() const;
-
-    std::vector<vec3d> getNearNonNborFlds() const;
+    solVec getNearNonNborSols() const;
     
-    template <typename T, typename Func> std::vector<T> getNearNborSols(Func);
-    
+    // template <typename T, typename Func> std::vector<T> getNearNborSols(Func);
+    solVec getNearNborSols() const;
+
+    solVec getSelfSols() const;
+
     void evaluateSolAtParticles();
 
     void pushToNearNonNbors(const std::shared_ptr<Node>& node) {
@@ -64,5 +61,4 @@ public:
 private:
     NodeVec nearNbors; // list 1
     NodeVec nearNonNbors; // list 3
-
 };

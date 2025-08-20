@@ -11,7 +11,7 @@ extern constexpr int DIM = 3;
 extern std::chrono::duration<double, std::milli> t_M2X{ 0 };
 extern std::chrono::duration<double, std::milli> t_X2X{ 0 };
 extern std::chrono::duration<double, std::milli> t_X2L{ 0 };
-extern std::chrono::duration<double, std::milli> t_X2L_l4{ 0 };
+extern std::chrono::duration<double, std::milli> t_P2L{ 0 };
 extern std::chrono::duration<double, std::milli> t_L2L{ 0 };
 extern std::chrono::duration<double, std::milli> t_L2P{ 0 };
 extern std::chrono::duration<double, std::milli> t_dir{ 0 };
@@ -85,7 +85,14 @@ int main() {
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     // ==================== Tests ==================== //
-    root->labelNodes();
+    //int ntrials = 1000;
+
+    //for (int trial = 0; trial < ntrials; ++trial) {
+    //    cout << "Trial # " << trial << '\n';
+    //    root->resetNode();
+    //    root->labelNodes();
+    //}
+
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
@@ -130,7 +137,7 @@ int main() {
 
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
     cout << "   Elapsed time (X2L): " << t_X2L.count() << " ms\n";
-    cout << "   Elapsed time (X2L,l4): " << t_X2L_l4.count() << " ms\n";
+    cout << "   Elapsed time (P2L): " << t_P2L.count() << " ms\n";
     cout << "   Elapsed time (L2L): " << t_L2L.count() << " ms\n";
     cout << "   Elapsed time (L2P): " << t_L2P.count() << " ms\n";
     cout << "   Elapsed time (Direct): " << t_dir.count() << " ms\n";
@@ -139,37 +146,25 @@ int main() {
 
     cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n\n";
 
-    // ================== Compute direct phi ================== //
+    // ================== Compute direct ===================== //
     if (!config.evalDirect) return 0;
-    cout << " Computing direct phi..." << endl;
+    cout << " Computing direct..." << endl;
     start = chrono::high_resolution_clock::now();
 
-    auto phisAnl = root->getDirectPhis();
+    auto solsDir = root->getDirectSols();
 
     end = chrono::high_resolution_clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    ofstream phiAnlFile("out/phiAnl.txt");
-    phiAnlFile << setprecision(15) << scientific;
-    for (const auto& phi : phisAnl)
-        phiAnlFile << phi << '\n';
-
-    // ================== Compute direct fld ================== //
-
-    cout << " Computing direct fld..." << endl;
-    start = chrono::high_resolution_clock::now();
-
-    auto fldsAnl = root->getDirectFlds();
-
-    end = chrono::high_resolution_clock::now();
-    duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-
-    ofstream fldAnlFile("out/fldAnl.txt");
+    ofstream phiAnlFile("out/phiAnl.txt"), fldAnlFile("out/fldAnl.txt");
     fldAnlFile << setprecision(15) << scientific;
-    for (const auto& fld : fldsAnl)
-        fldAnlFile << fld << '\n';
+    phiAnlFile << setprecision(15) << scientific;
+
+    for (const auto& sol : solsDir) {
+        phiAnlFile << sol.first << '\n';
+        fldAnlFile << sol.second << '\n';
+    }
 
     return 0;
 }

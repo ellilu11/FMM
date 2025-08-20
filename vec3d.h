@@ -4,20 +4,16 @@
 
 // using vec3d = std::array<double, 3>; 
 using vec3d = Eigen::Vector3d;
-// using vec3dVec = std::vector<vec3d>;
 
 using vec3cd = Eigen::Vector3cd;
-// using vec3cdVec = std::vector<vec3cd>;
 
 using vecXcd = Eigen::VectorXcd;
-// using vecXcdVec = std::vector<vecXcd>;
 
 using mat3d = Eigen::Matrix3d;
+
 using matXcd = Eigen::MatrixXcd;
-// using matXcdVec = std::vector<matXcd>;
 
 const vec3d zeroVec = vec3d::Zero();
-// constexpr vec3d zeroVec{ 0,0,0 };
 
 std::ostream& operator<< (std::ostream& os, const vec3d& X) {
     os << X[0] << " " << X[1] << " " << X[2];
@@ -50,13 +46,13 @@ vec3d operator* (const double a, const vec3d& X) {
 }
 */
 
-std::vector<vec3d> operator+ (const std::vector<vec3d>& Xs, const std::vector<vec3d>& Ys) {
-    assert(Xs.size() == Ys.size());
-    std::vector<vec3d> sum;
-    for (size_t i = 0; i < Xs.size(); ++i)
-        sum.push_back(Xs[i] + Ys[i]);
-    return sum;
-}
+//std::vector<vec3d> operator+ (const std::vector<vec3d>& Xs, const std::vector<vec3d>& Ys) {
+//    assert(Xs.size() == Ys.size());
+//    std::vector<vec3d> sum;
+//    for (size_t i = 0; i < Xs.size(); ++i)
+//        sum.push_back(Xs[i] + Ys[i]);
+//    return sum;
+//}
 
 std::ostream& operator<<(std::ostream& out, const std::vector<vec3d>& vec) {
     for (const auto& ele : vec)

@@ -15,7 +15,7 @@ assert( nnz(isSelf) == 1 );
 % fprintf('# Interaction nodes: %d\n', nnz(nodeStats >= 3));
 fprintf('# List 1 nodes: %d\n', nnz(nodeStats == 2));
 fprintf('# List 2 nodes: %d\n', nnz(nodeStats == 3));
-fprintf('# List 3 leaf nodes: %d\n', nnz(nodeStats == 4));
+fprintf('# List 2 outer nodes: %d\n', nnz(nodeStats == 4));
 fprintf('# List 3 stem nodes: %d\n', nnz(nodeStats == 5));
 fprintf('# List 4 nodes: %d\n', nnz(nodeStats == 6));
 fprintf('# Duplicate nodes: %d\n', nnz(nodeStats == 7));
