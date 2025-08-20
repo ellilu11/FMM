@@ -306,7 +306,12 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
         case UNE:
             if (branchIdx == 0)
                 return base->branches[7];
-            else {
+            if (branchIdx == 7) {
+                nbor = base->getNeighborGeqSize(dir);
+                if (nbor == nullptr) return nbor;
+                if (nbor->isNodeType<Leaf>()) return nbor;
+                return nbor->branches[0];
+            } else {
                 nbor = [this] {
                     switch (branchIdx) {
                         case 1: return base->getNeighborGeqSize(E);
@@ -315,7 +320,6 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
                         case 4: return base->getNeighborGeqSize(U);
                         case 5: return base->getNeighborGeqSize(UE);
                         case 6: return base->getNeighborGeqSize(UN);
-                        case 7: return base->getNeighborGeqSize(UNE);
                     } } ();
                     if (nbor == nullptr) return nbor;
                     if (nbor->isNodeType<Leaf>()) return nullptr;
@@ -326,10 +330,14 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
         case DSW:
             if (branchIdx == 7)
                 return base->branches[0];
-            else {
+            if (branchIdx == 0) {
+                nbor = base->getNeighborGeqSize(dir);
+                if (nbor == nullptr) return nbor;
+                if (nbor->isNodeType<Leaf>()) return nbor;
+                return nbor->branches[7];
+            } else {
                 nbor = [this] {
                     switch (branchIdx) {
-                        case 0: return base->getNeighborGeqSize(DSW);
                         case 1: return base->getNeighborGeqSize(DS);
                         case 2: return base->getNeighborGeqSize(DW);
                         case 3: return base->getNeighborGeqSize(D);
@@ -346,7 +354,12 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
         case UNW:
             if (branchIdx == 1)
                 return base->branches[6];
-            else {
+            if (branchIdx == 6) {
+                nbor = base->getNeighborGeqSize(dir);
+                if (nbor == nullptr) return nbor;
+                if (nbor->isNodeType<Leaf>()) return nbor;
+                return nbor->branches[1];
+            } else {
                 nbor = [this] {
                     switch (branchIdx) {
                         case 0: return base->getNeighborGeqSize(W);
@@ -354,7 +367,6 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
                         case 3: return base->getNeighborGeqSize(N);
                         case 4: return base->getNeighborGeqSize(UW);
                         case 5: return base->getNeighborGeqSize(U);
-                        case 6: return base->getNeighborGeqSize(UNW);
                         case 7: return base->getNeighborGeqSize(UN);
                     } } ();
                     if (nbor == nullptr) return nbor;
@@ -366,11 +378,15 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
         case DSE:
             if (branchIdx == 6)
                 return base->branches[1];
-            else {
+            if (branchIdx == 1) {
+                nbor = base->getNeighborGeqSize(dir);
+                if (nbor == nullptr) return nbor;
+                if (nbor->isNodeType<Leaf>()) return nbor;
+                return nbor->branches[6];
+            } else {
                 nbor = [this] {
                     switch (branchIdx) {
                         case 0: return base->getNeighborGeqSize(DS);
-                        case 1: return base->getNeighborGeqSize(DSE);
                         case 2: return base->getNeighborGeqSize(D);
                         case 3: return base->getNeighborGeqSize(DE);
                         case 4: return base->getNeighborGeqSize(S);
@@ -386,14 +402,18 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
         case USE:
             if (branchIdx == 2)
                 return base->branches[5];
-            else {
+            if (branchIdx == 5) {
+                nbor = base->getNeighborGeqSize(dir);
+                if (nbor == nullptr) return nbor;
+                if (nbor->isNodeType<Leaf>()) return nbor;
+                return nbor->branches[2];
+            } else {
                 nbor = [this] {
                     switch (branchIdx) {
                         case 0: return base->getNeighborGeqSize(S);
                         case 1: return base->getNeighborGeqSize(SE);
                         case 3: return base->getNeighborGeqSize(E);
                         case 4: return base->getNeighborGeqSize(US);
-                        case 5: return base->getNeighborGeqSize(USE);
                         case 6: return base->getNeighborGeqSize(U);
                         case 7: return base->getNeighborGeqSize(UE);
                     } } ();
@@ -406,12 +426,16 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
         case DNW:
             if (branchIdx == 5)
                 return base->branches[2];
-            else {
+            if (branchIdx == 2) {
+                nbor = base->getNeighborGeqSize(dir);
+                if (nbor == nullptr) return nbor;
+                if (nbor->isNodeType<Leaf>()) return nbor;
+                return nbor->branches[5];
+            } else {
                 nbor = [this] {
                     switch (branchIdx) {
                         case 0: return base->getNeighborGeqSize(DW);
                         case 1: return base->getNeighborGeqSize(D);
-                        case 2: return base->getNeighborGeqSize(DNW);
                         case 3: return base->getNeighborGeqSize(DN);
                         case 4: return base->getNeighborGeqSize(W);
                         case 6: return base->getNeighborGeqSize(NW);
@@ -426,13 +450,17 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
         case USW:
             if (branchIdx == 3)
                 return base->branches[4];
-            else {
+            if (branchIdx == 4) {
+                nbor = base->getNeighborGeqSize(dir);
+                if (nbor == nullptr) return nbor;
+                if (nbor->isNodeType<Leaf>()) return nbor;
+                return nbor->branches[3];
+            } else {
                 nbor = [this] {
                     switch (branchIdx) {
                         case 0: return base->getNeighborGeqSize(SW);
                         case 1: return base->getNeighborGeqSize(S);
                         case 2: return base->getNeighborGeqSize(W);
-                        case 4: return base->getNeighborGeqSize(USW);
                         case 5: return base->getNeighborGeqSize(US);
                         case 6: return base->getNeighborGeqSize(UW);
                         case 7: return base->getNeighborGeqSize(U);
@@ -446,13 +474,17 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
         case DNE:
             if (branchIdx == 4)
                 return base->branches[3];
-            else {
+            if (branchIdx == 3) {
+                nbor = base->getNeighborGeqSize(dir);
+                if (nbor == nullptr) return nbor;
+                if (nbor->isNodeType<Leaf>()) return nbor;
+                return nbor->branches[4];
+            } else {
                 nbor = [this] {
                     switch (branchIdx) {
                         case 0: return base->getNeighborGeqSize(D);
                         case 1: return base->getNeighborGeqSize(DE);
                         case 2: return base->getNeighborGeqSize(DN);
-                        case 3: return base->getNeighborGeqSize(DNE);
                         case 5: return base->getNeighborGeqSize(E);
                         case 6: return base->getNeighborGeqSize(N);
                         case 7: return base->getNeighborGeqSize(NE);

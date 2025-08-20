@@ -2,13 +2,14 @@ dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
 srcs = readmatrix(strcat(dir,"config\part3D\uniform_dip.txt"));
 nodes = readmatrix(strcat(dir,"out\nodes.txt"));
 
+nodePos = nodes(:,1:3);
 nodeLengs = nodes(:,4);
 nodeVec = [nodes(:,1:4),nodeLengs,nodeLengs];
 nodeVec(:,1:3) = nodeVec(:,1:3) - nodeVec(:,4:6)/2;
 
 nodeStats = nodes(:,5);
-isNode = (nodeStats == 1);
-assert( nnz(isNode) == 1 );
+isSelf = (nodeStats == 1);
+assert( nnz(isSelf) == 1 );
 
 % fprintf('# Neighbor nodes: %d\n', nnz(nodeStats == 2));
 % fprintf('# Interaction nodes: %d\n', nnz(nodeStats >= 3));
@@ -17,7 +18,7 @@ fprintf('# List 2 nodes: %d\n', nnz(nodeStats == 3));
 fprintf('# List 3 leaf nodes: %d\n', nnz(nodeStats == 4));
 fprintf('# List 3 stem nodes: %d\n', nnz(nodeStats == 5));
 fprintf('# List 4 nodes: %d\n', nnz(nodeStats == 6));
-fprintf('# Overlapping nodes: %d\n', nnz(nodeStats == 7));
+fprintf('# Duplicate nodes: %d\n', nnz(nodeStats == 7));
 
 close all;
 %%
@@ -57,9 +58,23 @@ for stat=1:8
 end
 hold off
 
-xlim(lim); ylim(lim); zlim(lim);
+% xlim(lim); ylim(lim); zlim(lim);
 xlabel('x'); ylabel('y'); zlabel('z'); 
 
+%% 
+% clc;
+% isDup = (nodeStats == 7);
+% selfNodePos = nodePos(isSelf,:);
+% dupeNodePos = nodePos(isDup,:);
+% numDupes = size(dupeNodePos,1);
+% 
+% dX = zeros(numDupes,3);
+% for i=1:numDupes
+%     dX(i,:) = abs(dupeNodePos(i,:)-selfNodePos);
+% end
+% 
+% dX
+% dL = (nodeLengs(isDup) + nodeLengs(isSelf))/2
 %%
 function rgb = stat2rgb(stat)
     switch stat

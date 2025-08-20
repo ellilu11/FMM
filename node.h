@@ -44,6 +44,8 @@ public:
     
     static const double legendreCos(const double, const int, const int);
 
+    static const double dLegendreCos(const double, const int, const int);
+
     /* member access and utility functions */
     ParticleVec getParticles() const { return particles; }
     
@@ -122,14 +124,13 @@ public:
     int getLvl() { return std::round(std::log(rootLeng/nodeLeng)/std::log(2)); }
 
     void labelNode(int label_) { 
-        if (label) {
-            std::cout << " Duplicate node! Node types: " << label << ' ' << label_ << '\n';
-            label = 7;
-        } else
-            label = label_;
+        //if (label) {
+        //    std::cout << " Duplicate node! Node types: " << '\n';
+        //    label = 7;
+        //} else
+        //    label = label_;
 
-        // label = (label ? 7 : label_);
-        // label += label_; 
+        label += label_; 
     }
 
     //static void setExponentialOrder(const Precision prec) {

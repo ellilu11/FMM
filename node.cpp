@@ -84,6 +84,18 @@ const double Node::legendreCos(const double th, const int l, const int abs_m) {
     return tables.coeffYlm_[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
 }
 
+const double Node::dLegendreCos(const double th, const int l, const int abs_m) {
+    if (!l) return 0.0;
+    assert(0 <= abs_m && abs_m <= l);
+
+    return
+        l / tan(th) * legendreCos(th, l, abs_m) -
+        (abs_m <= (l-1) ?
+            (l + abs_m) / sin(th) * legendreCos(th, l-1, abs_m)
+            * tables.fracCoeffYlm_[l][abs_m] : // sqrt((l-abs_m)/static_cast<double>(l+abs_m))
+            0.0);
+};
+
 Node::Node(
     const ParticleVec& particles,
     const int branchIdx,

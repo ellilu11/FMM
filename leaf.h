@@ -14,13 +14,13 @@ public:
 
     // void getNearNeighborsLessSize();
 
-    realVec getFarPhis();
+    realVec getFarPhis() const;
 
-    std::vector<vec3d> getFarFlds();
+    std::vector<vec3d> getFarFlds() const;
 
-    realVec getNearNonNborPhis();
+    realVec getNearNonNborPhis() const;
 
-    // realVec getNearNonNborFlds();
+    std::vector<vec3d> getNearNonNborFlds() const;
     
     template <typename T, typename Func> std::vector<T> getNearNborSols(Func);
     

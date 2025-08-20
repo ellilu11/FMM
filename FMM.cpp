@@ -85,14 +85,7 @@ int main() {
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     // ==================== Tests ==================== //
-    int ntrials = 50;
-    
-    for (int trial = 0; trial < ntrials; ++trial) {
-        cout << "Trial # " << trial << '\n';
-        root->labelNodes();
-        root->resetNode();
-    }
-    
+    root->labelNodes();
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
@@ -103,7 +96,7 @@ int main() {
     // ==============================================   
     // root->nfieldTest();
 
-    return 0;
+    // return 0;
     // ==================== Upward pass ==================== //
     cout << " Computing upward pass...\n";
     start = chrono::high_resolution_clock::now();
