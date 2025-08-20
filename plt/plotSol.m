@@ -1,5 +1,5 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
-srcs = readmatrix(strcat(dir,"config\uniform_plus.txt"));
+srcs = readmatrix(strcat(dir,"config\uniform_dip.txt"));
 phi = readmatrix(strcat(dir,"out\phi.txt"));
 fld = readmatrix(strcat(dir,"out\fld.txt"));
 
@@ -7,7 +7,6 @@ phiAnl = readmatrix(strcat(dir,"out\phiAnl.txt"));
 fldAnl = readmatrix(strcat(dir,"out\fldAnl.txt"));
 
 nvec = 1:size(phi,1);
-pvec = [7];
 % Nobs = 1000;
 close all;
 %%
@@ -30,13 +29,13 @@ ele = 2;
 fldSort = sortrows(fld,ele);
 fldAnlSort = sortrows(fldAnl,ele);
 
-figure(1);
+figure(3);
 plot(nvec, fldAnlSort(:,ele), nvec, fldSort(:,ele));
 legend([' Analytic',strcat(" p = ", arrayfun(@num2str,pvec,...
      'UniformOutput',false))],...
      'Location','southeast');
 
-figure(2);
+figure(4);
 relErrFld = abs(fldSort-fldAnlSort)./abs(fldAnlSort);
 semilogy(nvec, relErrFld, '-o');
 
@@ -48,7 +47,7 @@ npts = 1000;
 phig = griddata(X, Y, phi, Xg, Yg, 'natural');
 
 scale = 2.5;
-figure(3);
+figure(5);
 hold on;
 contour(Xg, Yg, phig, 100)
 quiver(X, Y, fld(:,1), fld(:,2), scale)

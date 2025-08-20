@@ -161,7 +161,7 @@ void Node::mpoleToLocalTest() {
         outFile << '\n';
 
         if (p < order) resetNode();
-    }
+}
 
 
     //cout << iList.size() << '\n';
@@ -176,7 +176,7 @@ void Node::mpoleToLocalTest() {
             phi += iNode->getDirectPhi(obs->getPos());
 
         outAnlFile << phi << ' ';
-    }
+}
     outAnlFile << '\n';
 
 }*/
@@ -234,19 +234,22 @@ void Node::nfieldTest() {
 
         if (p < order) resetNode();
 
+    node->labelNode(1); // self
 
+    auto leaf = dynamic_pointer_cast<Leaf>(node);
 
-    }
+    for (const auto& node : leaf->getNearNbors())     // list 1
+        node->labelNode(2);
 
-    cout << " Computing pairwise..." << endl;
-    auto start = chrono::high_resolution_clock::now();
+    for (const auto& node : leaf->getIlist())         // list 2
+        node->labelNode(3);
 
-    auto phis = getDirectPhis();
-    for (const auto& phi : phis)
-        outAnlFile << phi << ' ';
-    outAnlFile << '\n';
+    for (const auto& node : leaf->getNearNonNbors())  // list 3
+        if (node->isNodeType<Leaf>())
+            node->labelNode(4);
+        else
+            node->labelNode(5);
 
-    auto end = chrono::high_resolution_clock::now();
-    chrono::duration<double, milli> duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+    for (const auto& node : leaf->getLeafIlist())     // list 4
+        node->labelNode(6);
 }

@@ -53,19 +53,22 @@ public:
     
     const vec3d getCenter() const { return center; }
     
+    
     Node* getBase() const { return base; }
     
     const NodeVec getBranches() const { return branches; }
     
-    NodeVec const getNearNeighbors() { return nbors; }
+    NodeVec getNbors() const { return nbors; }
     
-    std::array<NodeVec, 6> const getDirList() { return dirList; }
+    NodeVec getIlist() const { return iList; }
+
+    NodeVec getLeafIlist() const { return leafIlist; }
+
+    void pushSelfToNearNonNbors();
     
-    NodeVec const getLeafIlist() { return leafIlist; }
+    cmplxVec getMpoleCoeffs() const { return coeffs; }
     
-    std::vector<vecXcd> getMpoleCoeffs() const { return coeffs; }
-    
-    std::vector<vecXcd> getLocalCoeffs() const { return localCoeffs; }
+    cmplxVec getLocalCoeffs() const { return localCoeffs; }
 
     const bool isRoot() const { return base == nullptr; }
     
@@ -147,6 +150,13 @@ public:
     const cmplx getPhiFromExp(const vec3d&, const std::vector<vecXcd>&, const int);
     const cmplx getPhiFromLocal(const vec3d&);
     void mpoleToExpToLocalTest();
+
+    /* Test methods */
+    void labelNode(int label_) { label += label_; }
+
+    void labelNodes();
+
+    virtual std::shared_ptr<Node> getRandNode(int) = 0;
 
 protected:
     static int order;

@@ -8,7 +8,7 @@ Leaf::Leaf(
 {
 }
 
-void Leaf::buildNeighbors() {
+void Leaf::buildNbors() {
     assert(!isRoot());
 
     for (int i = 0; i < numDir; ++i) {
@@ -16,7 +16,9 @@ void Leaf::buildNeighbors() {
         auto nbor = getNeighborGeqSize(dir);
         if (nbor != nullptr) {
             nbors.push_back(nbor);
-            nearNbors[i] = getNeighborsLeqSize(nbor, dir);
+            auto nbors = getNeighborsLeqSize(nbor, dir);
+            nearNbors.reserve(nearNbors.size() + nbors.size());
+            nearNbors.insert(nearNbors.end(), nbors.begin(), nbors.end());
         }
     }
     assert(nbors.size() <= numDir);
@@ -24,9 +26,9 @@ void Leaf::buildNeighbors() {
 
 void Leaf::buildLists() {
     if (!isRoot()) {
-        buildNeighbors();
+        buildNbors();
         buildInteractionList();
-        pushSelfToFarNeighbors();
+        pushSelfToNearNonNbors();
     }
 }
 
@@ -254,7 +256,8 @@ std::vector<T> Leaf::getNearSols(Func kernel) {
                 sol += src->getCharge() * kernel(obsPos - src->getPos());
 
         // due to particles in neighboring nodes (implement reciprocity much later)
-        for (const auto& nbor : nbors) {
+        // for (const auto& nbor : nbors) {
+        for (const auto& nbor : nearNbors) {
             auto srcsNbor = nbor->getParticles();
             for (const auto& src : srcsNbor)
                 sol += src->getCharge() * kernel(obsPos - src->getPos());

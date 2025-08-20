@@ -24,16 +24,20 @@ public:
     
     void evaluateSolAtParticles();
 
-    void pushToFarNeighbors(const std::shared_ptr<Node>& node) {
-        farNbors.push_back(node);
+    void pushToNearNonNbors(const std::shared_ptr<Node>& node) {
+        nearNonNbors.push_back(node);
     }
 
-    const NodeVec getFarNbors() const { return farNbors; }
+    const NodeVec getNearNonNbors() const { return nearNonNbors; }
 
-    const NodeVec getNearNbors(const int dirIdx) const { return nearNbors[dirIdx]; }
+    const NodeVec getNearNbors() const { return nearNbors; }
 
-    void printNode(std::ofstream& f) override {
+    void printNode(std::ofstream& f) {
         f << center << " " << nodeLeng << " " << label << '\n';
+    }
+
+    std::shared_ptr<Node> getSelf() override {
+        return shared_from_this();
     }
 
     std::shared_ptr<Node> getSelf() override {

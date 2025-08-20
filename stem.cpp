@@ -24,6 +24,30 @@ Stem::Stem(
     }
 }
 
+void Stem::buildNbors() {
+    assert(!isRoot());
+
+    for (int i = 0; i < numDir; ++i) {
+        Dir dir = static_cast<Dir>(i);
+        auto nbor = getNeighborGeqSize(dir);
+        if (nbor != nullptr)
+            nbors.push_back(nbor);
+    }
+    assert(nbors.size() <= numDir);
+}
+
+void Stem::buildLists() {
+
+    if (!isRoot()) {
+        buildNbors();
+        buildInteractionList();
+        pushSelfToNearNonNbors();
+    }
+
+    for (const auto& branch : branches)
+        branch->buildLists();
+}
+
 void Stem::buildNeighbors() {
     assert(!isRoot());
 

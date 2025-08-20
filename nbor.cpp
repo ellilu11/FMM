@@ -127,10 +127,10 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 4 || branchIdx == 5)
                 return base->branches[branchIdx-2];
             if (branchIdx == 2 || branchIdx == 3) {
-                nbor = base->getNeighborGeqSize(dir);
+            nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
                 if (nbor->isNodeType<Leaf>()) return nbor;
-                return nbor->branches[branchIdx+2];
+            return nbor->branches[branchIdx+2];
             } else {
                 nbor = (branchIdx == 0 || branchIdx == 1) ?
                     base->getNeighborGeqSize(D) :
@@ -466,7 +466,7 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
 }
 
 NodeVec Node::getNeighborsLeqSize(
-    const std::shared_ptr<Node>& nborGeqSize, const Dir dir) const 
+    const std::shared_ptr<Node>& nborGeqSize, const Dir dir) const
 {
     NodeVec nbors{};
     NodeVec queue{ nborGeqSize };

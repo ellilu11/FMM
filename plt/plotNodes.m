@@ -1,51 +1,35 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
-srcs = readmatrix(strcat(dir,"config\part3D\uniform_plus.txt"));
+srcs = readmatrix(strcat(dir,"config\uniform_dip.txt"));
 % obss = readmatrix(strcat(dir,"config\obss.txt"));
 nodes = readmatrix(strcat(dir,"out\nodes.txt"));
 
 lengs = nodes(:,3);
-% nodes = sortrows(nodes,3,"descend");
-
-%%
+nodeStats = nodes(:,4);
 nodeVec = [nodes(:,1:3),lengs];
 nodeVec(:,1:2) = nodeVec(:,1:2) - nodeVec(:,3:4)/2;
+% nodeLeng = lengs(isNode);
 
-close all;
-figure(1);
-hold on;
-
-for node = 1:length(nodes)
-    rectangle('Position',nodeVec(node,:),...
-        'LineWidth',2*lengs(node))
-end
-
-scatter(srcs(:,1),srcs(:,2));
-% scatter(obss(:,1),obss(:,2));
-
-hold off;
+fprintf('# List 1 nodes: %d\n', nnz(nodeStats == 2));
+fprintf('# List 2 nodes: %d\n', nnz(nodeStats == 3));
+fprintf('# List 3 leaf nodes: %d\n', nnz(nodeStats == 4));
+fprintf('# List 3 stem nodes: %d\n', nnz(nodeStats == 5));
+fprintf('# List 4 nodes: %d\n', nnz(nodeStats == 6));
+fprintf('# Overlapping nodes: %d\n', nnz(nodeStats > 6));
 
 %%
 % nodeVec = [nodes(:,1:3),lengs];
 % nodeVec(:,1:2) = nodeVec(:,1:2) - nodeVec(:,3:4)/2;
-% isNode = nodes(:,4) == 3;
-% % assert( nnz(isNode) == 1 );
-% nodeLeng = lengs(isNode);
 % 
-% figure();
+% close all;
+% figure(1);
 % hold on;
 % 
 % for node = 1:length(nodes)
-%     nborStat = nodes(node,4);
-%     if (lengs(node) < nodeLeng && ~nborStat)
-%         rgb = 'none';
-%     else
-%         rgb = [1 1-nborStat/nodes(isNode,4) 1];
-%     end
 %     rectangle('Position',nodeVec(node,:),...
-%         'FaceColor',rgb,...
 %         'LineWidth',2*lengs(node))
 % end
 % 
 % scatter(srcs(:,1),srcs(:,2));
+% % scatter(obss(:,1),obss(:,2));
 % 
 % hold off;

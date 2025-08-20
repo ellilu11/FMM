@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <type_traits>
-#include "enum.h"
 
 template <typename T>
 concept Enum = std::is_enum_v<T>;

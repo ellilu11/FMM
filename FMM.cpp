@@ -18,7 +18,7 @@ extern std::chrono::duration<double, std::milli> t_dir{ 0 };
 
 int main()
 {
-    Config config("config/config.txt");
+    Config config("config/config2D.txt");
 
     // ==================== Make particles ==================== //
     const auto fname = makeFname(config);
@@ -32,7 +32,7 @@ int main()
             Nsrcs = srcs.size();
             break;
 
-        case Mode::GEN : {
+        case Mode::WRITE : {
             srcs = makeParticles<uniform_real_distribution<double>>(config);
             Nsrcs = config.nsrcs;
 
@@ -70,7 +70,8 @@ int main()
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
-    start = chrono::high_resolution_clock::now();
+    auto start = chrono::high_resolution_clock::now();
+    auto start_ = start;
 
     // std::shared_ptr<Node> root = std::make_shared<Stem>(srcs, 0, nullptr);
     shared_ptr<Node> root;
@@ -153,8 +154,12 @@ int main()
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     ofstream phiAnlFile("out/phiAnl.txt");
+    phiAnlFile << setprecision(15) << scientific;
     for (const auto& phi : phisAnl)
         phiAnlFile << phi << '\n';
+
+    cout << " Computing direct fld..." << endl;
+    start = chrono::high_resolution_clock::now();
 
     cout << " Computing direct fld..." << endl;
     start = chrono::high_resolution_clock::now();
@@ -166,6 +171,7 @@ int main()
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     ofstream fldAnlFile("out/fldAnl.txt");
+    fldAnlFile << setprecision(15) << scientific;
     for (const auto& fld : fldsAnl)
         fldAnlFile << fld << '\n';
 
