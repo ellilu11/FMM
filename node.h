@@ -99,7 +99,15 @@ public:
     virtual void printNode(std::ofstream&) = 0;
 
     /* Test methods */
-    void labelNode(int label_) { label += label_; }
+    void labelNode(int label_) {
+        if (label) {
+            std::cout << " Duplicate node! Node types: " << label << ' ' << label_ << '\n';
+            label = 7;
+        } else
+            label = label_;
+
+        // label += label_; 
+    }
 
     void labelNodes();
 

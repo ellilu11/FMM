@@ -21,7 +21,6 @@ shared_ptr<Node> Leaf::getRandNode(int minLvl) {
     return make_shared<Leaf>(*this);
 }
 
-
 void Node::labelNodes() {
     auto node = getRandNode(1);
 
@@ -43,4 +42,25 @@ void Node::labelNodes() {
 
     for (const auto& node : leaf->getLeafIlist())     // list 4
         node->labelNode(6);
+}
+
+void Stem::resetNode() {
+    //coeffs.clear();
+    //localCoeffs.clear();
+    //nbors.clear();
+    //iList.clear();
+
+    label = 0;
+
+    for (const auto& branch : branches)
+        branch->resetNode();
+}
+
+void Leaf::resetNode() {
+    //coeffs.clear();
+    //localCoeffs.clear();
+    //nbors.clear();
+    //iList.clear();
+
+    label = 0;
 }

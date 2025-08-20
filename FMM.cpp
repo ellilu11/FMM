@@ -66,10 +66,18 @@ int main(int argc, char *argv[])
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     // ==================== Tests ==================== //
-    root->labelNodes();
+    int ntrials = 1000;
+
+    for (int trial = 0; trial < ntrials; ++trial) {
+        cout << "Trial # " << trial << '\n';
+        root->labelNodes();
+        root->resetNode();
+    }
 
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
+
+    return 0;
 
     // ==================== Upward pass ==================== //
     cout << " Computing upward pass...\n";

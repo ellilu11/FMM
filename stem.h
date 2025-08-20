@@ -29,15 +29,7 @@ public:
 
     /* Test methods */
     std::shared_ptr<Node> getRandNode(int);
-
-    void resetNode() {
-        coeffs.clear();
-        localCoeffs.clear();
-        nbors.clear();
-        iList.clear();
-        for (const auto& branch : branches)
-            branch->resetNode();
-    }
+    void resetNode();
 
 
 //private:
