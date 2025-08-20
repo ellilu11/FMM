@@ -179,8 +179,6 @@ void Node::buildInteractionList() {
 void Node::pushSelfToNearNonNbors() {
     if (leafIlist.empty()) return;
 
-    // if (isNodeType<Stem>()) std::cout << leafIlist.size() << "\n";
-
     auto self = getSelf(); // call shared_from_this()
     for (const auto& node : leafIlist) {
         auto leaf = dynamic_pointer_cast<Leaf>(node);
@@ -217,7 +215,7 @@ const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const
 }
 
 void Node::addToLocalCoeffsFromLeafIlist() {
-    /* if # observers is small, evaluate sol there directly */
+    // if # observers is small, evaluate sol there directly
     if (particles.size() <= order*order) {
         for (const auto& obs : particles)
             for (const auto& iNode : leafIlist)
@@ -225,7 +223,7 @@ void Node::addToLocalCoeffsFromLeafIlist() {
         return;
     }
 
-    /* otherwise, add to local expansion due to srcs in list 4 */
+    // otherwise, add to local expansion due to srcs in list 4
     for (const auto& node : leafIlist) {
         for (const auto& src : node->particles){
             auto dR = toSph(src->getPos() - center);
@@ -249,7 +247,7 @@ void Node::addToLocalCoeffsFromLeafIlist() {
     }
 }
 
-// return sol at X due to all particles in this node
+/* getDirectSol: Return sol at X due to all particles in this node */
 const pairSol Node::getDirectSol(const vec3d& X, const double EPS) {
     double phi = 0.0;
     vec3d fld = vec3d::Zero();
@@ -257,17 +255,20 @@ const pairSol Node::getDirectSol(const vec3d& X, const double EPS) {
     for (const auto& src : particles) {
         const auto dX = X - src->getPos();
         const auto r = dX.norm();
-        const auto charge = src->getCharge();
+        const auto srcPhi = src->getCharge() / r;
 
         if (r < EPS) continue;
-        phi += charge / r;
-        fld += charge * dX / pow(r, 3);
+        phi += srcPhi;
+        fld += srcPhi * dX / pow(r, 2);
+
     }
 
     return pairSol(phi,fld);
 }
 
-// return sols at all particles in this node due to all other particles in this node
+/* getDirectSols: Return sols at all particles in this node due to 
+   all other particles in this node */
+// TODO : Implement reciprocity
 const solVec Node::getDirectSols() {
     solVec sols;
 
@@ -280,10 +281,10 @@ const solVec Node::getDirectSols() {
 
             const auto dX = obs->getPos() - src->getPos();
             const auto r = dX.norm();
-            const auto charge = src->getCharge();
-
-            phi += charge / r;
-            fld += charge * dX / pow(r, 3);
+            const auto srcPhi = src->getCharge() / r;
+            
+            phi += srcPhi;
+            fld += srcPhi * dX / pow(r, 2);
         }
 
         sols.push_back(pairSol(phi,fld));
