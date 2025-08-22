@@ -11,6 +11,7 @@
 #include "vec3d.h"
 
 extern ClockTimes t;
+
 constexpr int DIM = 3;
 constexpr int numDir = 26;
 
@@ -92,17 +93,11 @@ public:
     
     void addShiftedExpCoeffs(const std::vector<vecXcd>&, const vec3d&, const int);
 
-    // void evalDirectSol(const std::shared_ptr<Particle>&);
-
-    void evalDirectSols(const std::shared_ptr<Node>&, const bool);
+    void evalPairSols(const std::shared_ptr<Node>&);
 
     void evalSelfSols();
 
     void resetSols();
-
-    // const solVec getSelfSols();
-
-    // const solVec getSelfSolsRecip();
    
     /* pure virtual */
     virtual std::shared_ptr<Node> getSelf() = 0;
@@ -168,6 +163,5 @@ protected:
     std::array<std::vector<vecXcd>,6> expCoeffs;
     std::vector<vecXcd> localCoeffs;
 
-    // === Test members ===
     int label;
 };

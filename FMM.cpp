@@ -56,7 +56,6 @@ int main() {
     cout << " Setting up domain...\n";
     auto start = Clock::now();
 
-    // std::shared_ptr<Node> root = std::make_shared<Stem>(srcs, 0, nullptr);
     shared_ptr<Node> root;
     if (Nsrcs > config.maxNodeParts)
         root = make_shared<Stem>(srcs, 0, nullptr);
@@ -72,15 +71,6 @@ int main() {
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     // ==================== Tests ==================== //
-    //int ntrials = 1000;
-
-    //for (int trial = 0; trial < ntrials; ++trial) {
-    //    cout << "Trial # " << trial << '\n';
-    //    root->resetNode();
-    //    root->labelNodes();
-    //}
-    // ==============================================
-
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
@@ -103,19 +93,10 @@ int main() {
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
     // ==================== Downward pass ==================== //
-    cout << " Propagating exponential coeffs...\n";
+    cout << " Computing downward pass...\n";
     start = Clock::now();
 
     root->propagateExpCoeffs();
-
-    end = Clock::now();
-    duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-    cout << "   Elapsed time (M2X): " << t.M2X.count() << " ms\n";
-    cout << "   Elapsed time (X2X): " << t.X2X.count() << " ms\n";
-
-    cout << " Computing downward pass...\n";
-    start = Clock::now();
 
     root->buildLocalCoeffs();
 
@@ -123,6 +104,8 @@ int main() {
     duration_ms = end - start;
 
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+    cout << "   Elapsed time (M2X): " << t.M2X.count() << " ms\n";
+    cout << "   Elapsed time (X2X): " << t.X2X.count() << " ms\n";
     cout << "   Elapsed time (X2L): " << t.X2L.count() << " ms\n";
     cout << "   Elapsed time (P2L): " << t.P2L.count() << " ms\n";
     cout << "   Elapsed time (L2L): " << t.L2L.count() << " ms\n";
@@ -139,7 +122,7 @@ int main() {
 
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
     cout << "   Elapsed time (L2P): " << t.L2P.count() << " ms\n";
-    cout << "   Elapsed time (Direct): " << t.dir.count() << " ms\n";
+    cout << "   Elapsed time (P2P): " << t.P2P.count() << " ms\n";
     cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n\n";
 
     printSols(srcs, "out/phi.txt", "out/fld.txt");

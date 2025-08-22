@@ -27,6 +27,9 @@ void Leaf::buildNeighbors() {
 }
 
 void Leaf::buildLists() {
+    // add self to list of leaves
+    leaves.push_back(shared_from_this()); 
+
     if (isRoot()) return;
     
     buildNeighbors();
@@ -34,13 +37,13 @@ void Leaf::buildLists() {
     buildInteractionList();
 
     pushSelfToNearNonNbors();
-
-    leaves.push_back(shared_from_this()); // record self in list of leaves
 }
 
 /* buildMpoleCoeffs : 
    Build mpole expansions from particles in this node (P2M) */
 void Leaf::buildMpoleCoeffs() {
+    if (isRoot()) return;
+
     for (int l = 0; l <= order; ++l)
         coeffs.emplace_back(vecXcd::Zero(2*l+1));
 
@@ -86,29 +89,29 @@ void Leaf::propagateExpCoeffs() {
 }
 
 void Leaf::buildLocalCoeffs() {
-    if (!isRoot()) {
-        auto start = Clock::now();
+    if (isRoot()) return;
+    
+    auto start = Clock::now();
 
-        evalLocalCoeffsFromLeafIlist();
+    evalLocalCoeffsFromLeafIlist();
 
-        t.P2L += Clock::now() - start;
+    t.P2L += Clock::now() - start;
 
-        start = Clock::now();
+    start = Clock::now();
 
-        evalLocalCoeffsFromDirList();
+    evalLocalCoeffsFromDirList();
 
-        t.X2L += Clock::now() - start;
+    t.X2L += Clock::now() - start;
 
-        start = Clock::now();
+    start = Clock::now();
         
-        if (!base->isRoot()) {
-            auto shiftedLocalCoeffs = base->getShiftedLocalCoeffs(branchIdx);
-            for (int l = 0; l <= order; ++l)
-                localCoeffs[l] += shiftedLocalCoeffs[l];
-        }
-        
-        t.L2L += Clock::now() - start;
+    if (!base->isRoot()) {
+        auto shiftedLocalCoeffs = base->getShiftedLocalCoeffs(branchIdx);
+        for (int l = 0; l <= order; ++l)
+            localCoeffs[l] += shiftedLocalCoeffs[l];
     }
+        
+    t.L2L += Clock::now() - start;
 }
 
 /* evalFarSols : 
@@ -160,7 +163,7 @@ void Leaf::evalFarSols() {
 }
 
 /* evalNearNonNborSols : 
-   Get sols directly or from mpole expansion due to near non-neighbor nodes (list 3) */
+   Get sols from mpole expansion due to near non-neighbor nodes (list 3) */
 void Leaf::evalNearNonNborSols() {
 
     for (const auto& obs : particles) {
@@ -172,21 +175,11 @@ void Leaf::evalNearNonNborSols() {
 
         for (const auto& node : nearNonNbors) {
 
-            // # srcs small, do direct
             const auto srcs = node->getParticles();
-            if (srcs.size() <= order*order) {
-                for (const auto& src : srcs) {
-                    // assert(obs != src);
-
-                    const auto dX = obsPos - src->getPos();
-                    const auto dr = dX.norm();
-                    const auto srcPhi = src->getCharge() / dr;
-
-                    phi += srcPhi;
-                    fld += srcPhi * dX / (dr*dr);
-                }
+            if (srcs.size() <= order*order)
+                // do nothing since contribution from list 3 node was 
+                // calculated by Node::evalLocalCoeffsFromLeafIlist()
                 continue;
-            }
 
             // # srcs large, use mpole expansion of src node
             const auto srcCoeffs = node->getMpoleCoeffs();
@@ -266,12 +259,12 @@ void Leaf::evaluateSols() {
     for (const auto& pair : findNearNborPairs()) {
         auto [obsLeaf, srcLeaf] = pair;
         const bool evalAtSrcs = 1;
-        obsLeaf->evalDirectSols(srcLeaf, evalAtSrcs);
+        obsLeaf->evalPairSols(srcLeaf);
     }
 
     for (const auto& leaf : leaves)
         leaf->evalSelfSols();
 
-    t.dir += Clock::now() - start;
+    t.P2P += Clock::now() - start;
 }
 

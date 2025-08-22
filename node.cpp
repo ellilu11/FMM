@@ -208,14 +208,15 @@ const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const
 }
 
 void Node::evalLocalCoeffsFromLeafIlist() {
-    // if # observers is small, evaluate sol there directly
+    // If # observers is small, evaluate sols in this node directly
+    // By reciprocity, also evaluate sols in list 4 node due to this node
     if (particles.size() <= order*order) {
         for (const auto& node : leafIlist)
-            evalDirectSols(node, 0);
+            evalPairSols(node);
         return;
     }
 
-    // otherwise, add to local expansion due to srcs in list 4
+    // Otherwise, add to local expansion due to srcs in list 4
     for (const auto& node : leafIlist) {
 
         for (const auto& src : node->particles){
@@ -242,18 +243,17 @@ void Node::evalLocalCoeffsFromLeafIlist() {
     }
 }
 
-/* evalSols:
+/* evalPairSols:
    Evaluate sols at particles in this node due to particles in srcNode
-   If evalAtSrcs is true, also evaluate sols at particles in srcNode 
-   due to particles in this node */
-void Node::evalDirectSols(const std::shared_ptr<Node>& srcNode, const bool evalAtSrcs) {
+   Evaluate sols at particles in srcNode due to particles in this node */
+void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
     const int numObss = particles.size(), numSrcs = srcNode->particles.size();
 
-    realVec phis(numObss, 0.0);
-    std::vector<vec3d> flds(numObss, vec3d::Zero());
+    realVec phiAtObss(numObss, 0.0);
+    std::vector<vec3d> fldAtObss(numObss, vec3d::Zero());
 
-    realVec phisAtSrc(numSrcs, 0.0);
-    std::vector<vec3d> fldsAtSrc(numSrcs, vec3d::Zero());
+    realVec phiAtSrcs(numSrcs, 0.0);
+    std::vector<vec3d> fldAtSrcs(numSrcs, vec3d::Zero());
 
     for (size_t obsIdx = 0; obsIdx < numObss; ++obsIdx) {
         for (size_t srcIdx = 0; srcIdx < numSrcs; ++srcIdx) {
@@ -265,29 +265,26 @@ void Node::evalDirectSols(const std::shared_ptr<Node>& srcNode, const bool evalA
             const auto srcPhi = src->getCharge() / dr;
             const auto srcFld = srcPhi * dX / (dr*dr);
 
-            phis[obsIdx] += srcPhi;
-            flds[obsIdx] += srcFld;
-
-            if (!evalAtSrcs) continue;
+            phiAtObss[obsIdx] += srcPhi;
+            fldAtObss[obsIdx] += srcFld;
 
             // assume all charges have equal magnitude
             if (obs->getCharge() == src->getCharge()) {
-                phisAtSrc[srcIdx] += srcPhi;
-                fldsAtSrc[srcIdx] -= srcFld;
+                phiAtSrcs[srcIdx] += srcPhi;
+                fldAtSrcs[srcIdx] -= srcFld;
             } else {
-                phisAtSrc[srcIdx] -= srcPhi;
-                fldsAtSrc[srcIdx] += srcFld;
+                phiAtSrcs[srcIdx] -= srcPhi;
+                fldAtSrcs[srcIdx] += srcFld;
             }
         }
     }
 
     for (int n = 0; n < numObss; ++n)
-        particles[n]->addToSol(phis[n], flds[n]);
-
-    if (!evalAtSrcs) return;
+        particles[n]->addToSol(phiAtObss[n], fldAtObss[n]);
 
     for (int n = 0; n < numSrcs; ++n)
-        (srcNode->particles[n])->addToSol(phisAtSrc[n], fldsAtSrc[n]);
+        (srcNode->particles[n])->addToSol(phiAtSrcs[n], fldAtSrcs[n]);
+
 }
 
 /* evalSelfSols:
