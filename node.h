@@ -1,25 +1,19 @@
 #pragma once
 
 #include <cassert>
-#include <chrono>
 #include <iostream>
 #include <numeric>
 #include "config.h"
+#include "clock.h"
 #include "enum.h"
 #include "particle.h"
 #include "tables.h"
 #include "vec3d.h"
 
-extern const int DIM;
-extern std::chrono::duration<double, std::milli> t_M2X;
-extern std::chrono::duration<double, std::milli> t_X2X;
-extern std::chrono::duration<double, std::milli> t_X2L;
-extern std::chrono::duration<double, std::milli> t_P2L;
-extern std::chrono::duration<double, std::milli> t_L2L;
-extern std::chrono::duration<double, std::milli> t_L2P;
-extern std::chrono::duration<double, std::milli> t_dir;
+extern ClockTimes t;
 
-constexpr int numDir = 26; // std::pow(3, DIM) - 1;
+constexpr int DIM = 3;
+constexpr int numDir = 26;
 
 class Node;
 
@@ -105,17 +99,11 @@ public:
 
     void addShiftedExpCoeffs(const std::vector<vecXcd>&, const vec3d&, const int);
 
-    // void evalDirectSol(const std::shared_ptr<Particle>&);
-
-    void evalDirectSols(const std::shared_ptr<Node>&, const bool);
+    void evalPairSols(const std::shared_ptr<Node>&);
 
     void evalSelfSols();
 
     void resetSols();
-
-    // const solVec getSelfSols();
-
-    // const solVec getSelfSolsRecip();
    
     /* pure virtual */
     virtual std::shared_ptr<Node> getSelf() = 0;
@@ -135,25 +123,7 @@ public:
     // ========== Test methods ==========
     int getLvl() { return std::round(std::log(rootLeng/nodeLeng)/std::log(2)); }
 
-    void labelNode(int label_) { 
-        if (label) {
-            std::cout << " Duplicate node! Node types: " << '\n';
-            label = 7;
-        } else
-            label = label_;
-
-        // label += label_; 
-    }
-
-    //static void setExponentialOrder(const Precision prec) {
-    //    orderExp = [&]() -> std::size_t {
-    //        switch (prec) {
-    //            case Precision::LOW:    return 8;
-    //            case Precision::MEDIUM: return 17;
-    //            case Precision::HIGH:   return 26;
-    //        }
-    //        }();
-    //}
+    void labelNode(int label_) { label += label_; }
 
     // definition under test/nodetest.cpp
     void labelNodes();
@@ -178,11 +148,11 @@ protected:
     static int orderExp;
     static int maxNodeParts;
     static double rootLeng;
+    static int numNodes;
     static Tables tables;
     static std::array<std::vector<matXcd>,14> wignerD;
     static std::array<std::vector<matXcd>,14> wignerDInv;
     static std::array<mat3d,6> rotMatR;
-    static int numNodes;
 
     ParticleVec particles;
     const int branchIdx;
@@ -201,6 +171,5 @@ protected:
     std::array<std::vector<vecXcd>,6> expCoeffs;
     std::vector<vecXcd> localCoeffs;
 
-    // === Test members ===
     int label;
 };
