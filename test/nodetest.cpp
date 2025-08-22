@@ -227,8 +227,8 @@ void Node::nfieldTest() {
         end = chrono::high_resolution_clock::now();
         duration_ms = end - start;
         cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-        cout << "   Elapsed time (M2X): " << t_M2X.count() << " ms\n";
-        cout << "   Elapsed time (X2X): " << t_X2X.count() << " ms\n";
+        cout << "   Elapsed time (M2X): " << t.M2X.count() << " ms\n";
+        cout << "   Elapsed time (X2X): " << t.X2X.count() << " ms\n";
 
         cout << " Computing downward pass...\n";
         start = chrono::high_resolution_clock::now();
@@ -238,8 +238,8 @@ void Node::nfieldTest() {
         end = chrono::high_resolution_clock::now();
         duration_ms = end - start;
         cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-        cout << "   Elapsed time (X2L): " << t_X2L.count() << " ms\n";
-        cout << "   Elapsed time (L2L): " << t_L2L.count() << " ms\n";
+        cout << "   Elapsed time (X2L): " << t.X2L.count() << " ms\n";
+        cout << "   Elapsed time (L2L): " << t.L2L.count() << " ms\n";
 
         for (const auto& src : particles)
             src->printPhi(outFile);
