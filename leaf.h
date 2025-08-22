@@ -5,6 +5,11 @@
 #include "node.h"
 #include "stem.h"
 
+class Leaf;
+
+using LeafVec = std::vector<std::shared_ptr<Leaf>>;
+using LeafPair = std::pair<std::shared_ptr<Leaf>, std::shared_ptr<Leaf>>;
+
 class Leaf final : public Node, public std::enable_shared_from_this<Leaf> {
 public:
     Leaf(
@@ -12,16 +17,18 @@ public:
         const int,
         Stem* const);
 
-    solVec getFarSols() const;
+    void evalFarSols();
 
-    solVec getNearNonNborSols() const;
+    void evalNearNonNborSols();
+
+    static std::vector<LeafPair> findNearNborPairs();
+
+    static void evaluateSols();
     
-    // template <typename T, typename Func> std::vector<T> getNearNborSols(Func);
-    solVec getNearNborSols() const;
+    // template <typename T, typename Func> std::vector<T> evalNearNborSols(Func);
+    // void evalNearNborSols();
 
-    solVec getSelfSols() const;
-
-    void evaluateSolAtParticles();
+    static const int getNumLeaves() { return leaves.size(); }
 
     void pushToNearNonNbors(const std::shared_ptr<Node>& node) {
         nearNonNbors.push_back(node);
@@ -39,7 +46,7 @@ public:
         return shared_from_this();
     }
 
-    void buildNbors() override;
+    void buildNeighbors() override;
 
     void buildLists() override;
 
@@ -59,6 +66,8 @@ public:
     void resetNode();
 
 private:
+    static LeafVec leaves;
+
     NodeVec nearNbors; // list 1
     NodeVec nearNonNbors; // list 3
 };

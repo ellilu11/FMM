@@ -50,7 +50,7 @@ std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
 
     for (const auto& branch : branches) {
         auto expCoeffs = branch->getMpoleToExpCoeffs(dirIdx);
-        const auto dX = center - branch->getCenter();
+        const auto dX = rotMatR[dirIdx] * (center - branch->getCenter());
         const double dx = dX[0], dy = dX[1], dz = dX[2];
 
         for (int k = 0; k < orderExp; ++k) {
@@ -59,7 +59,7 @@ std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
                 const double a_kj = tables.alphas_[k][j];
                 mergedCoeffs[k][j] +=
                     expCoeffs[k][j]
-                    * exp(l_k / 2.0
+                    * exp(l_k / 4.0
                         * cmplx(-1.0*dz,
                             dx*cos(a_kj) + dy*sin(a_kj)));
             }
@@ -78,6 +78,7 @@ const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
         auto expCoeffs = branch->getMpoleToExpCoeffs(dirIdx);
         auto branchIdx = branch->getBranchIdx();
 
+        // Shift branch exp coeffs to center of this node and merge them
         for (int k = 0; k < orderExp; ++k)
             for (int j = 0; j < tables.quadLengs_[k]; ++j)
                 mergedCoeffs[k][j] +=
@@ -112,8 +113,8 @@ void Node::addShiftedExpCoeffs(
     assert(idz == 4 || idz == 5);
     size_t l;
 
-    // shift to inner ilist
-    if (idz == 4) { 
+    // shift to inner ilist: [idX,idY] \in {-2, -1, 0, 1, 2}, idZ = 2 
+    if (idz == 4) {
         l = round(idX[0]+2.0) + 5*round(idX[1]+2.0);
         assert(0 <= l && l < 25);
 
@@ -122,7 +123,7 @@ void Node::addShiftedExpCoeffs(
                 expCoeffs[dirIdx][k][j] +=
                     srcExpCoeffs[k][j] * tables.expsInner_[k][j][l];
 
-    // shift to outer ilist
+    // shift to outer ilist: [idX,idY] \in {-2.5, -1.5, -0.5, 0.5, 1.5, 2.5}, idZ = 2.5 
     } else {
         l = round(idX[0]+2.5) + 6*round(idX[1]+2.5);
         assert(0 <= l && l < 36);
@@ -134,7 +135,7 @@ void Node::addShiftedExpCoeffs(
     }
 }
 
-void Node::addToLocalCoeffsFromDirList() {
+void Node::evalLocalCoeffsFromDirList() {
     assert(!isRoot());
 
     for (int dirIdx = 0; dirIdx < 6; ++dirIdx) {
@@ -149,8 +150,8 @@ void Node::addToLocalCoeffsFromDirList() {
                 int m_p = m+order;
                 for (int j = 0; j < M_k; ++j)
                     innerCoeffs[m_p] +=
-                        expCoeffs[dirIdx][k][j]
-                        * conj(tables.expI_alphas_[k][j][m_p]); // conj
+                    expCoeffs[dirIdx][k][j]
+                    * conj(tables.expI_alphas_[k][j][m_p]); // conj
                 innerCoeffs[m_p] *= powI(abs(m)); // plus sign
             }
 
@@ -161,7 +162,7 @@ void Node::addToLocalCoeffsFromDirList() {
                     int m_l = m+l;
                     rotatedLocalCoeffs[l][m_l] +=
                         innerCoeffs[m+order]
-                        * tables.Aexp_[l][m_l] 
+                        * tables.Aexp_[l][m_l]
                         * ml_k2l;
                 }
                 ml_k2l *= -l_k;
@@ -170,9 +171,9 @@ void Node::addToLocalCoeffsFromDirList() {
 
         // apply inverse rotation
         for (int l = 0; l <= order; ++l)
-            localCoeffs[l] += 
-                ( dirIdx ?
-                  wignerDInv[dirIdx+8][l] * rotatedLocalCoeffs[l] :
-                  rotatedLocalCoeffs[l] );
+            localCoeffs[l] +=
+            (dirIdx ?
+                wignerDInv[dirIdx+8][l] * rotatedLocalCoeffs[l] :
+                rotatedLocalCoeffs[l]);
     }
 }

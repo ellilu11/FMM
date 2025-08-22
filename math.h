@@ -80,17 +80,23 @@ vec3d toSph(const vec3d& X) {
     return vec3d( r, std::acos(z/r), toPhi(x,y) );
 }
 
+//pair2i idxToCoord(const int idx) {
+//    const int row = floor((1 + sqrt(1+8*idx)) / 2.0);
+//    const int col = idx - row*(row-1)/2;
+//    return pair2i(row, col);
+//}
+
 //constexpr int constPow(int base, int exp) {
 //    return (exp == 0) ? 1 : base * constPow(base,exp-1);
 //}
 
 // return \sum_i (coeffs[i] * z^i)
-template <typename T>
+/*template <typename T>
 const T evaluatePoly(std::vector<T> coeffs, const T z) {
     for (ptrdiff_t i = coeffs.size()-2; i >= 0; --i)
         coeffs[i] += coeffs[i+1] * z;
     return coeffs[0];
-}
+}*/
 
 const double fallingFactorial(double x, int k) {
     return k == 0 ? 1 : x * fallingFactorial(x - 1, k - 1);

@@ -104,7 +104,7 @@ void Node::mpoleToExpToLocalTest() {
             // from local coeffs
             for (const auto& iNode : iList) {
                 iNode->addShiftedExpCoeffs(expCoeffs, node->getCenter(), dir);
-                iNode->addToLocalCoeffsFromDirList();
+                iNode->evalLocalCoeffsFromDirList();
                 for (const auto& obs : iNode->getParticles()) {
                     outFile << iNode->getPhiFromLocal(obs->getPos()).real() << ' ';
 

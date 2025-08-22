@@ -189,8 +189,8 @@ void Tables::buildExpTables(const int order) {
             std::array<cmplx, 8> expsMerge_kj;
             for (int dir = 0; dir < 8; ++dir){
                 auto dX = -idx2pm(dir);
-                expsMerge_kj[dir] =
-                    exp(quadCoeffs_[k].first / 4.0
+                expsMerge_kj[dir] = // 1.0;
+                    exp(quadCoeffs_[k].first / 4.0 // 4.0
                         * cmplx(-1.0*dX[2],
                             dX[0]*cos(alpha_kj) + dX[1]*sin(alpha_kj)));
             }

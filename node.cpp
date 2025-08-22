@@ -88,7 +88,7 @@ const double Node::dLegendreCos(const double th, const int l, const int abs_m) {
         l / tan(th) * legendreCos(th, l, abs_m) -
         (abs_m <= (l-1) ?
             (l + abs_m) / sin(th) * legendreCos(th, l-1, abs_m)
-            * tables.fracCoeffYlm_[l][abs_m] : // sqrt((l-abs_m)/static_cast<double>(l+abs_m))
+            * tables.fracCoeffYlm_[l][abs_m] :
             0.0);
 };
 
@@ -97,10 +97,10 @@ Node::Node(
     const int branchIdx,
     Node* const base)
     : particles(particles), branchIdx(branchIdx), base(base),
-    nodeLeng(base == nullptr ? rootLeng : base->getLeng() / 2.0),
+    nodeLeng(base == nullptr ? rootLeng : base->nodeLeng / 2.0),
     center(base == nullptr ? zeroVec :
-        base->getCenter() + nodeLeng / 2.0 * idx2pm(branchIdx)),
-    label(0), useRot(0)
+        base->center + nodeLeng / 2.0 * idx2pm(branchIdx)),
+    label(0)
 {
     for (int l = 0; l <= order; ++l)
         localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
@@ -147,18 +147,15 @@ void Node::buildInteractionList() {
 
     for (const auto& baseNbor : base->nbors) {
         if (baseNbor->isNodeType<Leaf>() && notContains(nbors, baseNbor)) {
-            leafIlist.push_back(baseNbor); // list 4
+            leafIlist.push_back(baseNbor);
             continue;
         }
-        const auto center0 = base->getCenter();
-        const auto maxDist = base->getLeng();
+        const auto center0 = base->center;
+        const auto maxDist = base->nodeLeng;
         for (const auto& branch : baseNbor->branches)
             if (notContains(nbors, branch) &&
                 (branch->getCenter()-center0).lpNorm<Eigen::Infinity>() < maxDist)
                 iList.push_back(branch);
-            //if (notContains(nbors, branch) &&
-            //    (branch->getCenter()-center0).lpNorm<Eigen::Infinity>() < maxDist)
-            //    iList.push_back(branch);
     }
 
     assert(iList.size() <= pow(4, DIM) - pow(3, DIM));
@@ -168,11 +165,6 @@ void Node::buildInteractionList() {
 
     for (const auto& node : iList)
         assignToDirList(dirList, node, minDist);
-
-    //auto dirListSize =
-    //    std::accumulate(dirList.begin(), dirList.end(), size_t{ 0 },
-    //        [](size_t sum, const auto& vec) { return sum + vec.size(); });
-    //assert(dirListSize == iList.size());
 }
 
 void Node::buildOuterInteractionList() {
@@ -182,8 +174,7 @@ void Node::buildOuterInteractionList() {
     for (const auto& nbor : nbors) {
         if (nbor->isNodeType<Leaf>()) continue;
             
-        auto nodes = nbor->getBranches();
-        for (const auto& node : nodes)
+        for (const auto& node : nbor->branches)
             assignToDirList(outerDirList, node, minDist);
     }
 
@@ -214,9 +205,11 @@ const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const
 
     for (int j = 0; j <= order; ++j) {
         vecXcd shiftedLocalCoeffs_j = vecXcd::Zero(2*j+1);
+
         for (int k = -j; k <= j; ++k) {
             int k_j = k + j;
             double r2nmj = 1.0;
+
             for (int n = j; n <= order; ++n) {
                 shiftedLocalCoeffs_j[k_j] +=
                     rotatedLocalCoeffs[n][k+n] *
@@ -232,18 +225,19 @@ const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const
     return shiftedLocalCoeffs;
 }
 
-void Node::addToLocalCoeffsFromLeafIlist() {
+void Node::evalLocalCoeffsFromLeafIlist() {
     // if # observers is small, evaluate sol there directly
     if (particles.size() <= order*order) {
-        for (const auto& obs : particles)
-            for (const auto& iNode : leafIlist)
-                obs->addFromSol(iNode->getDirectSol(obs->getPos()));
+        for (const auto& node : leafIlist)
+            evalDirectSols(node, 0);
         return;
     }
 
     // otherwise, add to local expansion due to srcs in list 4
     for (const auto& node : leafIlist) {
+
         for (const auto& src : node->particles){
+
             auto dR = toSph(src->getPos() - center);
             double r = dR[0], th = dR[1], ph = dR[2];
 
@@ -259,35 +253,104 @@ void Node::addToLocalCoeffsFromLeafIlist() {
                         src->getCharge() / r2lpp *
                         legendreCoeffs[abs(-m)] * expI(-m*ph);
                 }
+
                 r2lpp *= r;
             }
         }
     }
 }
 
-/* getDirectSol: Return sol at X due to all particles in this node */
-const pairSol Node::getDirectSol(const vec3d& X, const double EPS) {
-    double phi = 0.0;
-    vec3d fld = vec3d::Zero();
+/* evalSols:
+   Evaluate sols at particles in this node due to particles in srcNode
+   If evalAtSrcs is true, also evaluate sols at particles in srcNode 
+   due to particles in this node */
+void Node::evalDirectSols(const std::shared_ptr<Node>& srcNode, const bool evalAtSrcs) {
+    const int numObss = particles.size(), numSrcs = srcNode->particles.size();
 
-    for (const auto& src : particles) {
-        const auto dX = X - src->getPos();
-        const auto r = dX.norm();
-        const auto srcPhi = src->getCharge() / r;
+    realVec phis(numObss, 0.0);
+    std::vector<vec3d> flds(numObss, vec3d::Zero());
 
-        if (r < EPS) continue;
-        phi += srcPhi;
-        fld += srcPhi * dX / pow(r, 2);
+    realVec phisAtSrc(numSrcs, 0.0);
+    std::vector<vec3d> fldsAtSrc(numSrcs, vec3d::Zero());
 
+    for (size_t obsIdx = 0; obsIdx < numObss; ++obsIdx) {
+        for (size_t srcIdx = 0; srcIdx < numSrcs; ++srcIdx) {
+            auto obs = particles[obsIdx], src = srcNode->particles[srcIdx];
+
+            const auto dX = obs->getPos() - src->getPos();
+            const auto dr = dX.norm();
+
+            const auto srcPhi = src->getCharge() / dr;
+            const auto srcFld = srcPhi * dX / (dr*dr);
+
+            phis[obsIdx] += srcPhi;
+            flds[obsIdx] += srcFld;
+
+            if (!evalAtSrcs) continue;
+
+            // assume all charges have equal magnitude
+            if (obs->getCharge() == src->getCharge()) {
+                phisAtSrc[srcIdx] += srcPhi;
+                fldsAtSrc[srcIdx] -= srcFld;
+            } else {
+                phisAtSrc[srcIdx] -= srcPhi;
+                fldsAtSrc[srcIdx] += srcFld;
+            }
+        }
     }
 
-    return pairSol(phi,fld);
+    for (int n = 0; n < numObss; ++n)
+        particles[n]->addToSol(phis[n], flds[n]);
+
+    if (!evalAtSrcs) return;
+
+    for (int n = 0; n < numSrcs; ++n)
+        (srcNode->particles[n])->addToSol(phisAtSrc[n], fldsAtSrc[n]);
 }
 
-/* getDirectSols: Return sols at all particles in this node due to 
-   all other particles in this node */
-// TODO : Implement reciprocity
-const solVec Node::getDirectSols() {
+/* evalSelfSols:
+   Evaluate sols at all particles in this node due to all other particles
+   in this node */
+void Node::evalSelfSols() {
+    const int numParts = particles.size();
+
+    realVec phis(numParts, 0.0);
+    std::vector<vec3d> flds(numParts, vec3d::Zero());
+
+    for (size_t obsIdx = 1; obsIdx < numParts; ++obsIdx) {
+        for (size_t srcIdx = 0; srcIdx < obsIdx; ++srcIdx) {
+            auto obs = particles[obsIdx], src = particles[srcIdx];
+
+            const auto dX = obs->getPos() - src->getPos();
+            const auto dr = dX.norm();
+
+            const auto srcPhi = src->getCharge() / dr;
+            const auto srcFld = srcPhi * dX / (dr*dr);
+
+            phis[obsIdx] += srcPhi;
+            flds[obsIdx] += srcFld;
+
+            // assume all charges have equal magnitude
+            if (obs->getCharge() == src->getCharge()) {
+                phis[srcIdx] += srcPhi;
+                flds[srcIdx] -= srcFld;
+            } else {
+                phis[srcIdx] -= srcPhi;
+                flds[srcIdx] += srcFld;
+            }
+        }
+    }
+
+    for (int n = 0; n < numParts; ++n)
+        particles[n]->addToSol(phis[n], flds[n]);
+}
+
+void Node::resetSols() {
+    for (const auto& p : particles)
+        p->resetSol();
+}
+
+/*void Node::evalSelfSols() {
     solVec sols;
 
     for (const auto& obs : particles) {
@@ -298,15 +361,14 @@ const solVec Node::getDirectSols() {
             if (obs == src) continue;
 
             const auto dX = obs->getPos() - src->getPos();
-            const auto r = dX.norm();
-            const auto srcPhi = src->getCharge() / r;
-            
+            const auto dr = dX.norm();
+            const auto srcPhi = src->getCharge() / dr;
+
             phi += srcPhi;
-            fld += srcPhi * dX / pow(r, 2);
+            fld += srcPhi * dX / (dr*dr);
         }
 
-        sols.push_back(pairSol(phi,fld));
+        obs->addToSol(phi, fld);
     }
+}*/
 
-    return sols;
-}

@@ -83,7 +83,8 @@ ParticleVec makeParticles(const Config& config)
     return particles;
 }
 
-void printSols(ParticleVec& particles, const std::string& pname, const std::string& fname) 
+void printSols(ParticleVec& particles, 
+    const std::string& pname, const std::string& fname) 
 {
     ofstream phiFile(pname);
     ofstream fldFile(fname);

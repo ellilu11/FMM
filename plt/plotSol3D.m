@@ -14,7 +14,6 @@ phiAnlSort = sortrows(phiAnl);
 
 figure(1);
 % [phiAnl, phi]
-hold on;
 plot(nvec, phiAnlSort, nvec, phiSort);
 
 % hold on;
