@@ -35,6 +35,8 @@ public:
     static const int getExponentialOrder() { return orderExp; }
     
     static const int getNumNodes() { return numNodes; }
+
+    static void findNearNborPairs();
     
     static void setNodeParams(const Config&);
     
@@ -87,24 +89,32 @@ public:
     
     void pushSelfToNearNonNbors();
    
-    void addToLocalCoeffsFromDirList();
+    void evalLocalCoeffsFromDirList();
     
     const std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
 
-    void addToLocalCoeffsFromLeafIlist();
+    void evalLocalCoeffsFromLeafIlist();
 
     const std::vector<vecXcd> getMpoleToExpCoeffs(const int) const;
     
     void addShiftedExpCoeffs(const std::vector<vecXcd>&, const vec3d&, const int);
 
-    const pairSol getDirectSol(const vec3d&, const double = 1.0E-12);
+    // void evalDirectSol(const std::shared_ptr<Particle>&);
 
-    const solVec getDirectSols();
+    void evalDirectSols(const std::shared_ptr<Node>&, const bool);
+
+    void evalSelfSols();
+
+    void resetSols();
+
+    // const solVec getSelfSols();
+
+    // const solVec getSelfSolsRecip();
    
     /* pure virtual */
     virtual std::shared_ptr<Node> getSelf() = 0;
     
-    virtual void buildNbors() = 0;
+    virtual void buildNeighbors() = 0;
 
     virtual void buildLists() = 0;
     
@@ -141,6 +151,7 @@ public:
 
     // definition under test/nodetest.cpp
     void labelNodes();
+    const pairSol getDirectSol(const vec3d&, const double = 1.0E-12);
     const cmplx getPhiFromMpole(const vec3d&);
     void ffieldTest(const int, const int, const int);
     void nfieldTest();
@@ -184,5 +195,4 @@ protected:
 
     // === Test members ===
     int label;
-    bool useRot;
 };

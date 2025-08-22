@@ -89,12 +89,12 @@ vec3d toSph(const vec3d& X) {
 //}
 
 // return \sum_i (coeffs[i] * z^i)
-template <typename T>
+/*template <typename T>
 const T evaluatePoly(std::vector<T> coeffs, const T z) {
     for (ptrdiff_t i = coeffs.size()-2; i >= 0; --i)
         coeffs[i] += coeffs[i+1] * z;
     return coeffs[0];
-}
+}*/
 
 const double fallingFactorial(double x, int k) {
     return k == 0 ? 1 : x * fallingFactorial(x - 1, k - 1);

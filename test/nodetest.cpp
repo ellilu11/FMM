@@ -17,19 +17,31 @@ void Node::labelNodes() {
         for (const auto& node : leaf->getDirList(dir))   // list 2
             node->labelNode(3);
 
-    auto outerDirList = leaf->getBase()->outerDirList;
-    for (int dir = 0; dir < 6; ++dir)
-        for (const auto& node : outerDirList[dir])       // list 2 (outer)
-            node->labelNode(4);
-
-    /*for (const auto& node : leaf->getNearNonNbors())   // list 3
+    for (const auto& node : leaf->getNearNonNbors())   // list 3
         if (node->isNodeType<Leaf>())
             node->labelNode(4);
         else
             node->labelNode(5);
 
     for (const auto& node : leaf->getLeafIlist())        // list 4
-        node->labelNode(6);*/
+        node->labelNode(6);
+}
+
+const pairSol Node::getDirectSol(const vec3d& X, const double EPS) {
+    double phi = 0.0;
+    vec3d fld = vec3d::Zero();
+
+    for (const auto& src : particles) {
+        const auto dX = X - src->getPos();
+        const auto dr = dX.norm();
+        const auto srcPhi = src->getCharge() / dr;
+
+        if (dr < EPS) continue;
+        phi += srcPhi;
+        fld += srcPhi * dX / (dr*dr);
+    }
+
+    return pairSol(phi, fld);
 }
 
 const cmplx Node::getPhiFromMpole(const vec3d& X) {

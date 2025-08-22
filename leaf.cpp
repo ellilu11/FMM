@@ -1,5 +1,7 @@
 #include "leaf.h"
 
+LeafVec Leaf::leaves;
+
 Leaf::Leaf(
     const ParticleVec& particles,
     const int branchIdx,
@@ -8,16 +10,16 @@ Leaf::Leaf(
 {
 }
 
-void Leaf::buildNbors() {
+void Leaf::buildNeighbors() {
     assert(!isRoot());
 
     for (int i = 0; i < numDir; ++i) {
         Dir dir = static_cast<Dir>(i);
         auto nbor = getNeighborGeqSize(dir);
+
         if (nbor != nullptr) {
             nbors.push_back(nbor);
             auto nbors = getNeighborsLeqSize(nbor, dir);
-            nearNbors.reserve(nearNbors.size() + nbors.size());
             nearNbors.insert(nearNbors.end(), nbors.begin(), nbors.end());
         }
     }
@@ -27,12 +29,17 @@ void Leaf::buildNbors() {
 void Leaf::buildLists() {
     if (isRoot()) return;
     
-    buildNbors();
+    buildNeighbors();
+
     buildInteractionList();
+
     pushSelfToNearNonNbors();
+
+    leaves.push_back(shared_from_this()); // record self in list of leaves
 }
 
-/* buildMpoleCoeffs : Build mpole expansions from particles in this node (P2M) */
+/* buildMpoleCoeffs : 
+   Build mpole expansions from particles in this node (P2M) */
 void Leaf::buildMpoleCoeffs() {
     for (int l = 0; l <= order; ++l)
         coeffs.emplace_back(vecXcd::Zero(2*l+1));
@@ -78,18 +85,41 @@ void Leaf::propagateExpCoeffs() {
     }
 }
 
-void Leaf::buildLocalCoeffs() {
+/*void Leaf::propagateExpCoeffs() {
+    if (isRoot()) return;
 
+    for (int dir = 0; dir < 6; ++dir) {
+
+        auto start = std::chrono::high_resolution_clock::now();
+
+        auto expCoeffs = getMpoleToExpCoeffs(dir);
+
+        t_M2X += std::chrono::high_resolution_clock::now() - start;
+
+        start = std::chrono::high_resolution_clock::now();
+        // for lvl > 1, propagate own exp coeffs to inner dirlist
+        if (!base->isRoot())
+            for (const auto& node : dirList[dir])
+                node->addShiftedExpCoeffs(expCoeffs, center, dir);
+
+        t_X2X += std::chrono::high_resolution_clock::now() - start;
+    }
+ 
+
+    expCoeffsOut = {};
+}*/
+
+void Leaf::buildLocalCoeffs() {
     if (!isRoot()) {
         auto start = std::chrono::high_resolution_clock::now();
 
-        addToLocalCoeffsFromLeafIlist();
+        evalLocalCoeffsFromLeafIlist();
 
         t_P2L += std::chrono::high_resolution_clock::now() - start;
 
         start = std::chrono::high_resolution_clock::now();
 
-        addToLocalCoeffsFromDirList();
+        evalLocalCoeffsFromDirList();
 
         t_X2L += std::chrono::high_resolution_clock::now() - start;
 
@@ -103,13 +133,11 @@ void Leaf::buildLocalCoeffs() {
         
         t_L2L += std::chrono::high_resolution_clock::now() - start;
     }
-
-    evaluateSolAtParticles();
 }
 
-/* getFarSols : Return sols from local expansion due to far nodes */
-solVec Leaf::getFarSols() const {
-    solVec sols;
+/* evalFarSols : 
+   Evaluate sols from local expansion due to far nodes (L2P) */
+void Leaf::evalFarSols() {
 
     for (const auto& obs : particles) {
         const auto dR = toSph(obs->getPos() - center);
@@ -151,16 +179,13 @@ solVec Leaf::getFarSols() const {
             {  cos(th),         -sin(th),          0.0             }
         } * fld;
 
-        sols.push_back(pairSol(phi.real(), fld.real()));
+        obs->addToSol(phi.real(), fld.real());
     }
-
-    return sols;
 }
 
-/* getNearNonNborSols : Evaluate sols directly or from mpole expansion due to
-   near non-neighbor nodes (list 3) */
-solVec Leaf::getNearNonNborSols() const {
-    solVec sols;
+/* evalNearNonNborSols : 
+   Get sols directly or from mpole expansion due to near non-neighbor nodes (list 3) */
+void Leaf::evalNearNonNborSols() {
 
     for (const auto& obs : particles) {
         const auto obsPos = obs->getPos();
@@ -178,11 +203,11 @@ solVec Leaf::getNearNonNborSols() const {
                     // assert(obs != src);
 
                     const auto dX = obsPos - src->getPos();
-                    const auto r = dX.norm();
-                    const auto srcPhi = src->getCharge() / r;
+                    const auto dr = dX.norm();
+                    const auto srcPhi = src->getCharge() / dr;
 
                     phi += srcPhi;
-                    fld += srcPhi * dX / pow(r, 2);
+                    fld += srcPhi * dX / (dr*dr);
                 }
                 continue;
             }
@@ -227,116 +252,51 @@ solVec Leaf::getNearNonNborSols() const {
             } * fld_R;
         }
 
-        sols.push_back(pairSol(phi.real(), fld.real()));
+        obs->addToSol(phi.real(), fld.real());
     }
-
-    return sols;
 }
 
-/* from particles in near neighbors (list 1) */
-/*solVec Leaf::getNearNborSols() const {
-    solVec sols;
+/* findNearNborPairs :
+   From list of leaves, find all near neighbor pairs */
+std::vector<LeafPair> Leaf::findNearNborPairs(){
+    std::vector<LeafPair> leafPairs;
 
-    for (const auto& obs : particles) {
-        double phi = 0.0;
-        vec3d fld = vec3d::Zero();
-
-        const auto obsPos = obs->getPos();
-
-        for (const auto& node : nearNbors) {
-            auto srcs = node->getParticles();
-
-            for (const auto& src : node->getParticles()) {
-                // assert(obs != src);
-
-                const auto dX = obs->getPos() - src->getPos();
-                const auto r = dX.norm();
-                const auto srcPhi = src->getCharge() / r;
-
-                phi += srcPhi;
-                fld += srcPhi * dX / pow(r, 2);
-            }
+    for (const auto& leaf : leaves) {
+        for (const auto& nbor : leaf->getNearNbors()) {
+            auto nborLeaf = dynamic_pointer_cast<Leaf>(nbor);
+            if (leaf < nbor)
+                leafPairs.emplace_back(std::make_pair(leaf, nborLeaf));
         }
-        sols.push_back(pairSol(phi,fld));
     }
-    return sols;
-}*/
+    //std::cout << "# leaf pairs: " << leafPairs.size() << '\n';
 
-/* getNearNborSols : Evaluate sols directly from near neighbor nodes (list 1) */
-solVec Leaf::getNearNborSols() const {
-    solVec sols;
-
-    for (const auto& obs : particles) {
-        double phi = 0.0;
-        vec3d fld = vec3d::Zero();
-
-        const auto obsPos = obs->getPos();
-
-        for (const auto& node : nearNbors) {
-            auto [srcNodePhi, srcNodeFld] = node->getDirectSol(obsPos);
-            phi += srcNodePhi;
-            fld += srcNodeFld;
-        }
-        sols.push_back(pairSol(phi,fld));
-    }
-    return sols;
+    return leafPairs;
 }
 
-/* evaluateSolAtParticles: Evaluate and pass sols to particles */ 
-void Leaf::evaluateSolAtParticles() {
+/* evaluateSols: 
+   Sum solutions at all particles in all leaf nodes */ 
+void Leaf::evaluateSols() {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    auto sols = getFarSols() + getNearNonNborSols();
+    for (const auto& leaf : leaves) {
+        leaf->evalFarSols();
+        leaf->evalNearNonNborSols();
+    }
 
     t_L2P += std::chrono::high_resolution_clock::now() - start;
 
     start = std::chrono::high_resolution_clock::now();
 
-    sols = sols + getNearNborSols() + getDirectSols();
+    for (const auto& pair : findNearNborPairs()) {
+        auto [obsNode, srcNode] = pair;
+        const bool evalAtSrcs = 1;
+        obsNode->evalDirectSols(srcNode, evalAtSrcs);
+    }
+
+    for (const auto& leaf : leaves)
+        leaf->evalSelfSols();
 
     t_dir += std::chrono::high_resolution_clock::now() - start;
-
-    for (size_t n = 0; n < particles.size(); ++n) {
-        auto p = particles[n];
-        p->addFromSol(sols[n]);
-    }
 }
 
-/*
-void Leaf::evaluateSolAtParticles() {
-    if (isRoot()) return; // fix later
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    auto phis = 
-        getFarPhis() 
-        + getNearNonNborPhis()
-        ;
-
-    auto flds =
-        getFarFlds()
-        + getNearNonNborFlds()
-        ;
-
-    t_L2P += std::chrono::high_resolution_clock::now() - start;
-
-    start = std::chrono::high_resolution_clock::now();
-
-    phis = phis 
-        + getNearNborSols<double>(
-        [](vec3d X) { return 1.0 / X.norm(); });
-
-    flds = flds 
-        + getNearNborSols<vec3d>(
-        [](vec3d X) { return X / pow(X.norm(), 3); });
-
-    t_dir += std::chrono::high_resolution_clock::now() - start;
-
-    // for (auto [p, phi, fld] : std::views::zip(particles, phis, flds)) {
-    for (size_t n = 0; n < particles.size(); ++n) {
-        auto p = particles[n];
-        p->addToPhi(phis[n]);
-        p->addToFld(flds[n]);
-    }
-}*/

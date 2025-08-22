@@ -27,9 +27,14 @@ public :
 
     //void addToFld(vec3d fld_) { fld += fld_; }
 
-    void addFromSol(const pairSol& sol) { 
-        phi += sol.first;
-        fld += sol.second;
+    void addToSol(const double phi_, const vec3d& fld_) { 
+        phi += phi_;
+        fld += fld_;
+    }
+
+    void resetSol() {
+        phi = 0.0;
+        fld = vec3d::Zero();
     }
 
     void printPhi(std::ofstream& f) const {

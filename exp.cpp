@@ -83,7 +83,7 @@ void Node::addShiftedExpCoeffs(
                 srcExpCoeffs[k][j] * tables.exps_[k][j][l];
 }
 
-void Node::addToLocalCoeffsFromDirList() {
+void Node::evalLocalCoeffsFromDirList() {
     assert(!isRoot());
 
     for (int dirIdx = 0; dirIdx < 6; ++dirIdx) {
@@ -98,8 +98,8 @@ void Node::addToLocalCoeffsFromDirList() {
                 int m_p = m+order;
                 for (int j = 0; j < M_k; ++j)
                     innerCoeffs[m_p] +=
-                        expCoeffs[dirIdx][k][j]
-                        * conj(tables.expI_alphas_[k][j][m_p]); // conj
+                    expCoeffs[dirIdx][k][j]
+                    * conj(tables.expI_alphas_[k][j][m_p]); // conj
                 innerCoeffs[m_p] *= powI(abs(m)); // plus sign
             }
 
@@ -110,7 +110,7 @@ void Node::addToLocalCoeffsFromDirList() {
                     int m_l = m+l;
                     rotatedLocalCoeffs[l][m_l] +=
                         innerCoeffs[m+order]
-                        * tables.Aexp_[l][m_l] 
+                        * tables.Aexp_[l][m_l]
                         * ml_k2l;
                 }
                 ml_k2l *= -l_k;
@@ -135,9 +135,9 @@ void Node::addToLocalCoeffsFromDirList() {
 
         // apply inverse rotation
         for (int l = 0; l <= order; ++l)
-            localCoeffs[l] += 
-                ( dirIdx ?
-                  wignerDInv[dirIdx+8][l] * rotatedLocalCoeffs[l] :
-                  rotatedLocalCoeffs[l] );
+            localCoeffs[l] +=
+            (dirIdx ?
+                wignerDInv[dirIdx+8][l] * rotatedLocalCoeffs[l] :
+                rotatedLocalCoeffs[l]);
     }
 }
