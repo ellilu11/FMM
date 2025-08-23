@@ -70,16 +70,39 @@ void Leaf::buildMpoleCoeffs() {
 void Leaf::propagateExpCoeffs() {
     if (isRoot()) return;
 
-    auto start = std::chrono::high_resolution_clock::now();
-    for (int dir = 0; dir < 6; ++dir) {
-        // for lvl > 1, propagate own exp coeffs to inner dirlist
+    Clock::time_point start;
+
+    for (int dir = 0; dir < 2; ++dir) {
+        start = Clock::now();
+
         if (!base->isRoot())
             for (const auto& node : dirList[dir])
                 node->addShiftedExpCoeffs(expCoeffsOut[dir], center, dir);
+
+        t.X2X += Clock::now() - start;
     }
-    t.X2X += std::chrono::high_resolution_clock::now() - start;
 
     expCoeffsOut = {};
+
+    // Puzzle: How to combine coordinate rotation to north/south/east/westlist
+    // with translation to base?
+    // TODO: Remove this section once puzzle solved
+    for (int dir = 2; dir < 6; ++dir) {
+        start = Clock::now();
+
+        auto expCoeffs = getMpoleToExpCoeffs(dir);
+
+        t.M2X += Clock::now() - start;
+
+        start = Clock::now();
+
+        if (!base->isRoot())
+            for (const auto& node : dirList[dir])
+                node->addShiftedExpCoeffs(expCoeffs, center, dir);
+
+        t.X2X += Clock::now() - start;
+
+    }
 }
 
 /*void Leaf::propagateExpCoeffs() {
@@ -111,7 +134,7 @@ void Leaf::buildLocalCoeffs() {
 
     auto start = Clock::now();
 
-    evalLocalCoeffsFromLeafIlist();
+    evalLeafIlistSols();
 
     t.P2L += Clock::now() - start;
 
@@ -139,6 +162,7 @@ void Leaf::evalFarSols() {
     for (const auto& obs : particles) {
         const auto dR = toSph(obs->getPos() - center);
         const double r = dR[0], th = dR[1], ph = dR[2];
+
         double r2l = 1.0, r2lmm = 1.0 / r;
 
         cmplx phi(0,0);
@@ -153,10 +177,10 @@ void Leaf::evalFarSols() {
             }
 
             for (int m = -l; m <= l; ++m) {
-                const int abs_m = abs(m);
+                const size_t abs_m = abs(m);
 
                 phi += localCoeffs[l][m+l] * r2l *
-                    legendreCoeffs[abs(m)] * expI(m*ph);
+                    legendreCoeffs[abs_m] * expI(m*ph);
 
                 fld -= localCoeffs[l][m+l] * r2lmm * expI(m*ph) *
                     vec3cd(
@@ -170,11 +194,7 @@ void Leaf::evalFarSols() {
         }
 
         // Convert to cartesian components
-        fld = mat3d{
-            {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph)/sin(th) },
-            {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph)/sin(th) },
-            {  cos(th),         -sin(th),          0.0             }
-        } * fld;
+        fld = matFromSph(th,ph) * fld;
 
         obs->addToSol(phi.real(), fld.real());
     }
@@ -184,22 +204,24 @@ void Leaf::evalFarSols() {
    Get sols from mpole expansion due to near non-neighbor nodes (list 3) */
 void Leaf::evalNearNonNborSols() {
 
-    for (const auto& obs : particles) {
-        const auto obsPos = obs->getPos();
+    for (const auto& node : nearNonNbors) {
 
-        cmplx phi(0,0);
-        vec3cd fld = vec3cd::Zero();
-        vec3cd fld_R = fld;
+        const auto srcs = node->getParticles();
 
-        for (const auto& node : nearNonNbors) {
+        if (srcs.size() <= order*order)
+            // Do nothing! Contribution from list 3 node was 
+            // already evaluated by Node::evalLeafIlistSols()
+            continue;
 
-            const auto srcs = node->getParticles();
-            if (srcs.size() <= order*order)
-                // do nothing since contribution from list 3 node was 
-                // calculated by Node::evalLocalCoeffsFromLeafIlist()
-                continue;
+        // # srcs large, use mpole expansion of list 3 node
+        for (const auto& obs : particles) {
 
-            // # srcs large, use mpole expansion of src node
+            const auto obsPos = obs->getPos();
+
+            cmplx phi(0,0);
+            vec3cd fld = vec3cd::Zero();
+            vec3cd fld_R = fld;
+
             const auto srcCoeffs = node->getMpoleCoeffs();
 
             const auto dR = toSph(obsPos - node->getCenter());
@@ -215,10 +237,10 @@ void Leaf::evalNearNonNborSols() {
                 }
 
                 for (int m = -l; m <= l; ++m) {
-                    const int abs_m = abs(m);
+                    const size_t abs_m = abs(m);
 
                     phi += srcCoeffs[l][m+l] / r2lpp *
-                        legendreCoeffs[abs(m)] * expI(m*ph);
+                        legendreCoeffs[abs_m] * expI(m*ph);
 
                     fld_R -=
                         srcCoeffs[l][m+l] / r2lp2 * expI(m*ph) *
@@ -232,14 +254,10 @@ void Leaf::evalNearNonNborSols() {
             }
 
             // Convert to cartesian components
-            fld += mat3d{
-                {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph)/sin(th) },
-                {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph)/sin(th) },
-                {  cos(th),         -sin(th),          0.0             }
-            } * fld_R;
-        }
+            fld += matFromSph(th, ph) * fld_R;
 
-        obs->addToSol(phi.real(), fld.real());
+            obs->addToSol(phi.real(), fld.real());
+        }
     }
 }
 
@@ -265,18 +283,22 @@ void Leaf::evaluateSols() {
 
     auto start = Clock::now();
 
-    for (const auto& leaf : leaves) {
+    for (const auto& leaf : leaves)
         leaf->evalFarSols();
-        leaf->evalNearNonNborSols();
-    }
 
     t.L2P += Clock::now() - start;
 
     start = Clock::now();
 
+    for (const auto& leaf : leaves)
+        leaf->evalNearNonNborSols();
+
+    t.M2P += Clock::now() - start;
+
+    start = Clock::now();
+
     for (const auto& pair : findNearNborPairs()) {
         auto [obsLeaf, srcLeaf] = pair;
-        const bool evalAtSrcs = 1;
         obsLeaf->evalPairSols(srcLeaf);
     }
 
@@ -285,4 +307,3 @@ void Leaf::evaluateSols() {
 
     t.P2P += Clock::now() - start;
 }
-

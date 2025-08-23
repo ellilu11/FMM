@@ -91,11 +91,13 @@ public:
     
     const std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
 
-    void evalLocalCoeffsFromLeafIlist();
+    void evalLeafIlistSols();
 
     std::vector<vecXcd> getMpoleToExpCoeffs(const int);
 
     const std::vector<vecXcd> getMergedExpCoeffs(const int) const;
+
+    void addShiftedExpCoeffsFromBranch(const std::vector<vecXcd>&, const vec3d&, const int);
 
     void addShiftedExpCoeffs(const std::vector<vecXcd>&, const vec3d&, const int);
 

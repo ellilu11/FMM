@@ -32,6 +32,7 @@ struct Tables {
     std::vector<std::vector<cmplxVec>> expI_alphas_;
     std::vector<std::vector<std::array<cmplx,25>>> expsInner_;
     std::vector<std::vector<std::array<cmplx,36>>> expsOuter_;
+    std::vector<std::vector<std::array<cmplx,98>>> exps_;
     std::vector<std::vector<std::array<cmplx,8>>> expsMerge_;
 };
 
@@ -139,6 +140,7 @@ void Tables::buildQuadTables(const Precision prec) {
                       64,64,72,72,80,80,88,88,88,88,72,32,4 };
             break;
     }
+
     assert(quadCoeffs_.size() == quadLengs_.size());
 }
 
@@ -149,6 +151,7 @@ void Tables::buildExpTables(const int order) {
         std::vector<cmplxVec> expI_alphas_k;
         std::vector<std::array<cmplx,25>> expsInner_k;
         std::vector<std::array<cmplx,36>> expsOuter_k;
+        std::vector<std::array<cmplx,98>> exps_k;
         std::vector<std::array<cmplx,8>> expsMerge_k;
 
         for (int j = 0; j < M_k; ++j) {
@@ -160,30 +163,43 @@ void Tables::buildExpTables(const int order) {
                 expI_alphas_kj.push_back(expI(m*alpha_kj));
             expI_alphas_k.push_back(expI_alphas_kj);
 
-            std::array<cmplx,25> expsInner_kj;
+            std::array<cmplx, 98> exps_kj;
             size_t l = 0;
+            for (int dz = 2; dz <= 3; ++dz)
+                for (int dy = -3; dy <= 3; ++dy)
+                    for (int dx = -3; dx <= 3; ++dx) {
+                        exps_kj[l++] =
+                            exp(quadCoeffs_[k].first
+                                * cmplx(-1.0*dz,
+                                    dx*cos(alpha_kj) + dy*sin(alpha_kj)));
+                    }
+            assert(l == 98);
+            exps_k.push_back(exps_kj);
+
+            std::array<cmplx,25> expsInner_kj;
+            size_t m = 0;
             constexpr double dzInner = 2.0;
-            for (double dy = -2.0; dy <= 2.0; dy += 1.0)
-                for (double dx = -2.0; dx <= 2.0; dx += 1.0) {
-                    expsInner_kj[l++] =
+            for (int dy = -2; dy <= 2; dy++)
+                for (int dx = -2; dx <= 2; dx++) {
+                    expsInner_kj[m++] =
                         exp(quadCoeffs_[k].first
                             * cmplx(-dzInner,
                                 dx*cos(alpha_kj) + dy*sin(alpha_kj)));
                 }
-            assert(l == 25);
+            assert(m == 25);
             expsInner_k.push_back(expsInner_kj);
 
             std::array<cmplx,36> expsOuter_kj;
-            size_t m = 0;
+            size_t n = 0;
             constexpr double dzOuter = 2.5;
             for (double dy = -2.5; dy <= 2.5; dy += 1.0)
                 for (double dx = -2.5; dx <= 2.5; dx += 1.0) {
-                    expsOuter_kj[m++] =
+                    expsOuter_kj[n++] =
                         exp(quadCoeffs_[k].first
                             * cmplx(-dzOuter,
                                 dx*cos(alpha_kj) + dy*sin(alpha_kj)));
                 }
-            assert(m == 36);
+            assert(n == 36);
             expsOuter_k.push_back(expsOuter_kj);
 
             std::array<cmplx, 8> expsMerge_kj;
@@ -200,6 +216,7 @@ void Tables::buildExpTables(const int order) {
         expI_alphas_.push_back(expI_alphas_k);
         expsInner_.push_back(expsInner_k);
         expsOuter_.push_back(expsOuter_k);
+        exps_.push_back(exps_k);
         expsMerge_.push_back(expsMerge_k);
     }
 }

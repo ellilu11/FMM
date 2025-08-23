@@ -86,10 +86,11 @@ void Stem::buildMpoleCoeffs() {
 
 void Stem::propagateExpCoeffs() {
     if (!isRoot()) {
-        for (int dir = 0; dir < 6; ++dir) {
-            auto start = Clock::now();
+        Clock::time_point start;
 
-            // build exp coeffs of branches, merge them, and propagate to outer dirlist
+        for (int dir = 0; dir < 2; ++dir) {
+            start = Clock::now();
+            
             auto mergedExpCoeffs = getMergedExpCoeffs(dir);
 
             t.M2X += Clock::now() - start;
@@ -105,9 +106,46 @@ void Stem::propagateExpCoeffs() {
                     node->addShiftedExpCoeffs(expCoeffsOut[dir], center, dir);
 
             t.X2X += Clock::now() - start;
+        }
+
+        expCoeffsOut = {};
+
+        // Puzzle: How to combine coordinate rotation to north/south/east/westlist
+        // with translation to base?
+        // TODO: Remove this section once puzzle solved
+        for (int dir = 2; dir < 6; ++dir) {
+
+            for (const auto& branch : branches) {
+                start = Clock::now();
+
+                auto expCoeffs = branch->getMpoleToExpCoeffs(dir);
+
+                t.M2X += Clock::now() - start;
+
+                start = Clock::now();
+
+                for (const auto& node: outerDirList[dir])
+                    node->addShiftedExpCoeffsFromBranch(expCoeffs, branch->getCenter(), dir);
+    
+                t.X2X += Clock::now() - start;
+            }
+
+            if (!base->isRoot()) {
+                start = Clock::now();
+
+                auto expCoeffs = getMpoleToExpCoeffs(dir);
+
+                t.M2X += Clock::now() - start;
+
+                start = Clock::now();
+
+                for (const auto& node : dirList[dir])
+                    node->addShiftedExpCoeffs(expCoeffs, center, dir);
+
+                t.X2X += Clock::now() - start;
+            }
 
         }
-        expCoeffsOut = {};
     }
 
     for (const auto& branch : branches)
@@ -148,7 +186,7 @@ void Stem::buildLocalCoeffs() {
     if (!isRoot()) {
         auto start = Clock::now();
 
-        evalLocalCoeffsFromLeafIlist();
+        evalLeafIlistSols();
 
         t.P2L += Clock::now() - start;
 

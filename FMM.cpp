@@ -49,7 +49,9 @@ int main() {
 
     // ==================== Build tables ===================== //
     auto fmm_start = Clock::now();
+    
     Node::buildTables(config);
+
     Node::buildRotationMats();
 
     // ==================== Set up domain ==================== //
@@ -131,8 +133,9 @@ int main() {
 
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
     cout << "   Elapsed time (L2P): " << t.L2P.count() << " ms\n";
+    cout << "   Elapsed time (M2P): " << t.M2P.count() << " ms\n";
     cout << "   Elapsed time (P2P): " << t.P2P.count() << " ms\n";
-    cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n\n";
+    cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n";
 
     printSols(srcs, "out/phi.txt", "out/fld.txt");
 
@@ -141,7 +144,7 @@ int main() {
 
     root->resetSols();
 
-    cout << " Computing direct..." << endl;
+    cout << "\n Computing direct...\n";
     start = Clock::now();
 
     root->evalSelfSols();
