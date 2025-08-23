@@ -113,21 +113,6 @@ double Node::dLegendreCos(const double th, const int l, const int abs_m) {
             0.0);
 };
 
-//const double Node::dLegendreCos(
-//    const double th, const int l, const int abs_m,
-//    const double lCos, const double lCos_prev)
-//{
-//    if (!l) return 0.0;
-//    assert(0 <= abs_m && abs_m <= l);
-//
-//    return
-//        l / tan(th) * lCos -
-//        (abs_m < l ?
-//            (l + abs_m) / sin(th) * lCos_prev
-//            * tables.fracCoeffYlm_[l][abs_m] :
-//            0.0);
-//};
-
 /* Node(particles,branchIdx,base)
  * particles : list of particles contained in this node
  * branchidx : index of this node relative to its base node

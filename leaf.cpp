@@ -142,33 +142,40 @@ void Leaf::evalFarSols() {
         const auto dR = toSph(obs->getPos() - center);
         const double r = dR[0], th = dR[1], ph = dR[2];
 
-        double r2l = 1.0, r2lmm = 1.0 / r;
-
         cmplx phi(0,0);
         vec3cd fld = vec3cd::Zero();
+        double r2lmm = 1.0 / r;
 
         for (int l = 0; l <= order; ++l) {
-            realVec legendreCoeffs, dLegendreCoeffs;
+            realVec legendre_l, dLegendre_l;
+
+            //for (int m = 0; m <= l; ++m) {
+            //    double legendre_lm = legendreCos(th, l, m);
+            //    legendre_l.push_back(legendre_lm);
+            //    double dLegendre_prev_m =
+            //        (m < l) ? legendre_prev[m] : 0.0;
+            //    dLegendre_l.push_back(
+            //        dLegendreCos(th, l, m,
+            //            legendre_lm, dLegendre_prev_m));
+            //}
 
             for (int m = 0; m <= l; ++m) {
-                legendreCoeffs.push_back(legendreCos(th,l,m));
-                dLegendreCoeffs.push_back(dLegendreCos(th,l,m));
+                legendre_l.push_back(legendreCos(th, l, m));
+                dLegendre_l.push_back(dLegendreCos(th, l, m));
             }
 
             for (int m = -l; m <= l; ++m) {
                 const size_t abs_m = abs(m);
+                const cmplx coeff = localCoeffs[l][m+l] * r2lmm * expI(m*ph);
 
-                phi += localCoeffs[l][m+l] * r2l *
-                    legendreCoeffs[abs_m] * expI(m*ph);
-
-                fld -= localCoeffs[l][m+l] * r2lmm * expI(m*ph) *
+                phi += coeff * r * legendre_l[abs_m];
+                fld -= coeff *
                     vec3cd(
-                        l * legendreCoeffs[abs_m],           // E_r
-                        dLegendreCoeffs[abs_m],              // E_th
-                        cmplx(0,m) * legendreCoeffs[abs_m]); // E_ph * sin(th)
-;
+                        l * legendre_l[abs_m],           // E_r
+                        dLegendre_l[abs_m],              // E_th
+                        cmplx(0,m) * legendre_l[abs_m]); // E_ph * sin(th)
             }
-            r2l *= r;
+
             r2lmm *= r;
         }
 
@@ -195,7 +202,6 @@ void Leaf::evalNearNonNborSols() {
 
         // # srcs large, use mpole expansion of list 3 node
         for (const auto& obs : particles) {
-
             const auto obsPos = obs->getPos();
 
             cmplx phi(0,0);
@@ -206,31 +212,29 @@ void Leaf::evalNearNonNborSols() {
 
             const auto dR = toSph(obsPos - node->getCenter());
             const double r = dR[0], th = dR[1], ph = dR[2];
-            double r2lpp = r, r2lp2 = r*r;
+            double r2lpp = r;
 
             for (int l = 0; l <= order; ++l) {
-                realVec legendreCoeffs, dLegendreCoeffs;
+                realVec legendre_l, dLegendre_l;
 
                 for (int m = 0; m <= l; ++m) {
-                    legendreCoeffs.push_back(legendreCos(th, l, m));
-                    dLegendreCoeffs.push_back(dLegendreCos(th, l, m));
+                    legendre_l.push_back(legendreCos(th, l, m));
+                    dLegendre_l.push_back(dLegendreCos(th, l, m));
                 }
 
                 for (int m = -l; m <= l; ++m) {
                     const size_t abs_m = abs(m);
+                    const cmplx coeff = srcCoeffs[l][m+l] / r2lpp * expI(m*ph);
 
-                    phi += srcCoeffs[l][m+l] / r2lpp *
-                        legendreCoeffs[abs_m] * expI(m*ph);
-
-                    fld_R -=
-                        srcCoeffs[l][m+l] / r2lp2 * expI(m*ph) *
+                    phi += coeff * legendre_l[abs_m];
+                    fld_R -= coeff / r * 
                         vec3cd(
-                            -(l+1) * legendreCoeffs[abs_m],      // E_r
-                            dLegendreCoeffs[abs_m],              // E_th
-                            cmplx(0,m) * legendreCoeffs[abs_m]); // E_ph * sin(th)
+                            -(l+1) * legendre_l[abs_m],      // E_r
+                            dLegendre_l[abs_m],              // E_th
+                            cmplx(0,m) * legendre_l[abs_m]); // E_ph * sin(th)
                 }
+
                 r2lpp *= r;
-                r2lp2 *= r;
             }
 
             // Convert to cartesian components
