@@ -66,29 +66,28 @@ void Stem::buildMpoleCoeffs() {
 
     for (const auto& branch : branches) {
         branch->buildMpoleCoeffs();
-
         auto branchCoeffs = branch->getMpoleCoeffs();
         const auto branchIdx = branch->getBranchIdx();
+
         const double r = (branch->getCenter() - center).norm();
 
-        for (size_t j = 0; j <= order; ++j) {
+        for (int j = 0; j <= order; ++j) {
             branchCoeffs[j] = wignerD[branchIdx][j] * branchCoeffs[j];
 
-            vecXcd shiftedCoeffs_j = vecXcd::Zero(2*j+1);
+            vecXcd shiftedBranchCoeffs_j = vecXcd::Zero(2*j+1);
             for (int k = -j; k <= j; ++k) {
-                const size_t kpj = k + j;
+                int k_ = k + j;
                 double r2n = 1.0;
-
                 for (int n = 0; n <= min(j+k, j-k); ++n) {
-                    shiftedCoeffs_j[kpj] += branchCoeffs[j-n][kpj-n] *
-                        tables.A_[n][n] * tables.A_[j-n][kpj-n] / tables.A_[j][kpj] *
+                    // if ( max(k+n-j, -n) <= 0 && 0 <= min(k+j-n, n) )
+                    shiftedBranchCoeffs_j[k_] += branchCoeffs[j-n][k_-n] *
+                        tables.A_[n][n] * tables.A_[j-n][k_-n] / tables.A_[j][k_] *
                         r2n; // legendreCos(0.0, n, 0) = 1 for all n;
-
                     r2n *= r;
                 }
             }
 
-            coeffs[j] += wignerDInv[branchIdx][j] * shiftedCoeffs_j;
+            coeffs[j] += wignerDInv[branchIdx][j] * shiftedBranchCoeffs_j;
         }
     }
 }

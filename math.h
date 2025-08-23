@@ -80,10 +80,6 @@ vec3d toSph(const vec3d& X) {
     return vec3d( r, std::acos(z/r), toPhi(x,y) );
 }
 
-//size_t lm2Idx(const int l, const int m) {
-//    return l*l + l + m;
-//}
-
 // return \sum_i (coeffs[i] * z^i)
 /*template <typename T>
 const T evaluatePoly(std::vector<T> coeffs, const T z) {

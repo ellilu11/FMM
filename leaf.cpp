@@ -59,20 +59,18 @@ void Leaf::buildMpoleCoeffs() {
     for (const auto& src : particles) {
         const auto dR = toSph(src->getPos() - center);
         const double r = dR[0], th = dR[1], ph = dR[2];
-        
         double r2l = 1.0;
 
-        for (size_t l = 0; l <= order; ++l) {
+        for (int l = 0; l <= order; ++l) {
             realVec legendreCoeffs;
-            for (size_t m = 0; m <= l; ++m)
-                legendreCoeffs.push_back(legendreCos(th,l,m));
+            for (int m = 0; m <= l; ++m)
+                legendreCoeffs.push_back(legendreCos(th, l, m));
 
             for (int m = -l; m <= l; ++m) {
                 coeffs[l][m+l] +=
                     src->getCharge() * r2l *
-                    legendreCoeffs[abs(-m)] * expI(-m*ph); 
+                    legendreCoeffs[abs(-m)] * expI(-m*ph);
             }
-
             r2l *= r;
         }
     }

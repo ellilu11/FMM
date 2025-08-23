@@ -58,7 +58,7 @@ void Node::buildRotationMats() {
                 case 4: return vec3d(1, 0, 0);
                 case 5: return vec3d(-1, 0, 0);
             } 
-            }(); // cardinal directions (for M2X and X2L)
+            }();          // cardinal directions (for M2X and X2L)
 
         auto R = toSph(X);
         pair2d angles(R[1], R[2]);
@@ -128,10 +128,8 @@ Node::Node(
         base->center + nodeLeng / 2.0 * idx2pm(branchIdx)),
     label(0)
 {
-    for (int l = 0; l <= order; ++l) {
-        coeffs.emplace_back(vecXcd::Zero(2*l+1));
+    for (int l = 0; l <= order; ++l) 
         localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
-    }
 
     for (int dir = 0; dir < 6; ++dir) {
         std::vector<vecXcd> expCoeffs_dir;
