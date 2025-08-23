@@ -2,6 +2,11 @@
 
 using enum Dir;
 
+/* getNeighborGeqSize(dir)
+ * Find the unique neighbor node (if it exists) of equal or greater size
+ * along a given direction
+ * dir : direction
+ */
 std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
     if (isRoot()) return nullptr;
 
@@ -477,6 +482,11 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
     }
 }
 
+/* getNeighborsLeqSize(nborGeqSize,dir)
+ * Find all neighbor leaves contained in nborGeqSize
+ * nborGeqSize : neighbor node of greater or equal size
+ * dir         : direction (must be consistent with direction of nborGeqSize)
+ */
 NodeVec Node::getNeighborsLeqSize(
     const std::shared_ptr<Node>& nborGeqSize, const Dir dir) const
 {

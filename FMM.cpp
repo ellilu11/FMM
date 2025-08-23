@@ -72,19 +72,10 @@ int main() {
     cout << "   # Leaves: " << Leaf::getNumLeaves() << '\n';
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    // ==================== Tests ==================== //
     std::ofstream nodeFile("out/nodes.txt");
     root->printNode(nodeFile);
 
-    // ==============================================
-    // root->ffieldTest(1,10,10);
-    // ==============================================   
-    // root->mpoleToExpToLocalTest();
-    // ==============================================   
-    // root->nfieldTest();
-
-    // return 0;
-    // ==================== Upward pass ==================== //
+    // ==================== Upward pass ===================== //
     cout << " Computing upward pass...\n";
     start = Clock::now();
 
