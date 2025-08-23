@@ -2,9 +2,9 @@
 
 /* getMpoleToExpCoeffs(dirIdx)
  * (M2X) Convert mpole coeffs into outgoing exp coeffs along direction dirIdx
- * dirIdx : direction of outgoing exp coeffs ( 0 = north, 1 = south, ...)
+ * dirIdx : direction of outgoing exp coeffs ( 0 = up, 1 = down, ...)
  */
-const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) const {
+std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
     std::vector<vecXcd> rotatedCoeffs, expCoeffs;
 
     // apply rotation
@@ -166,7 +166,7 @@ void Node::addShiftedExpCoeffs(
     }
 }
 
-void Node::evalLocalCoeffsFromDirList() {
+void Node::evalExpToLocalCoeffs() {
     assert(!isRoot());
 
     for (int dirIdx = 0; dirIdx < 6; ++dirIdx) {

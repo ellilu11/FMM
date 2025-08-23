@@ -134,14 +134,6 @@ mat3d matFromSph(const double th, const double ph) {
     };
 }
 
-mat3d matFromSph(const double th, const double ph) {
-    return mat3d{
-            {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph)/sin(th) },
-            {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph)/sin(th) },
-            {  cos(th),         -sin(th),          0.0             }
-    };
-}
-
 mat3d rotationR(const pair2d angles) {
     auto [th, ph] = angles;
     return mat3d {
