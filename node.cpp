@@ -79,7 +79,7 @@ void Node::buildRotationMats() {
  * l     : angular momentum number
  * abs_m : |m| where m is z-axis angular momentum number
  */
-const double Node::legendreCos(const double th, const int l, const int abs_m) {
+double Node::legendreCos(const double th, const int l, const int abs_m) {
     assert(abs_m <= l);
 
     const auto cos_th = cos(th);
@@ -88,20 +88,20 @@ const double Node::legendreCos(const double th, const int l, const int abs_m) {
 
     // term is zero for l-k odd
     for (int k = l; k >= abs_m; k -= 2)
-        legendreSum += 
-            tables.fallingFact_[k][abs_m] * tables.legendreSum_[l][k] 
-            * pow(cos_th, k-abs_m);
+        legendreSum +=
+        tables.fallingFact_[k][abs_m] * tables.legendreSum_[l][k]
+        * pow(cos_th, k-abs_m);
 
     return tables.coeffYlm_[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
 }
 
 /* dLegendreCos(th,l,abs_m)
  * Return derivative of C * L_l^{|m|}(\cos(th)) w.r.t. th.
- * th    : polar angle
- * l     : angular momentum number
- * abs_m : |m| where m is z-axis angular momentum number
+ * th        : polar angle
+ * l         : angular momentum number
+ * abs_m     : |m| where m is z-axis angular momentum number
  */
-const double Node::dLegendreCos(const double th, const int l, const int abs_m) {
+double Node::dLegendreCos(const double th, const int l, const int abs_m) {
     if (!l) return 0.0;
     assert(0 <= abs_m && abs_m <= l);
 
@@ -112,6 +112,21 @@ const double Node::dLegendreCos(const double th, const int l, const int abs_m) {
             * tables.fracCoeffYlm_[l][abs_m] :
             0.0);
 };
+
+//const double Node::dLegendreCos(
+//    const double th, const int l, const int abs_m,
+//    const double lCos, const double lCos_prev)
+//{
+//    if (!l) return 0.0;
+//    assert(0 <= abs_m && abs_m <= l);
+//
+//    return
+//        l / tan(th) * lCos -
+//        (abs_m < l ?
+//            (l + abs_m) / sin(th) * lCos_prev
+//            * tables.fracCoeffYlm_[l][abs_m] :
+//            0.0);
+//};
 
 /* Node(particles,branchIdx,base)
  * particles : list of particles contained in this node
@@ -287,7 +302,7 @@ void Node::evalLeafIlistSols() {
 }
 
 /* evalPairSols(srcNode)
- * Evaluate sols at particles in this node due to particles in srcNode
+ * (P2P) Evaluate sols at particles in this node due to particles in srcNode
  * and vice versa 
  * srcNode : source node
  */
@@ -332,7 +347,7 @@ void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
 }
 
 /* evalSelfSols()
- * Evaluate sols at all particles in this node due to all other particles
+ * (P2P) Evaluate sols at all particles in this node due to all other particles
  * in this node
  */
 void Node::evalSelfSols() {
