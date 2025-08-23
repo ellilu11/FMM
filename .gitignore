@@ -361,23 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/TestMultipole/farfield.cpp
-/TestMultipole/pch.cpp
-/TestMultipole/pch.h
-/TestMultipole/TestMultipole.cpp
-/TestMultipole/TestMultipole.vcxproj
-/TestMultipole/TestMultipole.vcxproj.filters
-/plotNodes.asv
-/plotPhi.asv
-/test/leaftest.cpp
-/test/nodetest.cpp
-/test/stemtest.cpp
-/plotCoeffs.m
-/plotPhi.m
-/getNeighbor.cpp
-/tables.cpp
-/test/MATLAB/A.m
-/test/MATLAB/mpole2mpole.m
-/test/MATLAB/rot_ph.m
-/test/MATLAB/rot_th.m
+test/
 eigen-3.4.0/

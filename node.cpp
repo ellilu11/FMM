@@ -29,6 +29,10 @@ void Node::buildTables(const Config& config) {
     assert(orderExp == tables.quadCoeffs_.size());
 }
 
+/* buildRotationMats()
+ * Construct wigner-D matrices and their inverses 
+ * Also construct 3D rotation matrices
+ */
 void Node::buildRotationMats() {
     auto wignerDAlongDir = [](const pair2d angles, bool isInv) {
         std::vector<matXcd> mats;
@@ -44,7 +48,7 @@ void Node::buildRotationMats() {
     for (int dir = 0; dir < 14; ++dir) {
         auto X = 
             dir < 8 ? 
-            idx2pm(dir) :   // diagonal directions (for M2M and L2L)
+            idx2pm(dir) : // diagonal directions (for M2M and L2L)
             [dir] { 
             switch (dir-8) {
                 case 0: return vec3d(0, 0, 1);
@@ -61,12 +65,20 @@ void Node::buildRotationMats() {
 
         wignerD[dir] = wignerDAlongDir(angles,0);
         wignerDInv[dir] = wignerDAlongDir(angles,1);
+
+        // 3D rotation matrices
         if (dir >=8)
             rotMatR[dir-8] = rotationR(angles);
     }
 }
 
-// theta part of Ylm
+/* legendreCos(th,l,abs_m)
+ * Return C * L_l^{|m|}(\cos(th)) where L_l^m(x) is an associated Legendre polynomial
+ * and C = coeffYlm(l, abs_m) is a spherical harmonic normalization constant
+ * th    : polar angle
+ * l     : angular momentum number
+ * abs_m : |m| where m is z-axis angular momentum number
+ */
 const double Node::legendreCos(const double th, const int l, const int abs_m) {
     assert(0 <= abs_m && abs_m <= l);
     const double cos_th = cos(th), sin_th = sin(th);
@@ -80,6 +92,12 @@ const double Node::legendreCos(const double th, const int l, const int abs_m) {
     return tables.coeffYlm_[l][abs_m] * pow(sin_th, abs_m) * legendreSum;
 }
 
+/* dLegendreCos(th,l,abs_m)
+ * Return derivative of C * L_l^{|m|}(\cos(th)) w.r.t. th.
+ * th    : polar angle
+ * l     : angular momentum number
+ * abs_m : |m| where m is z-axis angular momentum number
+ */
 const double Node::dLegendreCos(const double th, const int l, const int abs_m) {
     if (!l) return 0.0;
     assert(0 <= abs_m && abs_m <= l);
@@ -92,6 +110,11 @@ const double Node::dLegendreCos(const double th, const int l, const int abs_m) {
             0.0);
 };
 
+/* Node(particles,branchIdx,base)
+ * particles : list of particles contained in this node
+ * branchidx : index of this node relative to its base node
+ * base      : pointer to base node
+ */
 Node::Node(
     const ParticleVec& particles,
     const int branchIdx,
@@ -102,8 +125,10 @@ Node::Node(
         base->center + nodeLeng / 2.0 * idx2pm(branchIdx)),
     label(0)
 {
-    for (int l = 0; l <= order; ++l)
+    for (int l = 0; l <= order; ++l) {
+        coeffs.emplace_back(vecXcd::Zero(2*l+1));
         localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
+    }
 
     for (int dir = 0; dir < 6; ++dir) {
         std::vector<vecXcd> expCoeffs_dir;
@@ -115,6 +140,13 @@ Node::Node(
     numNodes++;
 }
 
+/* assignToDirList(list,node,minDist)
+ * Assign a node to dirlist of this node
+ * list    : dirlist of this node
+ * node    : node to assign to dirlist
+ * minDist : minimum distance between centers of this node and assigned node
+ *           along x, y, or z
+ */
 void Node::assignToDirList(
     std::array<NodeVec,6>& list, const std::shared_ptr<Node>& node,
     const double minDist) 
@@ -135,6 +167,9 @@ void Node::assignToDirList(
         list[5].push_back(node);
 }
 
+/* buildInteractionList()
+ * Find interaction nodes, and assign each to a dirlist.
+ */
 void Node::buildInteractionList() {
     assert(!isRoot());
     assert(!nbors.empty());
@@ -195,6 +230,10 @@ void Node::pushSelfToNearNonNbors() {
     }
 }
 
+/* getShiftedLocalCoeffs(branchIdx)
+ * (L2L) Return local coeffs shifted to center of branch labeled by branchIdx
+ * branchIdx : index of branch \in {0, ..., 7}
+ */
 const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const {
     std::vector<vecXcd> shiftedLocalCoeffs, rotatedLocalCoeffs;
     const double r = (branches[branchIdx]->center - center).norm();
@@ -225,6 +264,9 @@ const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const
     return shiftedLocalCoeffs;
 }
 
+/* evalLeafIlistSols()
+ * (P2L) Add contribution from list 4 to local coeffs
+ */
 void Node::evalLeafIlistSols() {
     // If # observers is small, evaluate sols in this node directly
     // By reciprocity, also evaluate sols in list 4 node due to this node
@@ -234,7 +276,7 @@ void Node::evalLeafIlistSols() {
         return;
     }
 
-    // Otherwise, add to local expansion due to list 4 particles
+    // Otherwise, add to local expansion due to list 4
     for (const auto& node : leafIlist) {
 
         for (const auto& src : node->particles){
@@ -261,9 +303,11 @@ void Node::evalLeafIlistSols() {
     }
 }
 
-/* evalPairSols:
-   Evaluate sols at particles in this node due to particles in srcNode
-   and vice versa */
+/* evalPairSols(srcNode)
+ * Evaluate sols at particles in this node due to particles in srcNode
+ * and vice versa 
+ * srcNode : source node
+ */
 void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
     const int numObss = particles.size(), numSrcs = srcNode->particles.size();
 
@@ -302,12 +346,12 @@ void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
 
     for (int n = 0; n < numSrcs; ++n)
         (srcNode->particles[n])->addToSol(phiAtSrcs[n], fldAtSrcs[n]);
-
 }
 
-/* evalSelfSols:
-   Evaluate sols at all particles in this node due to all other particles
-   in this node */
+/* evalSelfSols()
+ * Evaluate sols at all particles in this node due to all other particles
+ * in this node
+ */
 void Node::evalSelfSols() {
     const int numParts = particles.size();
 
@@ -342,11 +386,9 @@ void Node::evalSelfSols() {
         particles[n]->addToSol(phis[n], flds[n]);
 }
 
-void Node::resetSols() {
-    for (const auto& p : particles)
-        p->resetSol();
-}
-
+/* evalSelfSols()
+ * evalSelfSols without reciprocity
+ * /
 /*void Node::evalSelfSols() {
     solVec sols;
 

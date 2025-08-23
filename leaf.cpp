@@ -10,6 +10,10 @@ Leaf::Leaf(
 {
 }
 
+/* buildNeighbors()
+ * Find all neighbor nodes of equal or greater size
+ * Also find all neighbor leaves of equal or lesser size (list 1)
+ */
 void Leaf::buildNeighbors() {
     assert(!isRoot());
 
@@ -26,8 +30,12 @@ void Leaf::buildNeighbors() {
     assert(nbors.size() <= numDir);
 }
 
+/* buildLists()
+ * Add self to list of leaves 
+ * Find neighbor and interaction lists
+ * Add self as near non-neighbor (list 3 node) of any list 4 nodes
+ */
 void Leaf::buildLists() {
-    // add self to list of leaves
     leaves.push_back(shared_from_this()); 
 
     if (isRoot()) return;
@@ -39,8 +47,9 @@ void Leaf::buildLists() {
     pushSelfToNearNonNbors();
 }
 
-/* buildMpoleCoeffs : 
-   Build mpole expansions from particles in this node (P2M) */
+/* buildMpoleCoeffs()
+ * (P2M) Build mpole expansions from particles in this node  
+ */
 void Leaf::buildMpoleCoeffs() {
     if (isRoot()) return;
 
@@ -48,13 +57,14 @@ void Leaf::buildMpoleCoeffs() {
         coeffs.emplace_back(vecXcd::Zero(2*l+1));
 
     for (const auto& src : particles) {
-        auto dR = toSph(src->getPos() - center);
-        double r = dR[0], th = dR[1], ph = dR[2];
+        const auto dR = toSph(src->getPos() - center);
+        const double r = dR[0], th = dR[1], ph = dR[2];
+        
         double r2l = 1.0;
 
-        for (int l = 0; l <= order; ++l) {
+        for (size_t l = 0; l <= order; ++l) {
             realVec legendreCoeffs;
-            for (int m = 0; m <= l; ++m)
+            for (size_t m = 0; m <= l; ++m)
                 legendreCoeffs.push_back(legendreCos(th,l,m));
 
             for (int m = -l; m <= l; ++m) {
@@ -62,11 +72,16 @@ void Leaf::buildMpoleCoeffs() {
                     src->getCharge() * r2l *
                     legendreCoeffs[abs(-m)] * expI(-m*ph); 
             }
+
             r2l *= r;
         }
     }
 }
 
+/* propagateExpCoeffs()
+ * (M2X) Convert mpole coeffs into exp coeffs
+ * (X2X) Translate exp coeffs to nodes in all dirlists
+ */
 void Leaf::propagateExpCoeffs() {
     if (isRoot()) return;
 
@@ -140,7 +155,7 @@ void Leaf::buildLocalCoeffs() {
 
     start = Clock::now();
 
-    evalLocalCoeffsFromDirList();
+    evalExpToLocalCoeffs();
 
     t.X2L += Clock::now() - start;
 
@@ -148,6 +163,7 @@ void Leaf::buildLocalCoeffs() {
 
     if (!base->isRoot()) {
         auto shiftedLocalCoeffs = base->getShiftedLocalCoeffs(branchIdx);
+
         for (int l = 0; l <= order; ++l)
             localCoeffs[l] += shiftedLocalCoeffs[l];
     }
@@ -155,8 +171,9 @@ void Leaf::buildLocalCoeffs() {
     t.L2L += Clock::now() - start;
 }
 
-/* evalFarSols : 
-   Evaluate sols from local expansion due to far nodes (L2P) */
+/* evalFarSols()
+ * (L2P) Evaluate sols from local expansion due to far nodes
+ */
 void Leaf::evalFarSols() {
 
     for (const auto& obs : particles) {
@@ -200,8 +217,9 @@ void Leaf::evalFarSols() {
     }
 }
 
-/* evalNearNonNborSols : 
-   Get sols from mpole expansion due to near non-neighbor nodes (list 3) */
+/* evalNearNonNborSols()
+ * (M2P) Evaluate sols from mpole expansion due to list 3 nodes
+ */
 void Leaf::evalNearNonNborSols() {
 
     for (const auto& node : nearNonNbors) {
@@ -261,8 +279,9 @@ void Leaf::evalNearNonNborSols() {
     }
 }
 
-/* findNearNborPairs :
-   From list of leaves, find all near neighbor leaf pairs */
+/* findNearNborPairs()
+ * From list of leaves, find all near neighbor leaf pairs
+ */
 std::vector<LeafPair> Leaf::findNearNborPairs(){
     std::vector<LeafPair> leafPairs;
 
@@ -277,8 +296,9 @@ std::vector<LeafPair> Leaf::findNearNborPairs(){
     return leafPairs;
 }
 
-/* evaluateSols: 
-   Sum solutions at all particles in all leaves */ 
+/* evaluateSols()
+ * Sum solutions at all particles in all leaves 
+ */ 
 void Leaf::evaluateSols() {
 
     auto start = Clock::now();

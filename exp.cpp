@@ -1,6 +1,10 @@
 #include "node.h"
 
-std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
+/* getMpoleToExpCoeffs(dirIdx)
+ * (M2X) Convert mpole coeffs into outgoing exp coeffs along direction dirIdx
+ * dirIdx : direction of outgoing exp coeffs ( 0 = north, 1 = south, ...)
+ */
+const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) const {
     std::vector<vecXcd> rotatedCoeffs, expCoeffs;
 
     // apply rotation
@@ -37,8 +41,8 @@ std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
         for (int j = 0; j < M_k; ++j) {
             for (int m_p = 0; m_p <= 2*order; ++m_p)
                 expCoeffs[k][j] +=
-                innerCoeffs[m_p]
-                * tables.expI_alphas_[k][j][m_p];
+                    innerCoeffs[m_p]
+                    * tables.expI_alphas_[k][j][m_p];
         }
 
         expCoeffs[k] *= coeff_k;
@@ -118,11 +122,10 @@ void Node::addShiftedExpCoeffsFromBranch(
     // rotate dX so this center is in uplist of center0
     const auto dX = rotMatR[dirIdx] * (center - center0);
     const auto idX = round(Eigen::Array3d(dX)/nodeLeng);
+
     const size_t l = idX[0] + 7*idX[1] + 49*idX[2] - 74;
 
     assert(0 <= l && l < 98);
-    //assert(idz == 2 || idz == 3);
-    //assert(sqrt(idx*idx + idy*idy) <= 4.0*sqrt(2.0));
 
     // shift to dirlist: [idX, idY] \in {-3, -2, -1, 0, 1, 2, 3}, idZ \in {2, 3} 
     for (size_t k = 0; k < orderExp; ++k)
