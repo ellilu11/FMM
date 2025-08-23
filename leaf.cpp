@@ -76,6 +76,21 @@ void Leaf::buildMpoleCoeffs() {
     }
 }
 
+/*void Leaf::propagateExpCoeffs() {
+    if (isRoot()) return;
+
+    auto start = std::chrono::high_resolution_clock::now();
+    for (int dir = 0; dir < 6; ++dir) {
+        // for lvl > 1, propagate own exp coeffs to inner dirlist
+        if (!base->isRoot())
+            for (const auto& node : dirList[dir])
+                node->addShiftedExpCoeffs(expCoeffsOut[dir], center, dir);
+    }
+    t.X2X += std::chrono::high_resolution_clock::now() - start;
+
+    expCoeffsOut = {};
+}*/
+
 /* propagateExpCoeffs()
  * (M2X) Convert mpole coeffs into exp coeffs
  * (X2X) Translate exp coeffs to nodes in all dirlists
@@ -85,7 +100,7 @@ void Leaf::propagateExpCoeffs() {
 
     Clock::time_point start;
 
-    for (int dir = 0; dir < 2; ++dir) {
+    for (int dir = 0; dir < 1; ++dir) {
         start = Clock::now();
 
         if (!base->isRoot())
@@ -100,7 +115,7 @@ void Leaf::propagateExpCoeffs() {
     // Puzzle: How to combine coordinate rotation to north/south/east/westlist
     // with translation to base?
     // TODO: Remove this section once puzzle solved
-    for (int dir = 2; dir < 6; ++dir) {
+    for (int dir = 1; dir < 6; ++dir) {
         start = Clock::now();
 
         auto expCoeffs = getMpoleToExpCoeffs(dir);

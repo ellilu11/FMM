@@ -63,6 +63,7 @@ void Stem::buildLists() {
  * (M2M) Build mpole coeffs by merging branch mpole coeffs 
  */
 void Stem::buildMpoleCoeffs() {
+
     for (int l = 0; l <= order; ++l)
         coeffs.emplace_back(vecXcd::Zero(2*l+1));
 
@@ -94,13 +95,44 @@ void Stem::buildMpoleCoeffs() {
     }
 }
 
+/*void Stem::propagateExpCoeffs() {
+    if (!isRoot()) {
+        for (int dir = 0; dir < 6; ++dir) {
+            auto start = Clock::now();
+
+            // build exp coeffs of branches, merge them, and propagate to outer dirlist
+            auto mergedExpCoeffs = getMergedExpCoeffs(dir);
+
+            t.M2X += Clock::now() - start;
+
+            start = Clock::now();
+
+            for (const auto& node : outerDirList[dir])
+                node->addShiftedExpCoeffs(mergedExpCoeffs, center, dir);
+
+            // for lvl > 1, propagate own exp coeffs to inner dirlist
+            if (!base->isRoot())
+                for (const auto& node : dirList[dir])
+                    node->addShiftedExpCoeffs(expCoeffsOut[dir], center, dir);
+
+            t.X2X += Clock::now() - start;
+
+        }
+        expCoeffsOut = {};
+    }
+
+    for (const auto& branch : branches)
+        branch->propagateExpCoeffs();
+}*/
+
 void Stem::propagateExpCoeffs() {
     if (!isRoot()) {
         Clock::time_point start;
 
-        for (int dir = 0; dir < 2; ++dir) {
+        for (int dir = 0; dir < 1; ++dir) {
             start = Clock::now();
             
+            // build exp coeffs of branches, merge them, and propagate to outer dirlist
             auto mergedExpCoeffs = getMergedExpCoeffs(dir);
 
             t.M2X += Clock::now() - start;
@@ -123,7 +155,7 @@ void Stem::propagateExpCoeffs() {
         // Puzzle: How to combine coordinate rotation to north/south/east/westlist
         // with translation to base?
         // TODO: Remove this section once puzzle solved
-        for (int dir = 2; dir < 6; ++dir) {
+        for (int dir = 1; dir < 6; ++dir) {
 
             for (const auto& branch : branches) {
                 start = Clock::now();
@@ -201,7 +233,7 @@ void Stem::buildLocalCoeffs() {
     if (!isRoot()) {
         auto start = Clock::now();
 
-        evalLeafIlistSols();
+        evalExpToLocalCoeffs();
 
         t.X2L += Clock::now() - start;
 
@@ -212,14 +244,14 @@ void Stem::buildLocalCoeffs() {
         t.P2L += Clock::now() - start;
 
         start = Clock::now();
-        
+
         if (!base->isRoot()) {
             auto shiftedLocalCoeffs = base->getShiftedLocalCoeffs(branchIdx);
 
             for (int l = 0; l <= order; ++l)
                 localCoeffs[l] += shiftedLocalCoeffs[l];
         }
-        
+
         t.L2L += Clock::now() - start;
     }
 

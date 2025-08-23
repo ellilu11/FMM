@@ -17,7 +17,7 @@ void Node::labelNodes() {
         for (const auto& node : leaf->getDirList(dir))   // list 2
             node->labelNode(3);
 
-    for (const auto& node : leaf->getNearNonNbors())   // list 3
+    for (const auto& node : leaf->getNearNonNbors())     // list 3
         if (node->isNodeType<Leaf>())
             node->labelNode(4);
         else

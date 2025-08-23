@@ -30,4 +30,13 @@ public:
 
     void buildLocalCoeffs() override;
 
+    // test methods
+    std::shared_ptr<Node> getRandNode(int);
+
+    const cmplx getPhiFromBranchMpole(const vec3d&, const int);
+
+    void printMpoleCoeffs(std::ofstream&);
+
+    void resetNode();
+
 };

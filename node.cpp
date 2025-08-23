@@ -125,7 +125,7 @@ Node::Node(
         base->center + nodeLeng / 2.0 * idx2pm(branchIdx)),
     label(0)
 {
-    for (int l = 0; l <= order; ++l) 
+    for (int l = 0; l <= order; ++l)
         localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
 
     for (int dir = 0; dir < 6; ++dir) {
@@ -217,7 +217,10 @@ void Node::buildOuterInteractionList() {
     assert(dirListSize <= pow(6, DIM) - pow(4, DIM));
 }
 
-/* If leaf is in list 4 of self, self is in list 3 of leaf */
+/* pushSelfToNearNonNbors()
+ * Add this node to list 3 of leaf.
+ * (if leaf is in list 4 of self, self is in list 3 of leaf)
+ */
 void Node::pushSelfToNearNonNbors() {
     if (leafIlist.empty()) return;
 

@@ -43,7 +43,11 @@ size_t bools2Idx(const std::array<bool, 3>& x) {
     return x[0] + 2 * x[1] + 4 * x[2];
 }
 
-// convert x to reverse binary, then replace each bit as 0 -> -1, 1 -> 1
+/* idx2pm(x)
+ * Convert x to reverse binary, then replace each bit as 0 -> -1, 1 -> 1
+ * returning the result
+ * x : integer \in {0,...,7}
+ */
 vec3d idx2pm(const int x) {
     assert(x < 8);
     auto xmod4 = x%4;

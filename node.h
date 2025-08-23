@@ -88,13 +88,16 @@ public:
     void buildOuterInteractionList();
     
     void pushSelfToNearNonNbors();
-   
-    void evalExpToLocalCoeffs();
-    
+
     const std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
 
     void evalLeafIlistSols();
 
+    void evalPairSols(const std::shared_ptr<Node>&);
+
+    void evalSelfSols();
+
+    /* under exp.cpp */
     std::vector<vecXcd> getMpoleToExpCoeffs(const int);
 
     const std::vector<vecXcd> getMergedExpCoeffs(const int) const;
@@ -103,9 +106,7 @@ public:
 
     void addShiftedExpCoeffs(const std::vector<vecXcd>&, const vec3d&, const int);
 
-    void evalPairSols(const std::shared_ptr<Node>&);
-
-    void evalSelfSols();
+    void evalExpToLocalCoeffs();
    
     virtual std::shared_ptr<Node> getSelf() = 0;
     
@@ -120,6 +121,29 @@ public:
     virtual void buildLocalCoeffs() = 0;
     
     virtual void printNode(std::ofstream&) = 0;
+
+    // ========== Test methods ==========
+    int getLvl() { return std::round(std::log(rootLeng/nodeLeng)/std::log(2)); }
+
+    void labelNode(int label_) { label += label_; }
+
+    // definition under test/nodetest.cpp
+    void labelNodes();
+    const pairSol getDirectSol(const vec3d&, const double = 1.0E-12);
+    const cmplx getPhiFromMpole(const vec3d&);
+    void ffieldTest(const int, const int, const int);
+    void nfieldTest();
+
+    // definition under test/[stemtest.cpp, leaftest.cpp]
+    virtual std::shared_ptr<Node> getRandNode(int) = 0;
+    virtual const cmplx getPhiFromBranchMpole(const vec3d&, const int) = 0;
+    virtual void printMpoleCoeffs(std::ofstream&) = 0;
+    virtual void resetNode() = 0;
+
+    // definition under test/exptest.cpp
+    const cmplx getPhiFromExp(const vec3d&, const std::vector<vecXcd>&, const int);
+    const cmplx getPhiFromLocal(const vec3d&);
+    void mpoleToExpToLocalTest();
 
 protected:
     static int order;

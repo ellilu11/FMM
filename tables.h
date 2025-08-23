@@ -149,9 +149,9 @@ void Tables::buildExpTables(const int order) {
         double M_k = quadLengs_[k];
         realVec alphas_k; //
         std::vector<cmplxVec> expI_alphas_k;
+        std::vector<std::array<cmplx,98>> exps_k;
         std::vector<std::array<cmplx,25>> expsInner_k;
         std::vector<std::array<cmplx,36>> expsOuter_k;
-        std::vector<std::array<cmplx,98>> exps_k;
         std::vector<std::array<cmplx,8>> expsMerge_k;
 
         for (int j = 0; j < M_k; ++j) {
@@ -179,8 +179,8 @@ void Tables::buildExpTables(const int order) {
             std::array<cmplx,25> expsInner_kj;
             size_t m = 0;
             constexpr double dzInner = 2.0;
-            for (int dy = -2; dy <= 2; dy++)
-                for (int dx = -2; dx <= 2; dx++) {
+            for (double dy = -2.0; dy <= 2.0; dy += 1.0)
+                for (double dx = -2.0; dx <= 2.0; dx += 1.0) {
                     expsInner_kj[m++] =
                         exp(quadCoeffs_[k].first
                             * cmplx(-dzInner,
@@ -214,9 +214,9 @@ void Tables::buildExpTables(const int order) {
         }
         alphas_.push_back(alphas_k); //
         expI_alphas_.push_back(expI_alphas_k);
+        exps_.push_back(exps_k);
         expsInner_.push_back(expsInner_k);
         expsOuter_.push_back(expsOuter_k);
-        exps_.push_back(exps_k);
         expsMerge_.push_back(expsMerge_k);
     }
 }
