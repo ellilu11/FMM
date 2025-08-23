@@ -16,10 +16,12 @@ const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) const {
 
         // fast way
         vecXcd innerCoeffs = vecXcd::Zero(2*order+1);
-        for (int m = -order; m <= order; ++m){
+
+        for (int m = -order; m <= order; ++m) {
             int abs_m = abs(m);
             double l_k2l = pow(l_k,abs_m);
             int m_p = m+order;
+
             for (int l = abs_m; l <= order; ++l) {
                 int m_l = m+l;
                 innerCoeffs[m_p] += 
@@ -27,16 +29,19 @@ const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) const {
                     * tables.Aexp_[l][m_l] * l_k2l;
                 l_k2l *= l_k;
             }
+
             innerCoeffs[m_p] *= powI(abs_m); // plus sign
         }
 
         expCoeffs.emplace_back(vecXcd::Zero(M_k));
+
         for (int j = 0; j < M_k; ++j) {
             for (int m_p = 0; m_p <= 2*order; ++m_p)
                 expCoeffs[k][j] += 
                     innerCoeffs[m_p] 
                     * tables.expI_alphas_[k][j][m_p];
         }
+
         expCoeffs[k] *= coeff_k;
 
         // slow way
@@ -94,18 +99,22 @@ void Node::evalLocalCoeffsFromDirList() {
             double l_k = tables.quadCoeffs_[k].first / nodeLeng;
 
             vecXcd innerCoeffs = vecXcd::Zero(2*order+1);
+
             for (int m = -order; m <= order; ++m) {
                 int m_p = m+order;
+
                 for (int j = 0; j < M_k; ++j)
                     innerCoeffs[m_p] +=
-                    expCoeffs[dirIdx][k][j]
-                    * conj(tables.expI_alphas_[k][j][m_p]); // conj
+                        expCoeffs[dirIdx][k][j]
+                        * conj(tables.expI_alphas_[k][j][m_p]); // conj
+
                 innerCoeffs[m_p] *= powI(abs(m)); // plus sign
             }
 
             double ml_k2l = 1.0;
             for (int l = 0; l <= order; ++l) {
                 rotatedLocalCoeffs.emplace_back(vecXcd::Zero(2*l+1));
+
                 for (int m = -l; m <= l; ++m) {
                     int m_l = m+l;
                     rotatedLocalCoeffs[l][m_l] +=
@@ -113,7 +122,9 @@ void Node::evalLocalCoeffsFromDirList() {
                         * tables.Aexp_[l][m_l]
                         * ml_k2l;
                 }
+
                 ml_k2l *= -l_k;
+
             }
 
             // slow way

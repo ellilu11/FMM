@@ -48,9 +48,9 @@ ParticleVec makeParticles(const Config& config)
                 case Dist::UNIFORM:
                     return vec3d( rand0(gen), rand1(gen), rand2(gen) );
                 case Dist::GAUSSIAN: {
-                    const double r = sqrt(-2 * log(rand0(gen))); // fix
-                    const double th = 2.0 * PI * rand1(gen); // fix
-                    const double ph = rand2(gen);
+                    const double r = sqrt(-2.0 * log(rand0(gen))); // fix
+                    const double th = PI / 2.0;
+                    const double ph = 2.0 * PI * rand1(gen);
                     return fromSph(vec3d(r,th,ph));
                 }
                 case Dist::GRID: {

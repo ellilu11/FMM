@@ -87,7 +87,7 @@ public:
     
     const std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
 
-    void evalLocalCoeffsFromLeafIlist();
+    void evalLeafIlistSols();
 
     const std::vector<vecXcd> getMpoleToExpCoeffs(const int) const;
     

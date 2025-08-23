@@ -137,6 +137,7 @@ void Tables::buildQuadTables(const Precision prec) {
                       64,64,72,72,80,80,88,88,88,88,72,32,4 };
             break;
     }
+
     assert(quadCoeffs_.size() == quadLengs_.size());
 }
 

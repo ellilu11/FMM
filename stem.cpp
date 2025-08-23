@@ -143,7 +143,7 @@ void Stem::buildLocalCoeffs() {
     if (!isRoot()) {
         auto start = Clock::now();
 
-        evalLocalCoeffsFromLeafIlist();
+        evalLeafIlistSols();
 
         t.P2L += Clock::now() - start;
 

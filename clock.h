@@ -14,6 +14,7 @@ struct ClockTimes {
     Time P2L{ 0 };
     Time L2L{ 0 };
     Time L2P{ 0 };
+    Time M2P{ 0 };
     Time P2P{ 0 };
 };
 

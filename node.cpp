@@ -207,7 +207,7 @@ const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const
     return shiftedLocalCoeffs;
 }
 
-void Node::evalLocalCoeffsFromLeafIlist() {
+void Node::evalLeafIlistSols() {
     // If # observers is small, evaluate sols in this node directly
     // By reciprocity, also evaluate sols in list 4 node due to this node
     if (particles.size() <= order*order) {
@@ -216,7 +216,7 @@ void Node::evalLocalCoeffsFromLeafIlist() {
         return;
     }
 
-    // Otherwise, add to local expansion due to srcs in list 4
+    // Otherwise, add to local expansion due to list 4 particles
     for (const auto& node : leafIlist) {
 
         for (const auto& src : node->particles){
@@ -245,7 +245,7 @@ void Node::evalLocalCoeffsFromLeafIlist() {
 
 /* evalPairSols:
    Evaluate sols at particles in this node due to particles in srcNode
-   Evaluate sols at particles in srcNode due to particles in this node */
+   and vice versa */
 void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
     const int numObss = particles.size(), numSrcs = srcNode->particles.size();
 

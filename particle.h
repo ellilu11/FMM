@@ -23,10 +23,6 @@ public :
 
     const double getPhi() const { return phi; }
 
-    //void addToPhi(double phi_) { phi += phi_; }
-
-    //void addToFld(vec3d fld_) { fld += fld_; }
-
     void addToSol(const double phi_, const vec3d& fld_) { 
         phi += phi_;
         fld += fld_;

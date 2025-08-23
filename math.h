@@ -84,10 +84,6 @@ vec3d toSph(const vec3d& X) {
 //    return l*l + l + m;
 //}
 
-//constexpr int constPow(int base, int exp) {
-//    return (exp == 0) ? 1 : base * constPow(base,exp-1);
-//}
-
 // return \sum_i (coeffs[i] * z^i)
 /*template <typename T>
 const T evaluatePoly(std::vector<T> coeffs, const T z) {
@@ -126,6 +122,14 @@ const cmplx powI(const uint32_t m) {
         case 2: return -1.0;
         case 3: return -iu;
     }
+}
+
+mat3d matFromSph(const double th, const double ph) {
+    return mat3d{
+            {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph)/sin(th) },
+            {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph)/sin(th) },
+            {  cos(th),         -sin(th),          0.0             }
+    };
 }
 
 mat3d rotationR(const pair2d angles) {
