@@ -78,11 +78,12 @@ void Stem::buildMpoleCoeffs() {
             for (int k = -j; k <= j; ++k) {
                 int k_ = k + j;
                 double r2n = 1.0;
+
                 for (int n = 0; n <= min(j+k, j-k); ++n) {
-                    // if ( max(k+n-j, -n) <= 0 && 0 <= min(k+j-n, n) )
                     shiftedBranchCoeffs_j[k_] += branchCoeffs[j-n][k_-n] *
                         tables.A_[n][n] * tables.A_[j-n][k_-n] / tables.A_[j][k_] *
                         r2n; // legendreCos(0.0, n, 0) = 1 for all n;
+
                     r2n *= r;
                 }
             }

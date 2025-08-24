@@ -6,15 +6,19 @@
 #include <queue>
 #include "config.h"
 #include "clock.h"
-#include "enum.h"
 #include "particle.h"
 #include "tables.h"
-#include "vec3d.h"
 
 extern ClockTimes t;
 
 constexpr int DIM = 3;
 constexpr int numDir = 26;
+
+enum class Dir {
+    W, E, S, N, D, U,
+    SW, SE, NW, NE, DW, DE, UW, UE, DS, DN, US, UN,
+    DSW, DSE, DNW, DNE, USW, USE, UNW, UNE
+};
 
 class Node;
 
@@ -40,9 +44,6 @@ public:
     static void buildRotationMats();
     
     static double legendreCos(const double, const int, const int);
-
-    //static const double dLegendreCos(
-    //    const double, const int, const int, const double, const double);
 
     static double dLegendreCos(const double, const int, const int);
 

@@ -4,7 +4,32 @@
 #include <fstream>
 #include <iostream>
 #include <type_traits>
-#include "enum.h"
+
+enum class Mode {
+    READ,
+    WRITE
+};
+
+enum class Dist {
+    UNIFORM,
+    GAUSSIAN,
+    GRID
+};
+
+enum class ChargeDist {
+    PLUS,
+    MINUS,
+    DIP,
+    QUAD,
+    OCT,
+    RAND
+};
+
+enum class Precision {
+    LOW,
+    MEDIUM,
+    HIGH
+};
 
 void getDigit(std::istringstream& iss, char ch) {
     while (iss.get(ch)) {

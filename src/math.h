@@ -1,10 +1,10 @@
 #pragma once
 
+#include <Eigen/Dense>
 #include <algorithm>
 #include <cmath>
 
 #include "fmm.h"
-#include "vec3d.h"
 
 #define _USE_MATH_DEFINES
 
@@ -14,24 +14,36 @@ using cmplxVec = std::vector<cmplx>;
 
 using pair2i = std::pair<int, int>;
 using pair2d = std::pair<double, double>;
-using pairSol = std::pair<double, vec3d>;
-using solVec = std::vector<pairSol>;
 
+using vec3d = Eigen::Vector3d;
+using vec3cd = Eigen::Vector3cd;
+using vecXcd = Eigen::VectorXcd;
+
+using mat3d = Eigen::Matrix3d;
+using matXcd = Eigen::MatrixXcd;
+
+constexpr cmplx iu(0, 1);
 const double PI = std::acos(-1.0);
-constexpr cmplx iu(0,1);
+const vec3d zeroVec = vec3d::Zero();
 
-pairSol operator+ (const pairSol& sol0, const pairSol& sol1) {
-    return pairSol(sol0.first + sol1.first,
-        sol0.second + sol1.second);
-}
-
-// TODO : Use a concept to enforce that the template type is summable
 template <typename T>
 std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
     std::vector<T> sum;
     for (size_t i = 0; i < zs.size(); ++i)
         sum.push_back(zs[i] + ws[i]);
     return sum;
+}
+
+std::ostream& operator<< (std::ostream& os, const vec3d& X) {
+    os << X[0] << " " << X[1] << " " << X[2];
+    return os;
+}
+
+std::istream& operator>>(std::istream& is, vec3d& X) {
+    double x, y, z;
+    if (is >> x >> y >> z)
+        X = vec3d{ x, y, z };
+    return is;
 }
 
 std::array<bool,3> operator> (const vec3d& x, const vec3d& y) {

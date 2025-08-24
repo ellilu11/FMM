@@ -12,7 +12,7 @@ endif()
 project ("FMM")
 
 # Add source to this project's executable.
-add_executable (FMM "fmm.cpp" "fmm.h")
+add_executable (FMM "src/fmm.cpp" "src/fmm.h")
 
 target_include_directories(FMM
     PRIVATE

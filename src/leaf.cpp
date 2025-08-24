@@ -27,6 +27,7 @@ void Leaf::buildNeighbors() {
             nearNbors.insert(nearNbors.end(), nbors.begin(), nbors.end());
         }
     }
+
     assert(nbors.size() <= numDir);
 }
 
@@ -71,6 +72,7 @@ void Leaf::buildMpoleCoeffs() {
                     src->getCharge() * r2l *
                     legendreCoeffs[abs(-m)] * expI(-m*ph);
             }
+
             r2l *= r;
         }
     }
