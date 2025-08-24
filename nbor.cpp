@@ -491,152 +491,153 @@ NodeVec Node::getNeighborsLeqSize(
     const std::shared_ptr<Node>& nborGeqSize, const Dir dir) const
 {
     NodeVec nbors{};
-    NodeVec queue{ nborGeqSize };
+    std::queue<std::shared_ptr<Node>> queue{ { nborGeqSize } };
     if (isRoot()) return nbors;
 
     while (!queue.empty()) {
-        auto nbor = queue[0];
+        auto nbor = queue.front();
 
         if (nbor->isNodeType<Leaf>())
             nbors.push_back(nbor);
         else {
             switch (dir) {
                 case U:
-                    queue.push_back(nbor->branches[0]);
-                    queue.push_back(nbor->branches[1]);
-                    queue.push_back(nbor->branches[2]);
-                    queue.push_back(nbor->branches[3]);
+                    queue.push(nbor->branches[0]);
+                    queue.push(nbor->branches[1]);
+                    queue.push(nbor->branches[2]);
+                    queue.push(nbor->branches[3]);
                     break;
 
                 case D:
-                    queue.push_back(nbor->branches[4]);
-                    queue.push_back(nbor->branches[5]);
-                    queue.push_back(nbor->branches[6]);
-                    queue.push_back(nbor->branches[7]);
+                    queue.push(nbor->branches[4]);
+                    queue.push(nbor->branches[5]);
+                    queue.push(nbor->branches[6]);
+                    queue.push(nbor->branches[7]);
                     break;
 
                 case N:
-                    queue.push_back(nbor->branches[0]);
-                    queue.push_back(nbor->branches[1]);
-                    queue.push_back(nbor->branches[4]);
-                    queue.push_back(nbor->branches[5]);
+                    queue.push(nbor->branches[0]);
+                    queue.push(nbor->branches[1]);
+                    queue.push(nbor->branches[4]);
+                    queue.push(nbor->branches[5]);
                     break;
 
                 case S:
-                    queue.push_back(nbor->branches[2]);
-                    queue.push_back(nbor->branches[3]);
-                    queue.push_back(nbor->branches[6]);
-                    queue.push_back(nbor->branches[7]);
+                    queue.push(nbor->branches[2]);
+                    queue.push(nbor->branches[3]);
+                    queue.push(nbor->branches[6]);
+                    queue.push(nbor->branches[7]);
                     break;
 
                 case E:
-                    queue.push_back(nbor->branches[0]);
-                    queue.push_back(nbor->branches[2]);
-                    queue.push_back(nbor->branches[4]);
-                    queue.push_back(nbor->branches[6]);
+                    queue.push(nbor->branches[0]);
+                    queue.push(nbor->branches[2]);
+                    queue.push(nbor->branches[4]);
+                    queue.push(nbor->branches[6]);
                     break;
 
                 case W:
-                    queue.push_back(nbor->branches[1]);
-                    queue.push_back(nbor->branches[3]);
-                    queue.push_back(nbor->branches[5]);
-                    queue.push_back(nbor->branches[7]);
+                    queue.push(nbor->branches[1]);
+                    queue.push(nbor->branches[3]);
+                    queue.push(nbor->branches[5]);
+                    queue.push(nbor->branches[7]);
                     break;
 
                 case UN:
-                    queue.push_back(nbor->branches[0]);
-                    queue.push_back(nbor->branches[1]);
+                    queue.push(nbor->branches[0]);
+                    queue.push(nbor->branches[1]);
                     break;
 
                 case DS:
-                    queue.push_back(nbor->branches[6]);
-                    queue.push_back(nbor->branches[7]);
+                    queue.push(nbor->branches[6]);
+                    queue.push(nbor->branches[7]);
                     break;
 
                 case US:
-                    queue.push_back(nbor->branches[2]);
-                    queue.push_back(nbor->branches[3]);
+                    queue.push(nbor->branches[2]);
+                    queue.push(nbor->branches[3]);
                     break;
 
                 case DN:
-                    queue.push_back(nbor->branches[4]);
-                    queue.push_back(nbor->branches[5]);
+                    queue.push(nbor->branches[4]);
+                    queue.push(nbor->branches[5]);
                     break;
 
                 case UE:
-                    queue.push_back(nbor->branches[0]);
-                    queue.push_back(nbor->branches[2]);
+                    queue.push(nbor->branches[0]);
+                    queue.push(nbor->branches[2]);
                     break;
 
                 case DW:
-                    queue.push_back(nbor->branches[5]);
-                    queue.push_back(nbor->branches[7]);
+                    queue.push(nbor->branches[5]);
+                    queue.push(nbor->branches[7]);
                     break;
 
                 case UW:
-                    queue.push_back(nbor->branches[1]);
-                    queue.push_back(nbor->branches[3]);
+                    queue.push(nbor->branches[1]);
+                    queue.push(nbor->branches[3]);
                     break;
 
                 case DE:
-                    queue.push_back(nbor->branches[4]);
-                    queue.push_back(nbor->branches[6]);
+                    queue.push(nbor->branches[4]);
+                    queue.push(nbor->branches[6]);
                     break;
 
                 case NE:
-                    queue.push_back(nbor->branches[0]);
-                    queue.push_back(nbor->branches[4]);
+                    queue.push(nbor->branches[0]);
+                    queue.push(nbor->branches[4]);
                     break;
 
                 case SW:
-                    queue.push_back(nbor->branches[3]);
-                    queue.push_back(nbor->branches[7]);
+                    queue.push(nbor->branches[3]);
+                    queue.push(nbor->branches[7]);
                     break;
 
                 case NW:
-                    queue.push_back(nbor->branches[1]);
-                    queue.push_back(nbor->branches[5]);
+                    queue.push(nbor->branches[1]);
+                    queue.push(nbor->branches[5]);
                     break;
 
                 case SE:
-                    queue.push_back(nbor->branches[2]);
-                    queue.push_back(nbor->branches[6]);
+                    queue.push(nbor->branches[2]);
+                    queue.push(nbor->branches[6]);
                     break;
 
                 case UNE:
-                    queue.push_back(nbor->branches[0]);
+                    queue.push(nbor->branches[0]);
                     break;
 
                 case DSW:
-                    queue.push_back(nbor->branches[7]);
+                    queue.push(nbor->branches[7]);
                     break;
 
                 case UNW:
-                    queue.push_back(nbor->branches[1]);
+                    queue.push(nbor->branches[1]);
                     break;
 
                 case DSE:
-                    queue.push_back(nbor->branches[6]);
+                    queue.push(nbor->branches[6]);
                     break;
 
                 case USE:
-                    queue.push_back(nbor->branches[2]);
+                    queue.push(nbor->branches[2]);
                     break;
 
                 case DNW:
-                    queue.push_back(nbor->branches[5]);
+                    queue.push(nbor->branches[5]);
                     break;
 
                 case USW:
-                    queue.push_back(nbor->branches[3]);
+                    queue.push(nbor->branches[3]);
                     break;
 
                 case DNE:
-                    queue.push_back(nbor->branches[4]);
+                    queue.push(nbor->branches[4]);
                     break;
             }
         }
-        queue.erase(queue.begin());
+
+        queue.pop();
     }
 
     return nbors;

@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iostream>
 #include <numeric>
+#include <queue>
 #include "config.h"
 #include "clock.h"
 #include "enum.h"
@@ -90,7 +91,7 @@ public:
    
     void evalExpToLocalCoeffs();
     
-    const std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
+    std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
 
     void evalLeafIlistSols();
 

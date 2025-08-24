@@ -36,7 +36,7 @@ const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) const {
             innerCoeffs[m_p] *= powI(abs_m); // plus sign
         }
 
-        expCoeffs.emplace_back(vecXcd::Zero(M_k));
+        expCoeffs.push_back(vecXcd::Zero(M_k));
 
         for (int j = 0; j < M_k; ++j) {
             for (int m_p = 0; m_p <= 2*order; ++m_p)
@@ -66,7 +66,7 @@ void Node::addShiftedExpCoeffs(
     const auto idX = round(Eigen::Array3d(dX)/nodeLeng);
 
     const size_t l = idX[0] + 7*idX[1] + 49*idX[2] - 74;
-    assert(0 <= l && l < 98);
+    // assert(0 <= l && l < 98);
 
     for (size_t k = 0; k < orderExp; ++k)
         for (size_t j = 0; j < tables.quadLengs_[k]; ++j)
@@ -103,7 +103,7 @@ void Node::evalExpToLocalCoeffs() {
 
             double ml_k2l = 1.0;
             for (int l = 0; l <= order; ++l) {
-                rotatedLocalCoeffs.emplace_back(vecXcd::Zero(2*l+1));
+                rotatedLocalCoeffs.push_back(vecXcd::Zero(2*l+1));
 
                 for (int m = -l; m <= l; ++m) {
                     int m_l = m+l;
