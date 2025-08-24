@@ -39,7 +39,10 @@ std::array<bool,3> operator> (const vec3d& x, const vec3d& y) {
     return bools;
 }
 
-size_t bools2Idx(const std::array<bool, 3>& x) {
+/* bools2Idx(x)
+ * Convert bools into branchIdx \in {0, ... ,7}
+ */
+inline size_t bools2Idx(const std::array<bool, 3>& x) {
     return x[0] + 2 * x[1] + 4 * x[2];
 }
 
@@ -59,27 +62,51 @@ vec3d idx2pm(const int x) {
     return bits;
 }
 
-// return pow(-1,k)
-double pm(const int k) {
+inline double pm(const int k) {
     return k % 2 ? -1.0 : 1.0;
 }
 
-vec3d fromSph(const vec3d& R) {
-    auto r = R[0], th = R[1], ph = R[2];
-    return vec3d(
-        r * std::sin(th) * std::cos(ph), 
-        r * std::sin(th) * std::sin(ph), 
-        r * std::cos(th) );
+inline cmplx expI(const double arg) {
+    return std::exp(iu*arg);
 }
 
-vec3d toSph(const vec3d& X) {
+inline cmplx powI(const uint32_t m) {
+    switch (m % 4) {
+        case 0: return 1;
+        case 1: return iu;
+        case 2: return -1.0;
+        case 3: return -iu;
+    }
+}
+
+//const uint64_t factorial(int n) {
+//    return n == 0 ? 1 : n * factorial(n-1);
+//}
+
+inline double factorial(double n) {
+    return n == 0 ? 1 : n * factorial(n-1);
+}
+
+inline double fallingFactorial(double x, int k) {
+    return k == 0 ? 1 : x * fallingFactorial(x - 1, k - 1);
+}
+
+inline vec3d fromSph(const vec3d& R) {
+    auto r = R[0], th = R[1], ph = R[2];
+    return vec3d(
+        r * std::sin(th) * std::cos(ph),
+        r * std::sin(th) * std::sin(ph),
+        r * std::cos(th));
+}
+
+inline vec3d toSph(const vec3d& X) {
     auto x = X[0], y = X[1], z = X[2], r = X.norm();
     assert(r != 0);
 
     auto toPhi = [](double x, double y) {
         if (x == 0 && y == 0) return 0.0; // pick phi = 0.0
-        return std::atan2(y,x);
-    };
+        return std::atan2(y, x);
+        };
 
     return vec3d( r, std::acos(z/r), toPhi(x,y) );
 }
@@ -98,48 +125,22 @@ const T evaluatePoly(std::vector<T> coeffs, const T z) {
     return coeffs[0];
 }*/
 
-const double fallingFactorial(double x, int k) {
-    return k == 0 ? 1 : x * fallingFactorial(x - 1, k - 1);
-}
-
-//const uint64_t factorial(int n) {
-//    return n == 0 ? 1 : n * factorial(n-1);
-//}
-
-const double factorial(double n) {
-    return n == 0 ? 1 : n * factorial(n-1);
-}
-
-const double coeffYlm(int l, int abs_m) {
+inline double coeffYlm(int l, int abs_m) {
     assert(abs_m <= l);
     return
         std::sqrt(factorial(l-abs_m) / static_cast<double>(factorial(l+abs_m))) * // Ylm coeffs
         pm(abs_m) * std::pow(2.0, l); // legendreCos coeffs
 }
 
-const cmplx expI(const double arg) {
-    return std::exp(iu*arg);
-}
-
-const cmplx powI(const uint32_t m) {
-    switch (m % 4) {
-        case 0: return 1.0;
-        case 1: return iu;
-        case 2: return -1.0;
-        case 3: return -iu;
-    }
-}
-
-mat3d matFromSph(const double th, const double ph) {
+inline mat3d matFromSph(const double th, const double ph) {
     return mat3d{
-            {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph)/sin(th) },
-            {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph)/sin(th) },
-            {  cos(th),         -sin(th),          0.0             }
+        {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph)/sin(th) },
+        {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph)/sin(th) },
+        {  cos(th),         -sin(th),          0.0             }
     };
 }
 
-mat3d rotationR(const pair2d angles) {
-    auto [th, ph] = angles;
+inline mat3d rotationR(const double th, const double ph) {
     return mat3d {
         {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
         { -sin(ph),          cos(ph),          0       },

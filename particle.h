@@ -36,6 +36,7 @@ public :
     void printPhi(std::ofstream& f) const {
         // f << phi << ' ';
         f << phi << '\n';
+        // f << phi << ' ';
     }
 
     void printFld(std::ofstream& f) const {

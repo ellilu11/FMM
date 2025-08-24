@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iostream>
 #include <numeric>
+#include <queue>
 #include "config.h"
 #include "clock.h"
 #include "enum.h"
@@ -38,9 +39,12 @@ public:
     
     static void buildRotationMats();
     
-    static const double legendreCos(const double, const int, const int);
+    static double legendreCos(const double, const int, const int);
 
-    static const double dLegendreCos(const double, const int, const int);
+    //static const double dLegendreCos(
+    //    const double, const int, const int, const double, const double);
+
+    static double dLegendreCos(const double, const int, const int);
 
 public:
     ParticleVec getParticles() const { return particles; }
@@ -89,7 +93,7 @@ public:
     
     void pushSelfToNearNonNbors();
 
-    const std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
+    std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
 
     void evalLeafIlistSols();
 

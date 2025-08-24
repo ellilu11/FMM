@@ -11,7 +11,7 @@ std::array<std::vector<matXcd>,14> Node::wignerDInv;
 std::array<mat3d,6> Node::rotMatR;
 
 void Node::setNodeParams(const Config& config) {
-    order = ceil(-std::log(config.EPS) / std::log(2));
+    order = config.order; // ceil(-std::log(config.EPS) / std::log(2));
     orderExp = [&]() -> std::size_t {
         switch (config.prec) {
             case Precision::LOW:    return 8;
@@ -68,7 +68,7 @@ void Node::buildRotationMats() {
 
         // 3D rotation matrices
         if (dir >=8)
-            rotMatR[dir-8] = rotationR(angles);
+            rotMatR[dir-8] = rotationR(R[1], R[2]);
     }
 }
 
@@ -79,7 +79,7 @@ void Node::buildRotationMats() {
  * l     : angular momentum number
  * abs_m : |m| where m is z-axis angular momentum number
  */
-const double Node::legendreCos(const double th, const int l, const int abs_m) {
+double Node::legendreCos(const double th, const int l, const int abs_m) {
     assert(0 <= abs_m && abs_m <= l);
     const double cos_th = cos(th), sin_th = sin(th);
 
@@ -94,11 +94,11 @@ const double Node::legendreCos(const double th, const int l, const int abs_m) {
 
 /* dLegendreCos(th,l,abs_m)
  * Return derivative of C * L_l^{|m|}(\cos(th)) w.r.t. th.
- * th    : polar angle
- * l     : angular momentum number
- * abs_m : |m| where m is z-axis angular momentum number
+ * th        : polar angle
+ * l         : angular momentum number
+ * abs_m     : |m| where m is z-axis angular momentum number
  */
-const double Node::dLegendreCos(const double th, const int l, const int abs_m) {
+double Node::dLegendreCos(const double th, const int l, const int abs_m) {
     if (!l) return 0.0;
     assert(0 <= abs_m && abs_m <= l);
 
@@ -125,13 +125,13 @@ Node::Node(
         base->center + nodeLeng / 2.0 * idx2pm(branchIdx)),
     label(0)
 {
-    for (int l = 0; l <= order; ++l)
-        localCoeffs.emplace_back(vecXcd::Zero(2*l+1));
+    for (int l = 0; l <= order; ++l) 
+        localCoeffs.push_back(vecXcd::Zero(2*l+1));
 
     for (int dir = 0; dir < 6; ++dir) {
         std::vector<vecXcd> expCoeffs_dir;
         for (int k = 0; k < orderExp; ++k)
-            expCoeffs_dir.emplace_back( vecXcd::Zero(tables.quadLengs_[k]) );
+            expCoeffs_dir.push_back(vecXcd::Zero(tables.quadLengs_[k]));
         expCoeffs[dir] = expCoeffs_dir;
     }
 
@@ -224,10 +224,9 @@ void Node::buildOuterInteractionList() {
 void Node::pushSelfToNearNonNbors() {
     if (leafIlist.empty()) return;
 
-    auto self = getSelf(); // call shared_from_this()
     for (const auto& node : leafIlist) {
         auto leaf = dynamic_pointer_cast<Leaf>(node);
-        leaf->pushToNearNonNbors(self);
+        leaf->pushToNearNonNbors(getSelf()); // call shared_from_this()
     }
 }
 
@@ -235,7 +234,7 @@ void Node::pushSelfToNearNonNbors() {
  * (L2L) Return local coeffs shifted to center of branch labeled by branchIdx
  * branchIdx : index of branch \in {0, ..., 7}
  */
-const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const {
+std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const {
     std::vector<vecXcd> shiftedLocalCoeffs, rotatedLocalCoeffs;
     const double r = (branches[branchIdx]->center - center).norm();
 
@@ -255,6 +254,7 @@ const std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const
                     rotatedLocalCoeffs[n][k+n] *
                     tables.A_[n-j][n-j] * tables.A_[j][k_j] / tables.A_[n][k+n]
                     * r2nmj / pm(n+j);
+
                 r2nmj *= r;
             }
         }
@@ -305,7 +305,7 @@ void Node::evalLeafIlistSols() {
 }
 
 /* evalPairSols(srcNode)
- * Evaluate sols at particles in this node due to particles in srcNode
+ * (P2P) Evaluate sols at particles in this node due to particles in srcNode
  * and vice versa 
  * srcNode : source node
  */
@@ -324,15 +324,16 @@ void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
 
             const auto dX = obs->getPos() - src->getPos();
             const auto dr = dX.norm();
+            const auto srcCharge = src->getCharge();
 
-            const auto srcPhi = src->getCharge() / dr;
+            const auto srcPhi = srcCharge / dr;
             const auto srcFld = srcPhi * dX / (dr*dr);
 
             phiAtObss[obsIdx] += srcPhi;
             fldAtObss[obsIdx] += srcFld;
 
             // assume all charges have equal magnitude
-            if (obs->getCharge() == src->getCharge()) {
+            if (obs->getCharge() == srcCharge) {
                 phiAtSrcs[srcIdx] += srcPhi;
                 fldAtSrcs[srcIdx] -= srcFld;
             } else {
@@ -350,7 +351,7 @@ void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
 }
 
 /* evalSelfSols()
- * Evaluate sols at all particles in this node due to all other particles
+ * (P2P) Evaluate sols at all particles in this node due to all other particles
  * in this node
  */
 void Node::evalSelfSols() {

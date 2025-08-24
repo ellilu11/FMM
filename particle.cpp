@@ -64,7 +64,7 @@ ParticleVec makeParticles(const Config& config)
         auto x = X[0], y = X[1], z = X[2];
         auto idx = bools2Idx(X > zeroVec );
         int pm = [&] () -> int {
-            switch (config.cdist) {
+            switch (config.qdist) {
                 case ChargeDist::PLUS:  return 1;
                 case ChargeDist::MINUS: return 0;
                 case ChargeDist::DIP:   return x > 0;

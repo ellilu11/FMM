@@ -36,7 +36,8 @@ std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
             innerCoeffs[m_p] *= powI(abs_m); // plus sign
         }
 
-        expCoeffs.emplace_back(vecXcd::Zero(M_k));
+        expCoeffs.push_back(vecXcd::Zero(M_k));
+
         for (int j = 0; j < M_k; ++j) {
             for (int m_p = 0; m_p <= 2*order; ++m_p)
                 expCoeffs[k][j] +=
@@ -51,7 +52,7 @@ std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) {
     return expCoeffs;
 }
 
-const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
+/*const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
     std::vector<vecXcd> mergedCoeffs;
     for (int k = 0; k < orderExp; ++k)
         mergedCoeffs.emplace_back(vecXcd::Zero(tables.quadLengs_[k]));
@@ -75,9 +76,9 @@ const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
         }
     }
     return mergedCoeffs;
-}
+}*/
 
-/*const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
+const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
     std::vector<vecXcd> mergedCoeffs;
     for (int k = 0; k < orderExp; ++k)
         mergedCoeffs.emplace_back(vecXcd::Zero(tables.quadLengs_[k]));
@@ -94,7 +95,7 @@ const std::vector<vecXcd> Node::getMergedExpCoeffs(const int dirIdx) const {
                     expCoeffs[k][j] * tables.expsMerge_[k][j][branchIdx];
     }
     return mergedCoeffs;
-}*/
+}
 
 void Node::addShiftedExpCoeffsFromBranch(
     const std::vector<vecXcd>& srcExpCoeffs, const vec3d& center0, const int dirIdx) 
@@ -191,7 +192,7 @@ void Node::evalExpToLocalCoeffs() {
 
             double ml_k2l = 1.0;
             for (int l = 0; l <= order; ++l) {
-                rotatedLocalCoeffs.emplace_back(vecXcd::Zero(2*l+1));
+                rotatedLocalCoeffs.push_back(vecXcd::Zero(2*l+1));
 
                 for (int m = -l; m <= l; ++m) {
                     int m_l = m+l;

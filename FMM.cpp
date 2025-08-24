@@ -42,8 +42,7 @@ int main() {
     cout << " Source file:       " << fname << '\n';
     cout << " # Sources:         " << Nsrcs << '\n';
     cout << " Root length:       " << config.L << '\n';
-    cout << " Error tol.:        " << config.EPS << '\n';
-    cout << " Expansion order:   " << order << '\n';
+    cout << " Expansion order:   " << config.order << '\n';
     cout << " Exponential order: " << Node::getExponentialOrder() << '\n';
     cout << " Max node parts:    " << config.maxNodeParts << '\n' << '\n';
 
