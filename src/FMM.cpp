@@ -1,5 +1,4 @@
-﻿#include <chrono>
-#include <fstream>
+﻿#include <fstream>
 #include <iostream>
 #include "clock.h"
 #include "config.h"
@@ -50,7 +49,6 @@ int main() {
     auto fmm_start = Clock::now();
     
     Node::buildTables(config);
-
     Node::buildRotationMats();
 
     // ==================== Set up domain ==================== //

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "enum.h"
 #include "math.h"
 
 struct Tables {
