@@ -1,16 +1,42 @@
 #pragma once
 
+#include <cctype>
+#include <fstream>
 #include <iostream>
 #include <type_traits>
 #include "enum.h"
 
-template <typename T>
-concept Enum = std::is_enum_v<T>;
+void getDigit(std::istringstream& iss, char ch) {
+    while (iss.get(ch)) {
+        if (std::isdigit(static_cast<unsigned char>(ch))) {
+            iss.unget();
+            break;
+        }
+    }
+}
 
-template<Enum E>
-std::ifstream& operator>>(std::ifstream& is, E& eval) {
-    typename std::underlying_type<E>::type val;
-    if (is >> val) eval = static_cast<E>(val);
+template <typename T>
+std::ifstream& operator>>(std::ifstream& is, T& val) {
+    std::string line;
+    if (std::getline(is, line)) {
+        std::istringstream iss(line);
+
+        char ch = '\0';
+        getDigit(iss, ch);
+
+        if constexpr (std::is_enum_v<T>) {
+            typename std::underlying_type<T>::type eval;
+
+            while (iss >> eval) {
+                val = static_cast<T>(eval);
+                getDigit(iss, ch);
+            }
+
+        } else
+            while (iss >> val)
+                getDigit(iss, ch);
+    }
+
     return is;
 }
 
@@ -18,17 +44,17 @@ struct Config {
     Config() = default;
     Config(const std::string& fileName) {
         std::ifstream is(fileName);
-        is >> mode >> dist >> cdist >> prec
-            >> nsrcs >> L >> EPS >> maxNodeParts  >> evalDirect;
+        is >> mode >> dist >> qdist >> prec
+           >> order >> nsrcs >> L  >> maxNodeParts  >> evalDirect;
     }
 
     Mode mode;
     Dist dist;
-    ChargeDist cdist;
+    ChargeDist qdist;
     Precision prec;
+    int order;
     int nsrcs;
     double L;
-    double EPS;
     int maxNodeParts;
     bool evalDirect;
 };
@@ -44,7 +70,7 @@ const std::string makeFname(const Config& config) {
         }();
     std::string cdistStr = 
         [&]() -> std::string { 
-            switch (config.cdist) {
+            switch (config.qdist) {
                 case ChargeDist::PLUS:  return "plus";
                 case ChargeDist::MINUS: return "minus"; 
                 case ChargeDist::DIP:   return "dip";

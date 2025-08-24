@@ -39,11 +39,18 @@ std::array<bool,3> operator> (const vec3d& x, const vec3d& y) {
     return bools;
 }
 
+/* bools2Idx(x)
+ * Convert bools into branchIdx \in {0, ... ,7}
+ */
 inline size_t bools2Idx(const std::array<bool, 3>& x) {
     return x[0] + 2 * x[1] + 4 * x[2];
 }
 
-// convert x to reverse binary, then replace each bit as 0 -> -1, 1 -> 1
+/* idx2pm(x)
+ * Convert x to reverse binary, then replace each bit as 0 -> -1, 1 -> 1
+ * returning the result
+ * x : integer \in {0, ... , 7}
+ */
 inline vec3d idx2pm(const int x) {
     assert(x < 8);
     auto xmod4 = x%4;
@@ -55,7 +62,6 @@ inline vec3d idx2pm(const int x) {
     return bits;
 }
 
-// return pow(-1,k)
 inline double pm(const int k) {
     return k % 2 ? -1.0 : 1.0;
 }
@@ -73,16 +79,16 @@ inline cmplx powI(const uint32_t m) {
     }
 }
 
-inline double fallingFactorial(double x, int k) {
-    return k == 0 ? 1 : x * fallingFactorial(x - 1, k - 1);
-}
-
 //const uint64_t factorial(int n) {
 //    return n == 0 ? 1 : n * factorial(n-1);
 //}
 
 inline double factorial(double n) {
     return n == 0 ? 1 : n * factorial(n-1);
+}
+
+inline double fallingFactorial(double x, int k) {
+    return k == 0 ? 1 : x * fallingFactorial(x - 1, k - 1);
 }
 
 inline vec3d fromSph(const vec3d& R) {
@@ -114,14 +120,13 @@ inline double coeffYlm(int l, int abs_m) {
 
 inline mat3d matFromSph(const double th, const double ph) {
     return mat3d{
-            {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph)/sin(th) },
-            {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph)/sin(th) },
-            {  cos(th),         -sin(th),          0.0             }
+        {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph)/sin(th) },
+        {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph)/sin(th) },
+        {  cos(th),         -sin(th),          0.0             }
     };
 }
 
-inline mat3d rotationR(const pair2d angles) {
-    auto [th, ph] = angles;
+inline mat3d rotationR(const double th, const double ph) {
     return mat3d {
         {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
         { -sin(ph),          cos(ph),          0       },

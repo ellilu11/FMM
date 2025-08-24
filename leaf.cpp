@@ -54,7 +54,7 @@ void Leaf::buildMpoleCoeffs() {
     if (isRoot()) return;
 
     for (int l = 0; l <= order; ++l)
-        coeffs.emplace_back(vecXcd::Zero(2*l+1));
+        coeffs.push_back(vecXcd::Zero(2*l+1));
 
     for (const auto& src : particles) {
         const auto dR = toSph(src->getPos() - center);
@@ -144,7 +144,7 @@ void Leaf::evalFarSols() {
 
         cmplx phi(0,0);
         vec3cd fld = vec3cd::Zero();
-        double r2lmm = 1.0 / r;
+        double r2l = 1.0;
 
         for (int l = 0; l <= order; ++l) {
             realVec legendre_l, dLegendre_l;
@@ -166,17 +166,17 @@ void Leaf::evalFarSols() {
 
             for (int m = -l; m <= l; ++m) {
                 const size_t abs_m = abs(m);
-                const cmplx coeff = localCoeffs[l][m+l] * r2lmm * expI(m*ph);
+                const cmplx coeff = localCoeffs[l][m+l] * r2l * expI(m*ph);
 
-                phi += coeff * r * legendre_l[abs_m];
-                fld -= coeff *
+                phi += coeff * legendre_l[abs_m];
+                fld -= coeff / r *
                     vec3cd(
                         l * legendre_l[abs_m],           // E_r
                         dLegendre_l[abs_m],              // E_th
                         cmplx(0,m) * legendre_l[abs_m]); // E_ph * sin(th)
             }
 
-            r2lmm *= r;
+            r2l *= r;
         }
 
         // Convert to cartesian components
@@ -255,7 +255,7 @@ std::vector<LeafPair> Leaf::findNearNborPairs(){
         for (const auto& nbor : leaf->nearNbors) {
             auto nborLeaf = dynamic_pointer_cast<Leaf>(nbor);
             if (leaf < nborLeaf)
-                leafPairs.emplace_back(std::make_pair(leaf, nborLeaf));
+                leafPairs.emplace_back(leaf, nborLeaf);
         }
     }
 

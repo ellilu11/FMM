@@ -5,20 +5,22 @@ dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
 % phiAnlFile = strcat(dir,"out\ffAnl.txt");
 % phiFile = strcat(dir,"out\local.txt");
 % phiAnlFile = strcat(dir,"out\localAnl.txt");
-phiFile = strcat(dir,"out\nf.txt");
-phiAnlFile = strcat(dir,"out\nfAnl.txt");
+% phiFile = strcat(dir,"out\nf.txt");
+% phiAnlFile = strcat(dir,"out\nfAnl.txt");
+phiFile = strcat(dir,"out\phi.txt");
+phiAnlFile = strcat(dir,"out\phiAnl.txt");
 
 phi = readmatrix(phiFile)';
 phiAnl = readmatrix(phiAnlFile)';
-
-phi = sortrows(phi);
-phiAnl = sortrows(phiAnl);
 
 nvec = 1:size(phi,1);
 % nvec = linspace(0,2*pi,size(phi,1));
 % nobs = 100;
 % nvec = 0:(2*pi/nobs):(2*pi*(nobs-1)/nobs);
 numP = size(phi,2);
+% 
+% phi = sortrows(phi,numP);
+% phiAnl = sortrows(phiAnl);
 
 %%
 pmax = 10;
@@ -42,6 +44,6 @@ semilogy(nvec, relErr(:,1:numP), '-o');
 legend(strcat(" p = ", arrayfun(@num2str,pvec,...
     'UniformOutput',false)) );
 
-% figure(3);
-% meanRelErr = mean(relErr,1);
-% semilogy(pvec,meanRelErr(1:numP), '-o');
+figure(3);
+meanRelErr = mean(relErr,1);
+semilogy(pvec,meanRelErr(1:numP), '-o');

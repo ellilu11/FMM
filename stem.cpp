@@ -62,7 +62,7 @@ void Stem::buildLists() {
  */
 void Stem::buildMpoleCoeffs() {
     for (int l = 0; l <= order; ++l)
-        coeffs.emplace_back(vecXcd::Zero(2*l+1));
+        coeffs.push_back(vecXcd::Zero(2*l+1));
 
     for (const auto& branch : branches) {
         branch->buildMpoleCoeffs();
