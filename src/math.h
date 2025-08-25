@@ -95,11 +95,11 @@ inline cmplx powI(const uint32_t m) {
 //    return n == 0 ? 1 : n * factorial(n-1);
 //}
 
-inline double factorial(double n) {
+double factorial(double n) {
     return n == 0 ? 1 : n * factorial(n-1);
 }
 
-inline double fallingFactorial(double x, int k) {
+double fallingFactorial(double x, int k) {
     return k == 0 ? 1 : x * fallingFactorial(x - 1, k - 1);
 }
 
@@ -146,6 +146,7 @@ inline mat3d rotationR(const double th, const double ph) {
     };
 }
 
+// TODO: Generate recursively
 matXcd wignerD_l(const pair2d angles, const int l) {
     using namespace std;
     const auto [th, ph] = angles;

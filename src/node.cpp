@@ -20,7 +20,7 @@ void Node::setNodeParams(const Config& config) {
         }
         }();
     maxNodeParts = config.maxNodeParts;
-    rootLeng = config.L;
+    rootLeng = config.L; // enhance to find max l_infty norm of all src pos
     numNodes = 0;
 }
 
@@ -269,15 +269,15 @@ void Node::evalLeafIlistSols() {
 
             double r2lpp = r;
             for (int l = 0; l <= order; ++l) {
-                realVec legendreCoeffs;
+                realVec legendre_l;
 
                 for (int m = 0; m <= l; ++m)
-                    legendreCoeffs.push_back(legendreCos(th, l, m));
+                    legendre_l.push_back(legendreCos(th, l, m));
 
                 for (int m = -l; m <= l; ++m){
                     localCoeffs[l][m+l] +=
                         src->getCharge() / r2lpp *
-                        legendreCoeffs[abs(-m)] * expI(-m*ph);
+                        legendre_l[abs(-m)] * expI(-m*ph);
                 }
 
                 r2lpp *= r;

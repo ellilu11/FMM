@@ -1,4 +1,8 @@
-﻿#include <fstream>
+﻿/* Fast Multipole Method for 3D Laplace kernel
+ * Elliot Lu, 2025
+ */
+
+#include <fstream>
 #include <iostream>
 #include "clock.h"
 #include "config.h"
@@ -118,9 +122,9 @@ int main() {
 
     printSols(srcs, "out/phi.txt", "out/fld.txt");
 
-    // ================== Compute direct ===================== //
     if (!config.evalDirect) return 0;
 
+    // ================== Compute direct ===================== //
     root->resetSols();
 
     cout << "\n Computing direct...\n";

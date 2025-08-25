@@ -63,14 +63,14 @@ void Leaf::buildMpoleCoeffs() {
         double r2l = 1.0;
 
         for (int l = 0; l <= order; ++l) {
-            realVec legendreCoeffs;
+            realVec legendre_l;
             for (int m = 0; m <= l; ++m)
-                legendreCoeffs.push_back(legendreCos(th, l, m));
+                legendre_l.push_back(legendreCos(th, l, m));
 
             for (int m = -l; m <= l; ++m) {
                 coeffs[l][m+l] +=
                     src->getCharge() * r2l *
-                    legendreCoeffs[abs(-m)] * expI(-m*ph);
+                    legendre_l[abs(-m)] * expI(-m*ph);
             }
 
             r2l *= r;

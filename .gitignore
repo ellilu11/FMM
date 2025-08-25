@@ -362,3 +362,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 test/
+/plt/fig/uniform2D_dip_N10000.jpg
+/plt/fig/uniform_dip_N10000.jpg

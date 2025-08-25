@@ -34,8 +34,6 @@ public:
     static const int getExponentialOrder() { return orderExp; }
     
     static const int getNumNodes() { return numNodes; }
-
-    static void findNearNborPairs();
     
     static void setNodeParams(const Config&);
     
