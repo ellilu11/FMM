@@ -76,12 +76,12 @@ void Stem::buildMpoleCoeffs() {
 
             vecXcd shiftedBranchCoeffs_j = vecXcd::Zero(2*j+1);
             for (int k = -j; k <= j; ++k) {
-                int k_ = k + j;
+                int k_j = k + j;
                 double r2n = 1.0;
 
                 for (int n = 0; n <= min(j+k, j-k); ++n) {
-                    shiftedBranchCoeffs_j[k_] += branchCoeffs[j-n][k_-n] *
-                        tables.A_[n][n] * tables.A_[j-n][k_-n] / tables.A_[j][k_] *
+                    shiftedBranchCoeffs_j[k_j] += branchCoeffs[j-n][k_j-n] *
+                        tables.A_[n][n] * tables.A_[j-n][k_j-n] / tables.A_[j][k_j] *
                         r2n; // legendreCos(0.0, n, 0) = 1 for all n;
 
                     r2n *= r;

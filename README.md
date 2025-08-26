@@ -25,7 +25,7 @@ into frequency and time-domain simulations.
 Specify the following configuration parameters in `/config/config.txt` (a sample file is included):
 
 * `Mode`      : Input mode ( `0` - READ, `1` - WRITE )
-* `Pdist`     : Particle distribution ( `0` - Uniform, `1` - Gaussian, `2` - Grid )
+* `Pdist`     : Particle distribution ( `0` - Uniform, `1` - Gaussian, `2` - Sphere, `3` - Cylinder )
 * `Qdist`     : Charge distribution ( `0` - Plus, `1` - Minus, `2` - Dipole, `3` - Quadrupole, `4` - Octupole, `5` - Random )
 * `Exp prec`  : Exponential expansion precision ( `0` - order 8, `1` - order 17, `2` - order 26)
 * `Order`     : Multipole expansion order

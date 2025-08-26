@@ -2,8 +2,8 @@
 
 using namespace std;
 
-ParticleVec importParticles(const std::string& fname) {
-    ifstream inFile(fname);
+ParticleVec importParticles(const std::filesystem::path& fpath) {
+    ifstream inFile(fpath);
     if (!inFile) throw std::runtime_error("Unable to find file");
     string line;
     ParticleVec particles;
@@ -30,33 +30,45 @@ ParticleVec makeParticles(const Config& config)
     random_device rd;
     mt19937 gen(rd());
 
-    dist0 rand0(-config.L/2.0, config.L/2.0);
-    dist1 rand1(-config.L/2.0, config.L/2.0);
-    dist2 rand2(-config.L/2.0, config.L/2.0);
+    dist0 rand0(0, 1);
+    dist1 rand1(0, 1);
+    dist2 rand2(0, 1);
 
-    switch (config.dist) {
-        case Dist::GAUSSIAN:
-            rand0 = dist0(0, 1);
-            rand1 = dist1(0, 1);
-            break;
+    if (config.dist == Dist::UNIFORM) {
+        double lim = config.L/2.0;
+        rand0 = dist0(-lim, lim);
+        rand1 = dist1(-lim, lim);
+        rand2 = dist2(-lim, lim);
     }
 
     for (int n = 0; n < config.nsrcs; ++n) {
-        vec3d X;
-        X = [&] {
+        vec3d X = [&] {
+            double r, th, ph, z;
+
             switch (config.dist) {
                 case Dist::UNIFORM:
                     return vec3d( rand0(gen), rand1(gen), rand2(gen) );
-                case Dist::GAUSSIAN: {
-                    const double r = sqrt(-2.0 * log(rand0(gen))); // fix
-                    const double th = PI / 2.0;
-                    const double ph = 2.0 * PI * rand1(gen);
+
+                // 2D Gaussian at z = 0; TODO: 3D Gaussian
+                case Dist::GAUSSIAN: { 
+                    r = sqrt(-2.0 * log(rand0(gen))); 
+                    th = PI / 2.0;
+                    ph = 2.0 * PI * rand1(gen);
                     return fromSph(vec3d(r,th,ph));
                 }
-                case Dist::GRID: {
-                    assert(config.nsrcs <= 8);
-                    vec3d dX( rand0(gen), rand1(gen), rand2(gen) );
-                    return vec3d(config.L/4.0*idx2pm(n) + 0.25*dX);
+
+                case Dist::SPHERE: {
+                    r = 0.90 * (config.L / 2.0);
+                    th = acos(2.0*rand0(gen) - 1.0);
+                    ph = 2.0 * PI * rand1(gen);
+                    return fromSph(vec3d(r,th,ph));
+                }
+
+                case Dist::CYLINDER: {
+                    r = 0.45 * (config.L / 2.0);
+                    ph = 2.0 * PI * rand1(gen);
+                    z = 0.90 * config.L * (rand1(gen) - 0.5);
+                    return fromCyl(vec3d(r, ph, z));
                 }
             } 
             }();
@@ -86,8 +98,17 @@ ParticleVec makeParticles(const Config& config)
 void printSols(ParticleVec& particles, 
     const std::string& pname, const std::string& fname) 
 {
-    ofstream phiFile(pname);
-    ofstream fldFile(fname);
+    namespace fs = std::filesystem;
+    fs::path dir = "out";
+    std::error_code ec;
+
+    if (fs::create_directory(dir, ec))
+        std::cout << " Created directory " << dir.generic_string() << "/\n";
+    else if (ec)
+        std::cerr << " Error creating directory " << ec.message() << "\n";
+
+    ofstream phiFile(dir/pname);
+    ofstream fldFile(dir/fname);
 
     phiFile << setprecision(15) << scientific;
     fldFile << setprecision(15) << scientific;

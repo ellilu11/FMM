@@ -151,16 +151,6 @@ void Leaf::evalFarSols() {
         for (int l = 0; l <= order; ++l) {
             realVec legendre_l, dLegendre_l;
 
-            //for (int m = 0; m <= l; ++m) {
-            //    double legendre_lm = legendreCos(th, l, m);
-            //    legendre_l.push_back(legendre_lm);
-            //    double dLegendre_prev_m =
-            //        (m < l) ? legendre_prev[m] : 0.0;
-            //    dLegendre_l.push_back(
-            //        dLegendreCos(th, l, m,
-            //            legendre_lm, dLegendre_prev_m));
-            //}
-
             for (int m = 0; m <= l; ++m) {
                 legendre_l.push_back(legendreCos(th, l, m));
                 dLegendre_l.push_back(dLegendreCos(th, l, m));

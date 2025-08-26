@@ -16,13 +16,13 @@ int main() {
     Config config("config/config.txt");
 
     // ==================== Make particles ==================== //
-    const auto fname = makeFname(config);
+    const auto fpath = makePath(config);
     ParticleVec srcs;
     int Nsrcs;
     
     switch (config.mode) {
         case Mode::READ :
-            srcs = importParticles(fname);
+            srcs = importParticles(fpath);
             Nsrcs = srcs.size();
             break;
 
@@ -30,7 +30,7 @@ int main() {
             srcs = makeParticles<uniform_real_distribution<double>>(config);
             Nsrcs = config.nsrcs;
 
-            ofstream srcFile(fname);
+            ofstream srcFile(fpath);
             for (const auto& src : srcs) srcFile << *src;
             break;
         }
@@ -42,7 +42,7 @@ int main() {
     const int order = Node::getExpansionOrder();
 
     cout << " Mode:              " << (config.mode == Mode::READ ? "READ" : "WRITE") << '\n';
-    cout << " Source file:       " << fname << '\n';
+    cout << " Source file:       " << fpath.generic_string() << '\n';
     cout << " # Sources:         " << Nsrcs << '\n';
     cout << " Root length:       " << config.L << '\n';
     cout << " Expansion order:   " << config.order << '\n';
@@ -120,7 +120,7 @@ int main() {
     cout << "   Elapsed time (P2P): " << t.P2P.count() << " ms\n";
     cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n";
 
-    printSols(srcs, "out/phi.txt", "out/fld.txt");
+    printSols(srcs, "phi.txt", "fld.txt");
 
     if (!config.evalDirect) return 0;
 
@@ -136,7 +136,7 @@ int main() {
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    printSols(srcs, "out/phiAnl.txt", "out/fldAnl.txt");
+    printSols(srcs, "phiDir.txt", "fldDir.txt");
 
     return 0;
 }

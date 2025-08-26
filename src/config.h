@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cctype>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <type_traits>
@@ -13,7 +14,8 @@ enum class Mode {
 enum class Dist {
     UNIFORM,
     GAUSSIAN,
-    GRID
+    SPHERE,
+    CYLINDER
 };
 
 enum class ChargeDist {
@@ -84,13 +86,14 @@ struct Config {
     bool evalDirect;
 };
 
-const std::string makeFname(const Config& config) {
+std::filesystem::path makePath(const Config& config) {
     std::string distStr =
         [&]() -> std::string {
             switch (config.dist) {
-                case Dist::UNIFORM:  return "uniform";
-                case Dist::GAUSSIAN: return "gauss";
-                case Dist::GRID:     return "grid";
+                case Dist::UNIFORM:    return "uniform";
+                case Dist::GAUSSIAN:   return "gauss";
+                case Dist::SPHERE:     return "sphere";
+                case Dist::CYLINDER:   return "cyl";
             }
         }();
     std::string cdistStr = 
@@ -105,5 +108,7 @@ const std::string makeFname(const Config& config) {
             }
         }();
 
-    return "config/part3D/" + distStr + "_" + cdistStr + ".txt";
+    return
+        std::filesystem::path("config") /
+        (distStr + "_" + cdistStr + ".txt");
 }

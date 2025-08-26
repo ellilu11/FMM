@@ -111,6 +111,14 @@ inline vec3d fromSph(const vec3d& R) {
         r * std::cos(th));
 }
 
+inline vec3d fromCyl(const vec3d& S) {
+    auto r = S[0], ph = S[1], z = S[2];
+    return vec3d(
+        r * std::cos(ph),
+        r * std::sin(ph),
+        z);
+}
+
 inline vec3d toSph(const vec3d& X) {
     auto x = X[0], y = X[1], z = X[2], r = X.norm();
     assert(r != 0);

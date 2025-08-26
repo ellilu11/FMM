@@ -20,7 +20,7 @@ void Node::setNodeParams(const Config& config) {
         }
         }();
     maxNodeParts = config.maxNodeParts;
-    rootLeng = config.L; // enhance to find max l_infty norm of all src pos
+    rootLeng = config.L; // TODO: define from max l_infty norm of all src pos
     numNodes = 0;
 }
 
