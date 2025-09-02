@@ -101,6 +101,8 @@ public:
     void evalPairSols(const std::shared_ptr<Node>&);
 
     void evalSelfSols();
+
+    // void evalSelfSolsSlow();
    
     virtual std::shared_ptr<Node> getSelf() = 0;
     

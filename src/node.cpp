@@ -39,8 +39,8 @@ void Node::buildRotationMats() {
         for (int l = 0; l <= order; ++l)
             mats.push_back(
                 isInv ?
-                wignerD_l(angles, l) :
-                wignerD_l(angles, l).adjoint()
+                Math::wignerD_l(angles, l) :
+                Math::wignerD_l(angles, l).adjoint()
             );
         return mats;
     };
@@ -48,7 +48,7 @@ void Node::buildRotationMats() {
     for (int dir = 0; dir < 14; ++dir) {
         auto X = 
             dir < 8 ? 
-            idx2pm(dir) : // diagonal directions (for M2M and L2L)
+            Math::idx2pm(dir) : // diagonal directions (for M2M and L2L)
             [dir] { 
             switch (dir-8) {
                 case 0: return vec3d(0, 0, 1);
@@ -60,7 +60,7 @@ void Node::buildRotationMats() {
             } 
             }();          // cardinal directions (for M2X and X2L)
 
-        auto R = toSph(X);
+        auto R = Math::toSph(X);
         pair2d angles(R[1], R[2]);
 
         wignerD[dir] = wignerDAlongDir(angles,0);
@@ -68,7 +68,7 @@ void Node::buildRotationMats() {
 
         // 3D rotation matrices
         if (dir >=8)
-            rotMatR[dir-8] = rotationR(R[1], R[2]);
+            rotMatR[dir-8] = Math::rotationR(R[1], R[2]);
     }
 }
 
@@ -125,7 +125,7 @@ Node::Node(
     : particles(particles), branchIdx(branchIdx), base(base),
     nodeLeng(base == nullptr ? rootLeng : base->nodeLeng / 2.0),
     center(base == nullptr ? zeroVec :
-        base->center + nodeLeng / 2.0 * idx2pm(branchIdx)),
+        base->center + nodeLeng / 2.0 * Math::idx2pm(branchIdx)),
     label(0)
 {
     for (int l = 0; l <= order; ++l) 
@@ -175,7 +175,7 @@ void Node::buildInteractionList() {
     assert(!isRoot());
     assert(!nbors.empty());
 
-    auto notContains = [](NodeVec& vec, std::shared_ptr<Node> val) {
+    auto notContains = [](const NodeVec& vec, const std::shared_ptr<Node>& val) {
         return std::find(vec.begin(), vec.end(), val) == vec.end();
     };
 
@@ -235,7 +235,7 @@ std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const {
                 shiftedLocalCoeffs_j[k_j] +=
                     rotatedLocalCoeffs[n][k+n] *
                     tables.A_[n-j][n-j] * tables.A_[j][k_j] / tables.A_[n][k+n]
-                    * r2nmj / pm(n+j);
+                    * r2nmj / Math::pm(n+j);
 
                 r2nmj *= r;
             }
@@ -264,7 +264,7 @@ void Node::evalLeafIlistSols() {
 
         for (const auto& src : node->particles){
 
-            auto dR = toSph(src->getPos() - center);
+            auto dR = Math::toSph(src->getPos() - center);
             double r = dR[0], th = dR[1], ph = dR[2];
 
             double r2lpp = r;
@@ -277,7 +277,7 @@ void Node::evalLeafIlistSols() {
                 for (int m = -l; m <= l; ++m){
                     localCoeffs[l][m+l] +=
                         src->getCharge() / r2lpp *
-                        legendre_l[abs(-m)] * expI(-m*ph);
+                        legendre_l[abs(-m)] * Math::expI(-m*ph);
                 }
 
                 r2lpp *= r;
@@ -370,11 +370,10 @@ void Node::evalSelfSols() {
         particles[n]->addToSol(phis[n], flds[n]);
 }
 
-/* evalSelfSols()
+/* evalSelfSolsSlow()
  * evalSelfSols without reciprocity
- * /
-/*void Node::evalSelfSols() {
-    solVec sols;
+ */
+/*void Node::evalSelfSolsSlow() {
 
     for (const auto& obs : particles) {
         double phi = 0.0;

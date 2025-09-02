@@ -54,27 +54,27 @@ ParticleVec makeParticles(const Config& config)
                     r = sqrt(-2.0 * log(rand0(gen))); 
                     th = PI / 2.0;
                     ph = 2.0 * PI * rand1(gen);
-                    return fromSph(vec3d(r,th,ph));
+                    return Math::fromSph(vec3d(r,th,ph));
                 }
 
                 case Dist::SPHERE: {
                     r = 0.90 * (config.L / 2.0);
                     th = acos(2.0*rand0(gen) - 1.0);
                     ph = 2.0 * PI * rand1(gen);
-                    return fromSph(vec3d(r,th,ph));
+                    return Math::fromSph(vec3d(r,th,ph));
                 }
 
                 case Dist::CYLINDER: {
                     r = 0.45 * (config.L / 2.0);
                     ph = 2.0 * PI * rand1(gen);
                     z = 0.90 * config.L * (rand1(gen) - 0.5);
-                    return fromCyl(vec3d(r, ph, z));
+                    return Math::fromCyl(vec3d(r, ph, z));
                 }
             } 
             }();
         
         auto x = X[0], y = X[1], z = X[2];
-        auto idx = bools2Idx(X > zeroVec );
+        auto idx = Math::bools2Idx(X > zeroVec );
         int pm = [&] () -> int {
             switch (config.qdist) {
                 case ChargeDist::PLUS:  return 1;

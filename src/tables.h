@@ -34,25 +34,25 @@ struct Tables {
 
 void Tables::buildYlmTables(const int order) {
     auto binom = [](double x, int k) {
-        return fallingFactorial(x, k) / factorial(k);
+        return Math::fallingFactorial(x, k) / Math::factorial(k);
         };
 
     for (int l = 0; l <= 2*order; ++l) {
         realVec coeffYlm_l, fallingFact_l, legendreSum_l, fracCoeffYlm_l, A_l, Aexp_l;
 
         for (int m = 0; m <= l; ++m) {
-            coeffYlm_l.push_back(coeffYlm(l, m));
-            fallingFact_l.push_back(fallingFactorial(l, m));
+            coeffYlm_l.push_back(Math::coeffYlm(l, m));
+            fallingFact_l.push_back(Math::fallingFactorial(l, m));
             legendreSum_l.push_back(binom(l, m) * binom((l+m-1)/2.0, l));
             fracCoeffYlm_l.push_back(sqrt((l-m)/static_cast<double>(l+m)));
         }
 
-        auto pm_l = pm(l);
+        auto pm_l = Math::pm(l);
         for (int m = -l; m <= l; ++m) {
             A_l.push_back(pm_l /
-                std::sqrt(static_cast<double>(factorial(l-m)*factorial(l+m))));
+                std::sqrt(static_cast<double>(Math::factorial(l-m)*Math::factorial(l+m))));
             Aexp_l.push_back(1.0 /
-                std::sqrt(static_cast<double>(factorial(l-m)*factorial(l+m))));
+                std::sqrt(static_cast<double>(Math::factorial(l-m)*Math::factorial(l+m))));
         }
 
         coeffYlm_.push_back(coeffYlm_l);
@@ -153,7 +153,7 @@ void Tables::buildExpTables(const int order) {
 
             cmplxVec expI_alphas_kj;
             for (int m = -order; m <= order; ++m)
-                expI_alphas_kj.push_back(expI(m*alpha_kj));
+                expI_alphas_kj.push_back(Math::expI(m*alpha_kj));
             expI_alphas_k.push_back(expI_alphas_kj);
 
             std::array<cmplx, 98> exps_kj;

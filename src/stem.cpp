@@ -10,7 +10,7 @@ Stem::Stem(
     std::array<ParticleVec,8> branchParts;
 
     for (const auto& p : particles)
-        branchParts[bools2Idx(p->getPos() > center)].push_back(p);
+        branchParts[Math::bools2Idx(p->getPos() > center)].push_back(p);
  
     // Construct branch nodes
     for (size_t k = 0; k < branchParts.size(); ++k) {

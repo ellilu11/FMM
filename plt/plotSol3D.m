@@ -27,7 +27,7 @@ fldSort = sortrows(fld,ele);
 fldAnlSort = sortrows(fldAnl,ele);
 
 figure(3);
-plot(nvec, fldAnlSort(:,ele), nvec, fldSort(:,ele));
+semilogy(nvec, abs(fldAnlSort(:,ele)), nvec, abs(fldSort(:,ele)));
 
 figure(4);
 relErrFld = abs(fldSort(:,ele)-fldAnlSort(:,ele))./abs(fldAnlSort(:,ele));
@@ -42,7 +42,7 @@ Z = srcs(:,3);
 % phig = griddata(X, Y, Z, phi, Xg, Yg, Zg, 'natural');
 % 
 
-rootLeng = 1.0;
+rootLeng = 10.0;
 lim = [-rootLeng/2 rootLeng/2];
 
 figure(5);

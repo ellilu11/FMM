@@ -33,7 +33,7 @@ const std::vector<vecXcd> Node::getMpoleToExpCoeffs(const int dirIdx) const {
                 l_k2l *= l_k;
             }
 
-            innerCoeffs[m_p] *= powI(abs_m); // plus sign
+            innerCoeffs[m_p] *= Math::powI(abs_m); // plus sign
         }
 
         expCoeffs.push_back(vecXcd::Zero(M_k));
@@ -98,7 +98,7 @@ void Node::evalExpToLocalCoeffs() {
                         expCoeffs[dirIdx][k][j]
                         * conj(tables.expI_alphas_[k][j][m_p]); // conj
 
-                innerCoeffs[m_p] *= powI(abs(m)); // plus sign
+                innerCoeffs[m_p] *= Math::powI(abs(m)); // plus sign
             }
 
             double ml_k2l = 1.0;

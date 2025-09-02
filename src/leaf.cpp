@@ -58,7 +58,7 @@ void Leaf::buildMpoleCoeffs() {
         coeffs.push_back(vecXcd::Zero(2*l+1));
 
     for (const auto& src : particles) {
-        const auto dR = toSph(src->getPos() - center);
+        const auto dR = Math::toSph(src->getPos() - center);
         const double r = dR[0], th = dR[1], ph = dR[2];
         double r2l = 1.0;
 
@@ -70,7 +70,7 @@ void Leaf::buildMpoleCoeffs() {
             for (int m = -l; m <= l; ++m) {
                 coeffs[l][m+l] +=
                     src->getCharge() * r2l *
-                    legendre_l[abs(-m)] * expI(-m*ph);
+                    legendre_l[abs(-m)] * Math::expI(-m*ph);
             }
 
             r2l *= r;
@@ -141,7 +141,7 @@ void Leaf::buildLocalCoeffs() {
 void Leaf::evalFarSols() {
 
     for (const auto& obs : particles) {
-        const auto dR = toSph(obs->getPos() - center);
+        const auto dR = Math::toSph(obs->getPos() - center);
         const double r = dR[0], th = dR[1], ph = dR[2];
 
         cmplx phi(0,0);
@@ -158,7 +158,7 @@ void Leaf::evalFarSols() {
 
             for (int m = -l; m <= l; ++m) {
                 const size_t abs_m = abs(m);
-                const cmplx coeff = localCoeffs[l][m+l] * r2l * expI(m*ph);
+                const cmplx coeff = localCoeffs[l][m+l] * r2l * Math::expI(m*ph);
 
                 phi += coeff * legendre_l[abs_m];
                 fld -= coeff / r *
@@ -172,7 +172,7 @@ void Leaf::evalFarSols() {
         }
 
         // Convert to cartesian components
-        fld = matFromSph(th,ph) * fld;
+        fld = Math::matFromSph(th,ph) * fld;
 
         obs->addToSol(phi.real(), fld.real());
     }
@@ -202,7 +202,7 @@ void Leaf::evalNearNonNborSols() {
 
             const auto srcCoeffs = node->getMpoleCoeffs();
 
-            const auto dR = toSph(obsPos - node->getCenter());
+            const auto dR = Math::toSph(obsPos - node->getCenter());
             const double r = dR[0], th = dR[1], ph = dR[2];
             double r2lpp = r;
 
@@ -216,7 +216,7 @@ void Leaf::evalNearNonNborSols() {
 
                 for (int m = -l; m <= l; ++m) {
                     const size_t abs_m = abs(m);
-                    const cmplx coeff = srcCoeffs[l][m+l] / r2lpp * expI(m*ph);
+                    const cmplx coeff = srcCoeffs[l][m+l] / r2lpp * Math::expI(m*ph);
 
                     phi += coeff * legendre_l[abs_m];
                     fld_R -= coeff / r * 
@@ -230,7 +230,7 @@ void Leaf::evalNearNonNborSols() {
             }
 
             // Convert to cartesian components
-            fld += matFromSph(th, ph) * fld_R;
+            fld += Math::matFromSph(th, ph) * fld_R;
 
             obs->addToSol(phi.real(), fld.real());
         }
