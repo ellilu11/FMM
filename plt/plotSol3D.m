@@ -1,5 +1,5 @@
 dir = "C:\Users\ellil\Documents\WORK\FMM\FMM\out\build\x64-debug\";
-srcs = readmatrix(strcat(dir,"config\sphere_dip.txt"));
+srcs = readmatrix(strcat(dir,"config\cyl_dip.txt"));
 phi = readmatrix(strcat(dir,"out\phi.txt"));
 fld = readmatrix(strcat(dir,"out\fld.txt"));
 

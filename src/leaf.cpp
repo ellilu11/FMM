@@ -110,20 +110,10 @@ void Leaf::propagateExpCoeffs() {
  */
 void Leaf::buildLocalCoeffs() {
     if (isRoot()) return;
-    
-    auto start = Clock::now();
 
     evalLeafIlistSols();
 
-    t.P2L += Clock::now() - start;
-
-    start = Clock::now();
-
     evalExpToLocalCoeffs();
-
-    t.X2L += Clock::now() - start;
-
-    start = Clock::now();
         
     if (!base->isRoot()) {
         auto shiftedLocalCoeffs = base->getShiftedLocalCoeffs(branchIdx);
@@ -131,8 +121,6 @@ void Leaf::buildLocalCoeffs() {
         for (int l = 0; l <= order; ++l)
             localCoeffs[l] += shiftedLocalCoeffs[l];
     }
-        
-    t.L2L += Clock::now() - start;
 }
 
 /* evalFarSols()
@@ -259,21 +247,11 @@ std::vector<LeafPair> Leaf::findNearNborPairs(){
  */ 
 void Leaf::evaluateSols() {
 
-    auto start = Clock::now();
-
     for (const auto& leaf : leaves)
         leaf->evalFarSols();
 
-    t.L2P += Clock::now() - start;
-
-    start = Clock::now();
-
     for (const auto& leaf : leaves)
         leaf->evalNearNonNborSols();
-
-    t.M2P += Clock::now() - start;
-
-    start = Clock::now();
 
     for (const auto& pair : findNearNborPairs()) {
         auto [obsLeaf, srcLeaf] = pair;
@@ -283,5 +261,4 @@ void Leaf::evaluateSols() {
     for (const auto& leaf : leaves)
         leaf->evalSelfSols();
 
-    t.P2P += Clock::now() - start;
 }

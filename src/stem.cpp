@@ -100,20 +100,12 @@ void Stem::buildMpoleCoeffs() {
 void Stem::propagateExpCoeffs() {
     if (!isRoot()) {
         for (int dir = 0; dir < 6; ++dir) {
-            auto start = Clock::now();
-
             auto expCoeffs = getMpoleToExpCoeffs(dir);
-            
-            t.M2X += Clock::now() - start;
 
-            auto iList = dirList[dir];
-            
-            start = Clock::now();
+            auto iList = dirList[dir];        
             
             for (const auto& node : iList)
                 node->addShiftedExpCoeffs(expCoeffs, center, dir);
-            
-            t.X2X += Clock::now() - start;
         }
     }
 
@@ -128,19 +120,10 @@ void Stem::propagateExpCoeffs() {
  */
 void Stem::buildLocalCoeffs() {
     if (!isRoot()) {
-        auto start = Clock::now();
 
         evalExpToLocalCoeffs();
 
-        t.X2L += Clock::now() - start;
-
-        start = Clock::now();
-
         evalLeafIlistSols();
-
-        t.P2L += Clock::now() - start;
-
-        start = Clock::now();
         
         if (!base->isRoot()) {
             auto shiftedLocalCoeffs = base->getShiftedLocalCoeffs(branchIdx);
@@ -148,8 +131,6 @@ void Stem::buildLocalCoeffs() {
             for (int l = 0; l <= order; ++l)
                 localCoeffs[l] += shiftedLocalCoeffs[l];
         }
-        
-        t.L2L += Clock::now() - start;
     }
 
     for (const auto& branch : branches)

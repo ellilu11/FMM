@@ -10,8 +10,6 @@
 
 using namespace std;
 
-extern auto t = ClockTimes();
-
 int main() {
     Config config("config/config.txt");
 
@@ -98,11 +96,6 @@ int main() {
     duration_ms = end - start;
 
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-    cout << "   Elapsed time (M2X): " << t.M2X.count() << " ms\n";
-    cout << "   Elapsed time (X2X): " << t.X2X.count() << " ms\n";
-    cout << "   Elapsed time (X2L): " << t.X2L.count() << " ms\n";
-    cout << "   Elapsed time (P2L): " << t.P2L.count() << " ms\n";
-    cout << "   Elapsed time (L2L): " << t.L2L.count() << " ms\n";
 
     // ================== Evaluate solutions ================= //
     cout << " Evaluating solutions...\n";
@@ -115,9 +108,6 @@ int main() {
     Time fmm_duration_ms = end - fmm_start;
 
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-    cout << "   Elapsed time (L2P): " << t.L2P.count() << " ms\n";
-    cout << "   Elapsed time (M2P): " << t.M2P.count() << " ms\n";
-    cout << "   Elapsed time (P2P): " << t.P2P.count() << " ms\n";
     cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n";
 
     printSols(srcs, "phi.txt", "fld.txt");
