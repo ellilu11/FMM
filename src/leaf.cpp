@@ -86,20 +86,13 @@ void Leaf::propagateExpCoeffs() {
     if (isRoot()) return;
 
     for (int dir = 0; dir < 6; ++dir){
-        auto start = Clock::now();
         
         auto expCoeffs = getMpoleToExpCoeffs(dir);
-        
-        t.M2X += Clock::now() - start;
 
         auto iList = dirList[dir];
 
-        start = Clock::now();
-        
         for (const auto& iNode : iList)
             iNode->addShiftedExpCoeffs(expCoeffs, center, dir);
-        
-        t.X2X += Clock::now() - start;
     }
 }
 
@@ -247,18 +240,17 @@ std::vector<LeafPair> Leaf::findNearNborPairs(){
  */ 
 void Leaf::evaluateSols() {
 
-    for (const auto& leaf : leaves)
+    for (const auto& leaf : leaves) {
         leaf->evalFarSols();
 
-    for (const auto& leaf : leaves)
         leaf->evalNearNonNborSols();
+
+        leaf->evalSelfSols();
+    }
 
     for (const auto& pair : findNearNborPairs()) {
         auto [obsLeaf, srcLeaf] = pair;
         obsLeaf->evalPairSols(srcLeaf);
     }
-
-    for (const auto& leaf : leaves)
-        leaf->evalSelfSols();
 
 }

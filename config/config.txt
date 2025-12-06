@@ -6,4 +6,4 @@ Order     4
 Nsrcs     1000
 Root leng 1.0
 Max parts 20
-Do direct 1
+Do direct 0
