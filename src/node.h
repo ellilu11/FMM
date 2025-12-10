@@ -123,7 +123,8 @@ protected:
     static int orderExp;
     static int maxNodeParts;
     static double rootLeng;
-    static int numNodes;
+    inline static int numNodes = 0;
+    
     static Tables tables;
     static std::array<std::vector<matXcd>,14> wignerD;
     static std::array<std::vector<matXcd>,14> wignerDInv;

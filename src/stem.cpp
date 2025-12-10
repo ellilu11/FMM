@@ -65,8 +65,10 @@ void Stem::buildMpoleCoeffs() {
         coeffs.push_back(vecXcd::Zero(2*l+1));
 
     for (const auto& branch : branches) {
+        
         branch->buildMpoleCoeffs();
         auto branchCoeffs = branch->getMpoleCoeffs();
+        
         const auto branchIdx = branch->getBranchIdx();
 
         const double r = (branch->getCenter() - center).norm();
@@ -100,11 +102,9 @@ void Stem::buildMpoleCoeffs() {
 void Stem::propagateExpCoeffs() {
     if (!isRoot()) {
         for (int dir = 0; dir < 6; ++dir) {
-            auto expCoeffs = getMpoleToExpCoeffs(dir);
-
-            auto iList = dirList[dir];        
+            const auto& expCoeffs = getMpoleToExpCoeffs(dir);    
             
-            for (const auto& node : iList)
+            for (const auto& node : dirList[dir])
                 node->addShiftedExpCoeffs(expCoeffs, center, dir);
         }
     }

@@ -4,7 +4,6 @@ int Node::order;
 int Node::orderExp;
 int Node::maxNodeParts;
 double Node::rootLeng;
-int Node::numNodes;
 Tables Node::tables;
 std::array<std::vector<matXcd>,14> Node::wignerD;
 std::array<std::vector<matXcd>,14> Node::wignerDInv;

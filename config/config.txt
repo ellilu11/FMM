@@ -1,9 +1,9 @@
 Mode      1
-Dist      0
+Dist      2
 Qdist     2
 Exp prec  0
 Order     4
-Nsrcs     1000
+Nsrcs     10000
 Root leng 1.0
-Max parts 20
-Do direct 0
+Max parts 75
+Do direct 1

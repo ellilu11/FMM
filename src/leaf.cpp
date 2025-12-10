@@ -18,8 +18,8 @@ void Leaf::buildNeighbors() {
     assert(!isRoot());
 
     for (int i = 0; i < numDir; ++i) {
-        Dir dir = static_cast<Dir>(i);
-        auto nbor = getNeighborGeqSize(dir);
+        const Dir dir = static_cast<Dir>(i);
+        const auto nbor = getNeighborGeqSize(dir);
 
         if (nbor != nullptr) {
             nbors.push_back(nbor);
@@ -87,11 +87,9 @@ void Leaf::propagateExpCoeffs() {
 
     for (int dir = 0; dir < 6; ++dir){
         
-        auto expCoeffs = getMpoleToExpCoeffs(dir);
+        const auto& expCoeffs = getMpoleToExpCoeffs(dir);
 
-        auto iList = dirList[dir];
-
-        for (const auto& iNode : iList)
+        for (const auto& iNode : dirList[dir])
             iNode->addShiftedExpCoeffs(expCoeffs, center, dir);
     }
 }
@@ -166,7 +164,7 @@ void Leaf::evalNearNonNborSols() {
 
     for (const auto& node : nearNonNbors) {
 
-        const auto srcs = node->getParticles();
+        const auto& srcs = node->getParticles();
 
         if (srcs.size() <= order*order)
             // Do nothing! Contribution from list 3 node was 
@@ -226,7 +224,7 @@ std::vector<LeafPair> Leaf::findNearNborPairs(){
 
     for (const auto& leaf : leaves) {
         for (const auto& nbor : leaf->nearNbors) {
-            auto nborLeaf = dynamic_pointer_cast<Leaf>(nbor);
+            const auto nborLeaf = dynamic_pointer_cast<Leaf>(nbor);
             if (leaf < nborLeaf)
                 leafPairs.emplace_back(leaf, nborLeaf);
         }
