@@ -1,7 +1,7 @@
-## Fast Multipole Method for Electromagnetics
+## Fast Multipole Method for Laplace Kernel
 ![uniform_quad_n10000](https://github.com/user-attachments/assets/8824a917-6583-4daf-a728-9f4f3ce0b224)
 
-C++ implementation of 2D / 3D Fast Multipole Method (FMM) for computing `N`-body field-mediated interactions.
+C++ implementation of 2D / 3D Fast Multipole Method (FMM) for computing `N`-body Laplace-potential mediated interactions.
 
 ### Algorithm
 
@@ -12,9 +12,11 @@ in each box from which solutions due to distant sources can be quickly evaluated
 
 This implementation of the 3D FMM further uses plane wave expansions to accelerate the multipole to local (M2L)
 transforms, traditionally the performance bottleneck for the whole algorithm. Future work is planned to extend the 3D FMM
-into frequency and time-domain simulations.
+into frequency-domain (Helmholtz kernel) and time-domain (wave kernel) simulations.
 
 ### Build
+
+CMake
 
 ##### Requirements
 
