@@ -26,6 +26,8 @@ public:
 
     void buildMpoleCoeffs() override;
 
+    std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
+
     void propagateExpCoeffs() override;
 
     void buildLocalCoeffs() override;

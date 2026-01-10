@@ -107,7 +107,8 @@ void Leaf::buildLocalCoeffs() {
     evalExpToLocalCoeffs();
         
     if (!base->isRoot()) {
-        auto shiftedLocalCoeffs = base->getShiftedLocalCoeffs(branchIdx);
+        auto shiftedLocalCoeffs =
+            dynamic_cast<Stem*>(base)->getShiftedLocalCoeffs(branchIdx);
 
         for (int l = 0; l <= order; ++l)
             localCoeffs[l] += shiftedLocalCoeffs[l];
@@ -246,9 +247,7 @@ void Leaf::evaluateSols() {
         leaf->evalSelfSols();
     }
 
-    for (const auto& pair : findNearNborPairs()) {
-        auto [obsLeaf, srcLeaf] = pair;
+    for (const auto& [obsLeaf, srcLeaf] : findNearNborPairs())
         obsLeaf->evalPairSols(srcLeaf);
-    }
 
 }

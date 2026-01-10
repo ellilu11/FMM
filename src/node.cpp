@@ -211,43 +211,8 @@ void Node::pushSelfToNearNonNbors() {
     }
 }
 
-/* getShiftedLocalCoeffs(branchIdx)
- * (L2L) Return local coeffs shifted to center of branch labeled by branchIdx
- * branchIdx : index of branch \in {0, ..., 7}
- */
-std::vector<vecXcd> Node::getShiftedLocalCoeffs(const int branchIdx) const {
-    std::vector<vecXcd> shiftedLocalCoeffs, rotatedLocalCoeffs;
-    const double r = (branches[branchIdx]->center - center).norm();
-
-    // apply rotation (rotation axis is opposite from M2M)
-    for (int j = 0; j <= order; ++j)
-        rotatedLocalCoeffs.push_back(wignerD[7-branchIdx][j] * localCoeffs[j]);
-
-    for (int j = 0; j <= order; ++j) {
-        vecXcd shiftedLocalCoeffs_j = vecXcd::Zero(2*j+1);
-
-        for (int k = -j; k <= j; ++k) {
-            int k_j = k + j;
-            double r2nmj = 1.0;
-
-            for (int n = j; n <= order; ++n) {
-                shiftedLocalCoeffs_j[k_j] +=
-                    rotatedLocalCoeffs[n][k+n] *
-                    tables.A_[n-j][n-j] * tables.A_[j][k_j] / tables.A_[n][k+n]
-                    * r2nmj / Math::pm(n+j);
-
-                r2nmj *= r;
-            }
-        }
-
-        // apply inverse rotation
-        shiftedLocalCoeffs.push_back(wignerDInv[7-branchIdx][j] * shiftedLocalCoeffs_j);
-    }
-    return shiftedLocalCoeffs;
-}
-
 /* evalLeafIlistSols()
- * (P2L) Add contribution from list 4 to local coeffs
+ * (P2L/P2P) Add contribution from list 4 to local coeffs
  */
 void Node::evalLeafIlistSols() {
     // If # observers is small, evaluate sols in this node directly
@@ -263,8 +228,8 @@ void Node::evalLeafIlistSols() {
 
         for (const auto& src : node->particles){
 
-            auto dR = Math::toSph(src->getPos() - center);
-            double r = dR[0], th = dR[1], ph = dR[2];
+            const auto& dR = Math::toSph(src->getPos() - center);
+            const double r = dR[0], th = dR[1], ph = dR[2];
 
             double r2lpp = r;
             for (int l = 0; l <= order; ++l) {
@@ -303,12 +268,12 @@ void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
         for (size_t srcIdx = 0; srcIdx < numSrcs; ++srcIdx) {
             auto obs = particles[obsIdx], src = srcNode->particles[srcIdx];
 
-            const auto dX = obs->getPos() - src->getPos();
+            const auto& dX = obs->getPos() - src->getPos();
             const auto dr = dX.norm();
             const auto srcCharge = src->getCharge();
 
             const auto srcPhi = srcCharge / dr;
-            const auto srcFld = srcPhi * dX / (dr*dr);
+            const auto& srcFld = srcPhi * dX / (dr*dr);
 
             phiAtObss[obsIdx] += srcPhi;
             fldAtObss[obsIdx] += srcFld;
@@ -345,11 +310,11 @@ void Node::evalSelfSols() {
         for (size_t srcIdx = 0; srcIdx < obsIdx; ++srcIdx) {
             auto obs = particles[obsIdx], src = particles[srcIdx];
 
-            const auto dX = obs->getPos() - src->getPos();
+            const auto& dX = obs->getPos() - src->getPos();
             const auto dr = dX.norm();
 
             const auto srcPhi = src->getCharge() / dr;
-            const auto srcFld = srcPhi * dX / (dr*dr);
+            const auto& srcFld = srcPhi * dX / (dr*dr);
 
             phis[obsIdx] += srcPhi;
             flds[obsIdx] += srcFld;

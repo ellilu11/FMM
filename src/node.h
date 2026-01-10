@@ -48,15 +48,15 @@ public:
 public:
     ParticleVec getParticles() const { return particles; }
     
-    const int getBranchIdx() const { return branchIdx; }
+    int getBranchIdx() const { return branchIdx; }
     
-    const double getLeng() const { return nodeLeng; }
+    double getLeng() const { return nodeLeng; }
     
-    const vec3d getCenter() const { return center; }
+    vec3d getCenter() const { return center; }
     
     Node* getBase() const { return base; }
     
-    const NodeVec getBranches() const { return branches; }
+    NodeVec getBranches() const { return branches; }
     
     NodeVec getNbors() const { return nbors; }
 
@@ -68,10 +68,10 @@ public:
     
     std::vector<vecXcd> getLocalCoeffs() const { return localCoeffs; }
 
-    const bool isRoot() const { return base == nullptr; }
+    bool isRoot() const { return base == nullptr; }
     
     template <typename T>
-    const bool isNodeType() const { return typeid(*this) == typeid(T); }
+    bool isNodeType() const { return typeid(*this) == typeid(T); }
 
     void resetSols() { for (const auto& p : particles) p->resetSol(); }
 
@@ -89,8 +89,6 @@ public:
     void pushSelfToNearNonNbors();
    
     void evalExpToLocalCoeffs();
-    
-    std::vector<vecXcd> getShiftedLocalCoeffs(const int) const;
 
     void evalLeafIlistSols();
 

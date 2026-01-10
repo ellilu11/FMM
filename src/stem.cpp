@@ -21,7 +21,7 @@ Stem::Stem(
         else
             branch = std::make_shared<Leaf>(branchParts[k], k, this);
 
-        branches.push_back(branch);
+        branches.push_back(std::move(branch));
     }
 }
 
@@ -95,6 +95,41 @@ void Stem::buildMpoleCoeffs() {
     }
 }
 
+/* getShiftedLocalCoeffs(branchIdx)
+ * (L2L) Return local coeffs shifted to center of branch labeled by branchIdx
+ * branchIdx : index of branch \in {0, ..., 7}
+ */
+std::vector<vecXcd> Stem::getShiftedLocalCoeffs(const int branchIdx) const {
+    std::vector<vecXcd> shiftedLocalCoeffs, rotatedLocalCoeffs;
+    const double r = (branches[branchIdx]->getCenter() - center).norm();
+
+    // apply rotation (rotation axis is opposite from M2M)
+    for (int j = 0; j <= order; ++j)
+        rotatedLocalCoeffs.push_back(wignerD[7-branchIdx][j] * localCoeffs[j]);
+
+    for (int j = 0; j <= order; ++j) {
+        vecXcd shiftedLocalCoeffs_j = vecXcd::Zero(2*j+1);
+
+        for (int k = -j; k <= j; ++k) {
+            int k_j = k + j;
+            double r2nmj = 1.0;
+
+            for (int n = j; n <= order; ++n) {
+                shiftedLocalCoeffs_j[k_j] +=
+                    rotatedLocalCoeffs[n][k+n] *
+                    tables.A_[n-j][n-j] * tables.A_[j][k_j] / tables.A_[n][k+n]
+                    * r2nmj / Math::pm(n+j);
+
+                r2nmj *= r;
+            }
+        }
+
+        // apply inverse rotation
+        shiftedLocalCoeffs.push_back(wignerDInv[7-branchIdx][j] * shiftedLocalCoeffs_j);
+    }
+    return shiftedLocalCoeffs;
+}
+
 /* propagateExpCoeffs()
  * (M2X) Convert mpole coeffs into outgoing exp coeffs
  * (X2X) Translate outgoing exp coeffs to nodes in all dirlists
@@ -126,7 +161,8 @@ void Stem::buildLocalCoeffs() {
         evalLeafIlistSols();
         
         if (!base->isRoot()) {
-            auto shiftedLocalCoeffs = base->getShiftedLocalCoeffs(branchIdx);
+            auto shiftedLocalCoeffs = 
+                dynamic_cast<Stem*>(base)->getShiftedLocalCoeffs(branchIdx);
 
             for (int l = 0; l <= order; ++l)
                 localCoeffs[l] += shiftedLocalCoeffs[l];

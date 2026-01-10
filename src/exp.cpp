@@ -62,8 +62,8 @@ void Node::addShiftedExpCoeffs(
     const std::vector<vecXcd>& srcExpCoeffs, const vec3d& center0, const int dirIdx) 
 {
     // rotate dX so this center is in uplist of center0
-    const auto dX = rotMatR[dirIdx] * (center - center0);
-    const auto idX = round(Eigen::Array3d(dX)/nodeLeng);
+    const auto& dX = rotMatR[dirIdx] * (center - center0);
+    const auto& idX = round(Eigen::Array3d(dX)/nodeLeng);
 
     const size_t l = idX[0] + 7*idX[1] + 49*idX[2] - 74;
     // assert(0 <= l && l < 98);
